@@ -51,7 +51,7 @@ const BuilderCard = ({
           source={
             imageUrl 
               ? { uri: imageUrl }
-              : require('../assets/images/splash-icon.png')
+              : require('../../assets/images/splash-icon.png')
           }
           style={styles.image}
           resizeMode="cover"

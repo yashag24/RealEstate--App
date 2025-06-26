@@ -1,10 +1,10 @@
 const { v2: cloudinary } = require("cloudinary");
 const fs = require("fs");
-
+require('dotenv').config();
 cloudinary.config({
-  cloud_name: "dsrbflu0a",
-  api_key: "425673899486623",
-  api_secret: "Xp4012GXyXc3NEawuQnqOUx_SfM",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Function to upload files (works for any image including user profile image)

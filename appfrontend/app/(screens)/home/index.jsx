@@ -12,24 +12,24 @@ import { useRouter } from "expo-router";
 // import { useSelector } from "react-redux";
 
 // Import components (keep the same import structure)
-import Navbar from '@/components/Navbar';
-import Footer from "@/components/Footer";
-import CustomerReviewCard from "@/components/CustomerReviewCard";
-import LoginPopup from "@/components/LoginPopup";
-import PropertyCard from "@/components/PropertyCard";
-import BuilderCard from "@/components/BuilderCard";
-import CardLayout from "@/components/Insights";
-import CityWiseReviews from "@/components/CityWiseReviews";
-import Upcoming from "@/components/upcoming";
-import EmergingLocalities from "@/components/EmergingLocalities";
-import Articles from "@/components/Articles";
-import ReviewForm from "@/components/ReviewForm";
-import PropertyTypeCarousel from "@/components/PropertyTypeCarousel";
-import SearchBar from "@/components/SearchBar";
-import AppointmentForm from "@/components/AppointmentForm";
-import BankingPartnersSection from "@/components/BankingPartnersSection";
-import RecentSearch from "@/components/RecentSearch";
-import StaffPerformanceCategories from "@/components//StaffPerformanceCategories";
+import Navbar from '@/components/home/Navbar';
+import Footer from "@/components/home/Footer";
+import CustomerReviewCard from "@/components/home/CustomerReviewCard";
+import LoginPopup from "@/components/home/LoginPopup";
+import PropertyCard from "@/components/home/PropertyCard";
+import BuilderCard from "@/components/home/BuilderCard";
+import CardLayout from "@/components/home/Insights";
+import CityWiseReviews from "@/components/home/CityWiseReviews";
+import Upcoming from "@/components/home/upcoming";
+import EmergingLocalities from "@/components/home/EmergingLocalities";
+import Articles from "@/components/home/Articles";
+import ReviewForm from "@/components/home/ReviewForm";
+import PropertyTypeCarousel from "@/components/home/PropertyTypeCarousel";
+import SearchBar from "@/components/home/SearchBar";
+import AppointmentForm from "@/components/home/AppointmentForm";
+import BankingPartnersSection from "@/components/home/BankingPartnersSection";
+import RecentSearch from "@/components/home/RecentSearch";
+import StaffPerformanceCategories from "@/components/home//StaffPerformanceCategories";
 
 const HomePage = () => {
   const [firstName, setFirstName] = useState("");

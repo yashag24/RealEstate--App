@@ -37,7 +37,7 @@ const CustomerReviewCard = ({
             source={
               imageUrl 
                 ? { uri: imageUrl }
-                : require('../assets/images/react-logo.png')
+                : require('../../assets/images/react-logo.png')
             }
             style={styles.avatar}
             resizeMode="cover"
