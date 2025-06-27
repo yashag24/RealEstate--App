@@ -19,7 +19,7 @@ const Articles = () => {
     const fetchArticles = async () => {
       try {
         const response = await fetch(
-          'https://newsapi.org/v2/everything?q=real%20estate&apiKey=24bcf6c46b474bec8c8e6a95e67f0cbe'
+          'https://newsapi.org/v2/everything?q=real%20estate&apiKey=cc543b56a9f4473f99a9b75372096e94'
         );
         const data = await response.json();
 

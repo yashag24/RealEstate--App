@@ -5,14 +5,13 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
-  Linking,
+  ImageBackground,
+  Dimensions
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSelector } from "react-redux";
 
-// Import components (keep the same import structure)
-import Navbar from '@/components/home/Navbar';
+// Import components
+import Navbar from "@/components/home/Navbar";
 import Footer from "@/components/home/Footer";
 import CustomerReviewCard from "@/components/home/CustomerReviewCard";
 import LoginPopup from "@/components/home/LoginPopup";
@@ -23,7 +22,6 @@ import CityWiseReviews from "@/components/home/CityWiseReviews";
 import Upcoming from "@/components/home/upcoming";
 import EmergingLocalities from "@/components/home/EmergingLocalities";
 import Articles from "@/components/home/Articles";
-import ReviewForm from "@/components/home/ReviewForm";
 import PropertyTypeCarousel from "@/components/home/PropertyTypeCarousel";
 import SearchBar from "@/components/home/SearchBar";
 import AppointmentForm from "@/components/home/AppointmentForm";
@@ -31,55 +29,16 @@ import BankingPartnersSection from "@/components/home/BankingPartnersSection";
 import RecentSearch from "@/components/home/RecentSearch";
 import StaffPerformanceCategories from "@/components/home/StaffPerformanceCategories";
 
+const { width, height } = Dimensions.get('window');
+
 const HomePage = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [isLoginPopupVisible, setIsLoginPopupVisible] = useState(false);
   const [properties, setProperties] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
-  
+
   const router = useRouter();
-  
-  const recentSearchCities = useSelector(
-    (state) => state.search?.recentSearchCities || []
-  );
 
-  // Commented out handleSubmit function (same as original)
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
-  //   const apiUrl = "http://localhost:8000/api/appointments";
-  //   try {
-  //     const response = await fetch(apiUrl, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         firstName,
-  //         lastName,
-  //         email,
-  //         phone,
-  //       }),
-  //     });
-  //     if (response.ok) {
-  //       Alert.alert("Success", "Appointment booked successfully!");
-  //       setFirstName("");
-  //       setLastName("");
-  //       setEmail("");
-  //       setPhone("");
-  //       setIsFormVisible(false);
-  //     } else {
-  //       throw new Error("Failed to book appointment.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error booking appointment:", error);
-  //     Alert.alert("Error", "Failed to book appointment. Please try again.");
-  //   }
-  // };
-
-  const fetchProperties = async (query = "") => {
+  const fetchProperties = async () => {
     try {
       const response = await fetch(`http://localhost:8000/api/allproperty`, {
         method: "GET",
@@ -103,169 +62,172 @@ const HomePage = () => {
     fetchProperties();
   }, []);
 
-  useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const response = await fetch(
-          "https://newsapi.org/v2/everything?q=real%20estate&apiKey=24bcf6c46b474bec8c8e6a95e67f0cbe"
-        );
-        const data = await response.json();
-        // Note: fetchArticles is being called recursively here, might need fixing
-        // fetchArticles(data.articles[7]);
-      } catch (error) {
-        console.error("Error fetching the articles: ", error);
-      }
-    };
-
-    fetchArticles();
-  }, []);
-
   const handlePropertyPress = (propertyId) => {
     router.push(`/property-details/${propertyId}`);
   };
 
   return (
-    <ScrollView 
-      style={[
-        styles.pageContainer,
-        isLoginPopupVisible && styles.blur
-      ]}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <Navbar
-        onLoginClick={() => setIsLoginPopupVisible(true)}
-        onSearch={fetchProperties}
-      />
-      
-      <View style={styles.hero}>
-        <View style={styles.search}>
-          <SearchBar />
-        </View>
-      </View>
-      
-      <RecentSearch />
-      <PropertyTypeCarousel />
-      
-      <View style={styles.popularProperties}>
-        <Text style={styles.heading}>POPULAR PROPERTIES</Text>
-        <View style={styles.listings}>
-          {properties.slice(0, 4).map((property) => (
-            <TouchableOpacity
-              key={property._id}
-              onPress={() => handlePropertyPress(property._id)}
-              style={styles.propertyCardWrapper}
-            >
-              <PropertyCard
-                title={property.title}
-                bhk={property.Bhk}
-                city={property.city}
-                price={property.price?.toString()}
-                area={property.area?.toString()}
-                // imageUrl={property.images}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      
-      {/* Banking Partners Section */}
-      <BankingPartnersSection />
-      
-      <View style={styles.popularBuilders}>
-        <Text style={styles.heading}>POPULAR BUILDERS</Text>
-        <View style={styles.listings}>
-          {properties.slice(0, 1).map((builder) => (
-            <View key={builder._id} style={styles.builderCardWrapper}>
-              <BuilderCard
-                name="MV Kiran Sooraj"
-                properties="1500+ Properties"
-              />
-              <BuilderCard 
-                name="Raj" 
-                properties="2000+ Properties" 
-              />
+    <View style={styles.container}>
+      <ScrollView
+        style={[styles.pageContainer, isLoginPopupVisible && styles.blur]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Navbar
+          onLoginClick={() => setIsLoginPopupVisible(true)}
+          onSearch={fetchProperties}
+        />
+
+        <View style={styles.heroContainer}>
+          <ImageBackground 
+            source={require('@/assets/images/bg.jpg')}
+            style={styles.heroBackground}
+            resizeMode="cover"
+          >
+            <View style={styles.heroOverlay}>
+              <View style={styles.searchWrapper}>
+                <SearchBar />
+              </View>
             </View>
-          ))}
+          </ImageBackground>
         </View>
-      </View>
-      
-      <Upcoming />
-      <CityWiseReviews />
-      <EmergingLocalities />
-      
-      <View style={styles.insightsContainer}>
-        <CardLayout />
-      </View>
-      
-      <View style={styles.happyCustomers}>
-        <Text style={styles.heading}>HAPPY CUSTOMERS</Text>
-        <Text style={styles.subheading}>HAPPY TRADE</Text>
-        <View style={styles.reviews}>
-          <CustomerReviewCard
-            imageUrl="./istockphoto1476170969170667a-1@2x.png"
-            name="Raghav"
-            review="I was blown away by the exceptional service I received from your website! The website was easy to navigate, and the real estate agents were knowledgeable and responsive. I found my dream home in no time, and the entire process was stress-free. I highly recommend this to anyone looking to buy or sell a property. Thanks a lot to the team of BasilAbode."
-          />
-          <CustomerReviewCard
-            imageUrl="./istockphoto1476170969170667a-1@2x.png"
-            name="Kishore"
-            review="As a first-time homebuyer, I was nervous about the process, but this made it a breeze! The website's resources and guides were incredibly helpful, and the agents were patient and understanding. I found my dream home in no time, and the entire process was stress-free. I felt supported every step of the way, and I couldn't be happier with my new home."
-          />
-          <CustomerReviewCard
-            imageUrl="./istockphoto1476170969170667a-1@2x.png"
-            name="Ravi"
-            review="I had a great experience using this real estate website. The search functionality was user-friendly, and the property listings were accurate and detailed. The customer support team was always available to assist me with any questions I had. I found the perfect property and closed the deal smoothly. I will definitely use this website again for future real estate needs!"
-          />
+
+        <RecentSearch />
+        <PropertyTypeCarousel />
+
+        <View style={styles.popularProperties}>
+          <Text style={styles.heading}>POPULAR PROPERTIES</Text>
+          <View style={styles.listings}>
+            {properties.slice(0, 4).map((property) => (
+              <TouchableOpacity
+                key={property._id}
+                onPress={() => handlePropertyPress(property._id)}
+                style={styles.propertyCardWrapper}
+                activeOpacity={0.7}
+              >
+                <PropertyCard
+                  title={property.title}
+                  bhk={property.Bhk}
+                  city={property.city}
+                  price={property.price?.toString()}
+                  area={property.area?.toString()}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-      </View>
-      
-      {/* Uncomment if needed */}
-      <StaffPerformanceCategories />
-      
-      <Articles />
-      <Footer />
-      
-      {/* Login Popup Modal */}
+
+        <BankingPartnersSection />
+
+        <View style={styles.popularBuilders}>
+          <Text style={styles.heading}>POPULAR BUILDERS</Text>
+          <View style={styles.builderListings}>
+            {properties.slice(0, 1).map((builder) => (
+              <View key={builder._id} style={styles.builderCardWrapper}>
+                <BuilderCard
+                  name="MV Kiran Sooraj"
+                  properties="1500+ Properties"
+                />
+                <BuilderCard name="Raj" properties="2000+ Properties" />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <Upcoming />
+        <CityWiseReviews />
+        <EmergingLocalities />
+
+        <View style={styles.insightsContainer}>
+          <CardLayout />
+        </View>
+
+        <View style={styles.happyCustomers}>
+          <Text style={styles.heading}>HAPPY CUSTOMERS</Text>
+          <Text style={styles.subheading}>HAPPY TRADE</Text>
+          <View style={styles.reviews}>
+            <CustomerReviewCard
+              imageSource={require("../../../assets/images/reviewimage.png")}
+              name="Raghav"
+              review="I was blown away by the exceptional service I received from your website! The website was easy to navigate, and the real estate agents were knowledgeable and responsive. I found my dream home in no time, and the entire process was stress-free. I highly recommend this to anyone looking to buy or sell a property. Thanks a lot to the team of BasilAbode."
+            />
+            <CustomerReviewCard
+              imageSource={require("../../../assets/images/reviewimage.png")}
+              name="Kishore"
+              review="As a first-time homebuyer, I was nervous about the process, but this made it a breeze! The website's resources and guides were incredibly helpful, and the agents were patient and understanding. I found my dream home in no time, and the entire process was stress-free. I felt supported every step of the way, and I couldn't be happier with my new home."
+            />
+            <CustomerReviewCard
+              imageSource={require("../../../assets/images/reviewimage.png")}
+              name="Ravi"
+              review="I had a great experience using this real estate website. The search functionality was user-friendly, and the property listings were accurate and detailed. The customer support team was always available to assist me with any questions I had. I found the perfect property and closed the deal smoothly. I will definitely use this website again for future real estate needs!"
+            />
+          </View>
+        </View>
+
+        <StaffPerformanceCategories />
+        <Articles />
+        <Footer />
+      </ScrollView>
+
       {isLoginPopupVisible && (
-        <LoginPopup onClose={() => setIsLoginPopupVisible(false)} />
+        <View style={styles.modalOverlay}>
+          <LoginPopup onClose={() => setIsLoginPopupVisible(false)} />
+        </View>
       )}
-      
-      {/* Appointment Form Modal */}
+
       {isFormVisible && (
-        <AppointmentForm onClose={() => setIsFormVisible(false)} />
+        <View style={styles.modalOverlay}>
+          <AppointmentForm onClose={() => setIsFormVisible(false)} />
+        </View>
       )}
-      
-      {/* Fixed Appointment Button */}
+
       <TouchableOpacity
         style={styles.fixedIcon}
         onPress={() => setIsFormVisible(!isFormVisible)}
+        activeOpacity={0.8}
       >
-        <Text style={styles.fixedIconText}>
-          Book an{'\n'}Appointment
-        </Text>
+        <Text style={styles.fixedIconText}>Book an{"\n"}Appointment</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   pageContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 100,
   },
   blur: {
     opacity: 0.5,
   },
-  hero: {
-    backgroundColor: '#f5f5f5',
-    paddingVertical: 40,
+  heroContainer: {
+    height: height * 0.4,
+    position: 'relative',
+  },
+  heroBackground: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
-  search: {
-    alignItems: 'center',
+  searchWrapper: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: "center",
   },
   popularProperties: {
     padding: 20,
@@ -275,64 +237,81 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 20,
-    color: '#333',
+    color: "#333",
+    letterSpacing: 0.5,
   },
   subheading: {
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
     marginBottom: 15,
-    color: '#666',
+    color: "#666",
   },
   listings: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  builderListings: {
+    alignItems: 'center',
   },
   propertyCardWrapper: {
-    width: '48%',
+    width: (width - 50) / 2,
     marginBottom: 15,
   },
   builderCardWrapper: {
-    width: '100%',
+    width: "100%",
     marginBottom: 15,
+    gap: 10,
   },
   insightsContainer: {
-    padding: 0,
-    margin: 0,
+    marginVertical: 10,
   },
   happyCustomers: {
     padding: 20,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   reviews: {
-    gap: 15,
+    gap: 20,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   fixedIcon: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     right: 20,
-    backgroundColor: '#007bff',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 25,
-    elevation: 5,
-    shadowColor: '#000',
+    backgroundColor: "#007bff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 999,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fixedIconText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
+    lineHeight: 16,
   },
 });
 

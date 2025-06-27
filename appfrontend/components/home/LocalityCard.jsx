@@ -5,7 +5,7 @@ const LocalityCard = ({ name, rating, projects, imageUrl }) => {
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Image source={{ uri: imageUrl }} style={styles.profilePic} />
+        <Image source={imageUrl} style={styles.profilePic} />
         <View style={styles.info}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{name}</Text>

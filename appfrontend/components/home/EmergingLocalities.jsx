@@ -6,7 +6,8 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import LocalityCard from './LocalityCard'; // Ensure LocalityCard.jsx exists in the same folder
+import LocalityCard from './LocalityCard';
+import localImage from '@/assets/images/image.png'; // Import your local image
 
 const EmergingLocalities = () => {
   const [localities, setLocalities] = useState([]);
@@ -18,35 +19,35 @@ const EmergingLocalities = () => {
         name: 'Madhurawada',
         rating: 4.3,
         projects: 17,
-        imageUrl: 'image.png',
+        imageUrl: localImage, // Use the imported image
       },
       {
         id: 2,
         name: 'Banjara Hills',
         rating: 4.5,
         projects: 12,
-        imageUrl: 'image.png',
+        imageUrl: localImage,
       },
       {
         id: 3,
         name: 'Gachibowli',
         rating: 4.2,
         projects: 8,
-        imageUrl: 'image.png',
+        imageUrl: localImage,
       },
       {
         id: 4,
         name: 'Kukatpally',
         rating: 4.0,
         projects: 10,
-        imageUrl: 'image.png',
+        imageUrl: localImage,
       },
       {
         id: 5,
         name: 'Jubilee Hills',
         rating: 4.6,
         projects: 15,
-        imageUrl: 'image.png',
+        imageUrl: localImage,
       },
     ];
     setLocalities(response);
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
   },
   carousel: {
     flexDirection: 'row',
-    gap: width < 480 ? 8 : width < 768 ? 12 : 16, // Tailored spacing for responsiveness
+    gap: width < 480 ? 8 : width < 768 ? 12 : 16,
   },
 });
 
