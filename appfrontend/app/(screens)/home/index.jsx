@@ -9,7 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
-// import { useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 // Import components (keep the same import structure)
 import Navbar from '@/components/home/Navbar';
@@ -42,9 +42,9 @@ const HomePage = () => {
   
   const router = useRouter();
   
-  // const recentSearchCities = useSelector(
-  //   (state) => state.search?.recentSearchCities || []
-  // );
+  const recentSearchCities = useSelector(
+    (state) => state.search?.recentSearchCities || []
+  );
 
   // Commented out handleSubmit function (same as original)
   // const handleSubmit = async (event) => {
@@ -161,6 +161,7 @@ const HomePage = () => {
                 city={property.city}
                 price={property.price?.toString()}
                 area={property.area?.toString()}
+                // imageUrl={property.images}
               />
             </TouchableOpacity>
           ))}

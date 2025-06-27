@@ -40,7 +40,7 @@ const PropertyCard = ({
           source={
             imageUrl 
               ? { uri: imageUrl }
-              : require('../../assets/images/icon.png')
+              : require('../../assets/images//try3.jpg')
           }
           style={styles.image}
           resizeMode="cover"
