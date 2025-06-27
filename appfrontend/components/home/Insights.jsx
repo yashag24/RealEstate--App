@@ -9,7 +9,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import Navbar from './Navbar'; // Make sure this file exists and is correctly linked
+
 
 const INSIGHT_CARDS = [
   {
@@ -50,7 +50,7 @@ const CardLayout = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.insightsContainer}>
-      <Navbar />
+      
 
       <View style={styles.header}>
         <Image
