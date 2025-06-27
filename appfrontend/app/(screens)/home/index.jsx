@@ -127,6 +127,7 @@ const HomePage = () => {
                 <BuilderCard
                   name="MV Kiran Sooraj"
                   properties="1500+ Properties"
+                  imageUrl={properties.images}
                 />
                 <BuilderCard name="Raj" properties="2000+ Properties" />
               </View>
