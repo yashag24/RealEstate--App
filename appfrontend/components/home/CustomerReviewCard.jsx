@@ -8,7 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const CustomerReviewCard = ({ 
-  imageUrl, 
+  imageSource,     // Pass in either require(...) or { uri: ... }
   name, 
   review, 
   rating = 5,
@@ -34,26 +34,18 @@ const CustomerReviewCard = ({
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <Image
-            source={
-              imageUrl 
-                ? { uri: imageUrl }
-                : require('../../assets/images/react-logo.png')
-            }
+            source={ imageSource ?? require('../../assets/images/react-logo.png') }
             style={styles.avatar}
             resizeMode="cover"
           />
           <View style={styles.userDetails}>
             <Text style={styles.name}>{name || 'Anonymous'}</Text>
-            {location && (
-              <Text style={styles.location}>{location}</Text>
-            )}
+            {location && <Text style={styles.location}>{location}</Text>}
           </View>
         </View>
         
         <View style={styles.rating}>
-          <View style={styles.stars}>
-            {renderStars(rating)}
-          </View>
+          <View style={styles.stars}>{renderStars(rating)}</View>
           <Text style={styles.ratingText}>{rating}.0</Text>
         </View>
       </View>
@@ -67,7 +59,6 @@ const CustomerReviewCard = ({
           <Ionicons name="checkmark-circle" size={16} color="#28a745" />
           <Text style={styles.verifiedText}>Verified Purchase</Text>
         </View>
-        
         <Text style={styles.date}>2 weeks ago</Text>
       </View>
     </View>
@@ -80,11 +71,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 15,
+    // Cross-platform shadow
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -146,12 +135,12 @@ const styles = StyleSheet.create({
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
   },
   verifiedText: {
     fontSize: 12,
     color: '#28a745',
     fontWeight: '600',
+    marginLeft: 4,
   },
   date: {
     fontSize: 12,
