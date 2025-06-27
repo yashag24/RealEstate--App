@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, Image } from 'react-native';
-
+import BankCard from './BankCard';
 // BankCard Component
-const BankCard = ({ bankName, logo, rating, loanProducts, interestRate }) => {
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardContent}>
-        {logo.startsWith('http') ? (
-          <Image source={{ uri: logo }} style={styles.logo} />
-        ) : (
-          <Text style={styles.logoPlaceholder}>{logo}</Text>
-        )}
-        <Text style={styles.bankName}>{bankName}</Text>
-        <Text style={styles.rating}>Rating: {rating.toFixed(1)}</Text>
-        <Text style={styles.loanProducts}>Products: {loanProducts}</Text>
-        <Text style={styles.interestRate}>Interest: {interestRate}%</Text>
-      </View>
-    </View>
-  );
-};
+// const BankCard = ({ bankName, logo, rating, loanProducts, interestRate }) => {
+//   return (
+//     <View style={styles.card}>
+//       <View style={styles.cardContent}>
+//         {logo.startsWith('http') ? (
+//           <Image source={{ uri: logo }} style={styles.logo} />
+//         ) : (
+//           <Text style={styles.logoPlaceholder}>{logo}</Text>
+//         )}
+//         <Text style={styles.bankName}>{bankName}</Text>
+//         <Text style={styles.rating}>Rating: {rating.toFixed(1)}</Text>
+//         <Text style={styles.loanProducts}>Products: {loanProducts}</Text>
+//         <Text style={styles.interestRate}>Interest: {interestRate}%</Text>
+//       </View>
+//     </View>
+//   );
+// };
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75; // 75% of screen width for each card
@@ -38,7 +38,7 @@ const BankingPartnersSection = () => {
         {
           _id: '1',
           bankName: 'HDFC Bank',
-          logo: '🏦',
+          logo: 'https://logos-world.net/wp-content/uploads/2020/11/HDFC-Bank-Logo-700x394.png',
           rating: 4.5,
           loanProducts: [{ productType: 'home_loan' }, { productType: 'personal_loan' }],
           interestRate: 8.5,
@@ -46,7 +46,7 @@ const BankingPartnersSection = () => {
         {
           _id: '2',
           bankName: 'ICICI Bank',
-          logo: 'https://logos-world.net/wp-content/uploads/2021/02/ICICI-Bank-Logo.png',
+          logo: 'https://tse1.mm.bing.net/th/id/OIP.hBB7ExivNttEZdX41c8V9AHaHa?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           rating: 4.3,
           loanProducts: [{ productType: 'home_loan' }, { productType: 'car_loan' }],
           interestRate: 8.7,
@@ -54,7 +54,7 @@ const BankingPartnersSection = () => {
         {
           _id: '3',
           bankName: 'State Bank of India',
-          logo: 'https://www.sbi.co.in/documents/16012/1400784/logo.png',
+          logo: 'https://tse3.mm.bing.net/th/id/OIP.yWmLWG0-5V4ztYizTQTzgAHaE8?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           rating: 4.2,
           loanProducts: [{ productType: 'home_loan' }],
           interestRate: 8.4,
@@ -62,7 +62,7 @@ const BankingPartnersSection = () => {
         {
           _id: '4',
           bankName: 'Axis Bank',
-          logo: 'https://www.axisbank.com/images/default-source/revamp_new/bank-logos/axis-bank-logo.png',
+          logo: 'https://tse1.explicit.bing.net/th/id/OIP.XhVCeOTXoRiQVGOu3kwApAHaE8?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           rating: 4.4,
           loanProducts: [{ productType: 'home_loan' }, { productType: 'personal_loan' }],
           interestRate: 8.6,
@@ -70,7 +70,7 @@ const BankingPartnersSection = () => {
         {
           _id: '5',
           bankName: 'Kotak Mahindra Bank',
-          logo: 'https://www.kotak.com/content/dam/Kotak/investor-relation/Financial-result/Kotak-logo.png',
+          logo: 'https://tse1.mm.bing.net/th/id/OIP.gTXhSW1n8NQSnlpKoxNNegHaCL?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           rating: 4.3,
           loanProducts: [{ productType: 'home_loan' }],
           interestRate: 8.8,
@@ -78,7 +78,7 @@ const BankingPartnersSection = () => {
         {
           _id: '6',
           bankName: 'Punjab National Bank',
-          logo: 'https://www.pnbindia.in/images/logos/pnb-logo.png',
+          logo: 'https://static.vecteezy.com/system/resources/previews/024/039/038/large_2x/punjab-national-bank-pnb-logo-transparent-free-png.png',
           rating: 4.1,
           loanProducts: [{ productType: 'home_loan' }],
           interestRate: 8.3,
@@ -86,7 +86,7 @@ const BankingPartnersSection = () => {
         {
           _id: '7',
           bankName: 'Bank of Baroda',
-          logo: 'https://www.bankofbaroda.in/-/media/Project/BOB/CountryWebsites/India/Bob-Logo-Tagline.png',
+          logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNTb2yDkcUnvW-Pgg6YrL8HCt6PyYQ5j6cTJVqMT6ernW7oPBgRGWmoWWH&s',
           rating: 4.0,
           loanProducts: [{ productType: 'home_loan' }],
           interestRate: 8.2,
@@ -94,7 +94,7 @@ const BankingPartnersSection = () => {
         {
           _id: '8',
           bankName: 'Canara Bank',
-          logo: 'https://canarabank.com/images/canara-bank-logo.png',
+          logo: 'https://www.liblogo.com/img-logo/ca8792c86d-canara-bank-logo-canara-bank-launches-qualified-institutional-placement.png',
           rating: 4.1,
           loanProducts: [{ productType: 'home_loan' }],
           interestRate: 8.1,
@@ -108,7 +108,7 @@ const BankingPartnersSection = () => {
         {
           _id: '1',
           bankName: 'HDFC Bank',
-          logo: 'https://logos-world.net/wp-content/uploads/2020/12/HDFC-Bank-Logo.png',
+          logo: 'https://logos-world.net/hdfc-bank-logo/',
           rating: 4.5,
           loanProducts: [{ productType: 'home_loan' }, { productType: 'personal_loan' }],
           interestRate: 8.5,
