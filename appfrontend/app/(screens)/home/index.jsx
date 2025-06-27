@@ -29,7 +29,7 @@ import SearchBar from "@/components/home/SearchBar";
 import AppointmentForm from "@/components/home/AppointmentForm";
 import BankingPartnersSection from "@/components/home/BankingPartnersSection";
 import RecentSearch from "@/components/home/RecentSearch";
-import StaffPerformanceCategories from "@/components/home//StaffPerformanceCategories";
+import StaffPerformanceCategories from "@/components/home/StaffPerformanceCategories";
 
 const HomePage = () => {
   const [firstName, setFirstName] = useState("");
@@ -219,7 +219,7 @@ const HomePage = () => {
       </View>
       
       {/* Uncomment if needed */}
-      {/* <StaffPerformanceCategories /> */}
+      <StaffPerformanceCategories />
       
       <Articles />
       <Footer />
