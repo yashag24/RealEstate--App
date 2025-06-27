@@ -8,40 +8,39 @@ import {
   Dimensions,
 } from 'react-native';
 
-
 const cards = [
   {
-    image: require('../assets/images/ccu.png'),
+    image: require('../../assets/images/ccu.png'),
     title: 'Chakrborty grih',
     location: 'sector 5 old Kolkata',
     price: '1 Cr',
   },
   {
-    image: require('../assets/images/Delhi.png'),
+    image: require('../../assets/images/Delhi.png'),
     title: 'Garg builder floor',
     location: 'sector 8 Dwarka Delhi',
     price: '1.9 Cr',
   },
   {
-    image: require('../assets/images/Mumbai.png'),
+    image: require('../../assets/images/Mumbai.png'),
     title: 'Ashiyana Floor',
     location: 'sector 2 South Mumbai',
     price: '3 Cr',
   },
   {
-    image: require('../assets/images/gurugram.png'),
+    image: require('../../assets/images/gurugram.png'),
     title: 'Kailash Apartments',
     location: 'sector 5 Gurugram',
     price: '75 lakh',
   },
 ];
 
-const Upcoming: React.FC = () => {
+const Upcoming = () => {
   return (
     <ScrollView contentContainerStyle={styles.wrapper}>
       <View style={styles.header}>
         <Image
-          source={require('../assets/images/upcoming.png')}
+          source={require('../../assets/images/upcoming.png')}
           style={styles.logo}
         />
         <Text style={styles.heading}>NEW ARRIVALS</Text>

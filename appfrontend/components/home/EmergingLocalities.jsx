@@ -6,21 +6,13 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import LocalityCard from '../components/LocalityCard'; 
+import LocalityCard from './LocalityCard'; // Ensure LocalityCard.jsx exists in the same folder
 
-interface Locality {
-  id: number;
-  name: string;
-  rating: number;
-  projects: number;
-  imageUrl: string;
-}
-
-const EmergingLocalities: React.FC = () => {
-  const [localities, setLocalities] = useState<Locality[]>([]);
+const EmergingLocalities = () => {
+  const [localities, setLocalities] = useState([]);
 
   useEffect(() => {
-    const response: Locality[] = [
+    const response = [
       {
         id: 1,
         name: 'Madhurawada',
@@ -88,11 +80,14 @@ const EmergingLocalities: React.FC = () => {
   );
 };
 
-
-
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: '#fff',
+  },
   head: {
     width: '100%',
     maxWidth: width * 0.8,
@@ -104,32 +99,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  container: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-
   subheading: {
     color: '#777',
     fontSize: 14,
   },
-  carouselContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: width < 480 ? '100%' : width < 768 ? '95%' : '80%',
-    marginBottom: width < 480 ? 32 : 16,
-    alignSelf: 'center',
-  },
-  carouselViewport: {
-    width: '100%',
-    paddingVertical: 12,
-  },
   carousel: {
     flexDirection: 'row',
-    gap: width < 480 ? 8 : width < 768 ? 12 : 16,
+    gap: width < 480 ? 8 : width < 768 ? 12 : 16, // Tailored spacing for responsiveness
   },
 });
-
 
 export default EmergingLocalities;

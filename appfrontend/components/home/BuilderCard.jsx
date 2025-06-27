@@ -8,39 +8,39 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const BuilderCard = ({ 
-  name, 
-  properties, 
+const BuilderCard = ({
+  name,
+  properties,
   rating,
   location,
   imageUrl,
   experience,
-  onPress 
+  onPress,
 }) => {
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating || 4.5);
     const hasHalfStar = (rating || 4.5) % 1 !== 0;
-    
+
     for (let i = 0; i < fullStars; i++) {
       stars.push(
         <Ionicons key={i} name="star" size={14} color="#ffc107" />
       );
     }
-    
+
     if (hasHalfStar) {
       stars.push(
         <Ionicons key="half" name="star-half" size={14} color="#ffc107" />
       );
     }
-    
+
     const emptyStars = 5 - stars.length;
     for (let i = 0; i < emptyStars; i++) {
       stars.push(
         <Ionicons key={`empty-${i}`} name="star-outline" size={14} color="#ffc107" />
       );
     }
-    
+
     return stars;
   };
 
@@ -49,7 +49,7 @@ const BuilderCard = ({
       <View style={styles.imageContainer}>
         <Image
           source={
-            imageUrl 
+            imageUrl
               ? { uri: imageUrl }
               : require('../../assets/images/splash-icon.png')
           }
@@ -60,22 +60,18 @@ const BuilderCard = ({
           <Text style={styles.badgeText}>Verified</Text>
         </View>
       </View>
-      
+
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.name} numberOfLines={1}>
             {name || 'Builder Name'}
           </Text>
           <View style={styles.ratingContainer}>
-            <View style={styles.stars}>
-              {renderStars(rating)}
-            </View>
-            <Text style={styles.ratingText}>
-              {(rating || 4.5).toFixed(1)}
-            </Text>
+            <View style={styles.stars}>{renderStars(rating)}</View>
+            <Text style={styles.ratingText}>{(rating || 4.5).toFixed(1)}</Text>
           </View>
         </View>
-        
+
         <View style={styles.details}>
           <View style={styles.detailItem}>
             <Ionicons name="business-outline" size={16} color="#666" />
@@ -83,14 +79,14 @@ const BuilderCard = ({
               {properties || '1500+ Properties'}
             </Text>
           </View>
-          
+
           {experience && (
             <View style={styles.detailItem}>
               <Ionicons name="time-outline" size={16} color="#666" />
               <Text style={styles.detailText}>{experience} Years</Text>
             </View>
           )}
-          
+
           {location && (
             <View style={styles.detailItem}>
               <Ionicons name="location-outline" size={16} color="#666" />
@@ -98,12 +94,12 @@ const BuilderCard = ({
             </View>
           )}
         </View>
-        
+
         <View style={styles.footer}>
           <TouchableOpacity style={styles.viewButton}>
             <Text style={styles.viewButtonText}>View Properties</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.contactButton}>
             <Ionicons name="call" size={16} color="#007bff" />
           </TouchableOpacity>
@@ -118,10 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -186,18 +179,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 8,
   },
   detailText: {
     fontSize: 14,
     color: '#666',
-    flex: 1,
+    marginLeft: 8,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
   },
   viewButton: {
     flex: 1,
@@ -208,6 +199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 20,
     alignItems: 'center',
+    marginRight: 10,
   },
   viewButtonText: {
     color: '#007bff',

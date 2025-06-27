@@ -43,7 +43,7 @@ const AppointmentForm = ({ onClose }) => {
 
   const handleSubmit = async () => {
     const { firstName, lastName, email, phone } = formData;
-    
+
     if (!firstName || !lastName || !email || !phone) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -62,18 +62,13 @@ const AppointmentForm = ({ onClose }) => {
     }
 
     setLoading(true);
-    
+
     try {
-      // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      Alert.alert(
-        'Success!', 
-        'Your appointment has been booked successfully. Our team will contact you soon.',
-        [{ text: 'OK', onPress: onClose }]
-      );
-      
-      // Reset form
+      Alert.alert('Success!', 'Your appointment has been booked successfully.', [
+        { text: 'OK', onPress: onClose }
+      ]);
+
       setFormData({
         firstName: '',
         lastName: '',
@@ -99,16 +94,10 @@ const AppointmentForm = ({ onClose }) => {
         {options.map((option, index) => (
           <TouchableOpacity
             key={index}
-            style={[
-              styles.optionButton,
-              value === option && styles.selectedOption
-            ]}
+            style={[styles.optionButton, value === option && styles.selectedOption]}
             onPress={() => onSelect(option)}
           >
-            <Text style={[
-              styles.optionText,
-              value === option && styles.selectedOptionText
-            ]}>
+            <Text style={[styles.optionText, value === option && styles.selectedOptionText]}>
               {option}
             </Text>
           </TouchableOpacity>
@@ -118,13 +107,8 @@ const AppointmentForm = ({ onClose }) => {
   );
 
   return (
-    <Modal
-      visible={true}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView 
+    <Modal visible={true} transparent animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
@@ -148,7 +132,7 @@ const AppointmentForm = ({ onClose }) => {
                   autoCapitalize="words"
                 />
               </View>
-              
+
               <View style={[styles.inputContainer, { flex: 1 }]}>
                 <Ionicons name="person-outline" size={20} color="#666" />
                 <TextInput
@@ -229,21 +213,21 @@ const AppointmentForm = ({ onClose }) => {
               />
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={loading}
             >
-              {loading ? (
-                <View style={styles.loadingContainer}>
+              <View style={styles.loadingContainer}>
+                {loading ? (
                   <Text style={styles.submitButtonText}>Booking...</Text>
-                </View>
-              ) : (
-                <>
-                  <Ionicons name="calendar-outline" size={20} color="#fff" />
-                  <Text style={styles.submitButtonText}>Book Appointment</Text>
-                </>
-              )}
+                ) : (
+                  <>
+                    <Ionicons name="calendar-outline" size={20} color="#fff" />
+                    <Text style={styles.submitButtonText}>Book Appointment</Text>
+                  </>
+                )}
+              </View>
             </TouchableOpacity>
 
             <Text style={styles.disclaimer}>
@@ -373,6 +357,7 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   submitButtonText: {
     color: '#fff',

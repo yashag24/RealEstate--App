@@ -10,9 +10,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-const Articles: React.FC = () => {
-  const [article, setArticle] = useState<any>(null);
-  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+const Articles = () => {
+  const [article, setArticle] = useState(null);
+  const [previousIndex, setPreviousIndex] = useState(null);
   const chosenIndices = [0, 2, 3, 8, 9, 17, 43];
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const Articles: React.FC = () => {
         );
         const data = await response.json();
 
-        const getRandomIndex = (excludedIndex: number | null, length: number) => {
+        const getRandomIndex = (excludedIndex, length) => {
           let randomIndex;
           do {
             randomIndex = Math.floor(Math.random() * length);
@@ -80,65 +80,57 @@ const Articles: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingTop: 24, // ~3vw
-    paddingBottom: 32, // ~4vw
-    paddingHorizontal: 24, // ~6vw–8vw range
-    gap: 40,
+    flex: 1,
+    paddingVertical: 24,
+    paddingHorizontal: 24,
     backgroundColor: '#764EC6',
-    color: '#fff',
-    marginVertical: 20,
-  },
-  article: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    gap: 50,
-    flexWrap: 'wrap', // Allows responsiveness
-  },
-  image: {
-    height: 400,
-    width: 400,
-    resizeMode: 'cover',
   },
   heading: {
     fontWeight: '500',
-    fontSize: 36,
+    fontSize: 28,
     color: '#fff',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  article: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  image: {
+    height: 200,
+    width: '100%',
+    resizeMode: 'cover',
+    borderRadius: 10,
+    marginBottom: 20,
   },
   content: {
-    height: 400,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    flex: 1,
+    width: '100%',
+    paddingHorizontal: 10,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#fff',
+    marginBottom: 10,
   },
   description: {
-    fontSize: 18,
+    fontSize: 16,
     fontStyle: 'italic',
-    lineHeight: 25,
+    lineHeight: 22,
     color: '#fff',
+    marginBottom: 10,
   },
   readMore: {
     alignSelf: 'flex-end',
     marginTop: 12,
   },
   readMoreText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#fff',
     textDecorationLine: 'underline',
     fontWeight: 'bold',
   },
 });
-
 
 export default Articles;
