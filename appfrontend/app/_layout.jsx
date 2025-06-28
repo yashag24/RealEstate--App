@@ -4,29 +4,34 @@ import { View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
 import Toast from 'react-native-toast-message';
-// import Navbar from '@/components/home/Navbar';
-// import Footer from '@/components/home/Footer';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <View style={styles.container}>
-        {/* <Navbar /> */}
-        <View style={styles.content}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          {/* <Navbar /> */}
+          <View style={styles.content}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+          </View>
+          {/* <Footer /> */}
+          <Toast />
         </View>
-        {/* <Footer /> */}
-        <Toast />
-      </View>
+      </SafeAreaView>
     </Provider>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'black'// whatever your root bg is
+  },
   container: {
     flex: 1,
   },
