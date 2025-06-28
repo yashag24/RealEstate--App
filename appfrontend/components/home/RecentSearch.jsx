@@ -1,11 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
-const RecentSearch = () => {
+const { width } = Dimensions.get('window');
+const isSmallScreen = width < 350;
+
+const RecentSearch = ({ onCitySelect }) => {
   const recentSearchCities = useSelector((state) => state.search.recentSearchCities);
   const sentSearchesRef = useRef(new Set());
 
@@ -13,7 +16,7 @@ const RecentSearch = () => {
 
   const getUserSearchHistory = async (search_text, userId) => {
     try {
-      await axios.post('http://192.168.56.1:8000/api/user-update/search-history', {
+      await axios.post('http://localhost:8000/api/user-update/search-history', {
         search_text,
         userId,
       });
@@ -45,21 +48,45 @@ const RecentSearch = () => {
     handleSearchUpdate();
   }, [recentSearchCities]);
 
+  const handleCityPress = (city) => {
+    if (onCitySelect) {
+      onCitySelect(city);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Recent Searches :</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>
+      <View style={styles.headerContainer}>
+        <Ionicons name="time-outline" size={20} color="#007bff" />
+        <Text style={styles.label}>Recent Searches</Text>
+      </View>
+      
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+      >
         {recentSearchCities && recentSearchCities.length > 0 ? (
           recentSearchCities.map((city, index) => (
-            <View key={index} style={styles.chip}>
-              <FontAwesome name="clock-o" size={16} color="#555" />
-              <Text style={styles.chipText}>{city}</Text>
-            </View>
+            <TouchableOpacity
+              key={index}
+              style={styles.chip}
+              onPress={() => handleCityPress(city)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            >
+              <Ionicons name="location" size={14} color="#007bff" />
+              <Text style={styles.chipText} numberOfLines={1}>
+                {city}
+              </Text>
+            </TouchableOpacity>
           ))
         ) : (
-          <View style={styles.chip}>
-            <FontAwesome name="clock-o" size={16} color="#555" />
-            <Text style={styles.chipText}>No recent searches</Text>
+          <View style={styles.emptyChip}>
+            <Ionicons name="search-outline" size={14} color="#999" />
+            <Text style={styles.emptyChipText}>No recent searches</Text>
           </View>
         )}
       </ScrollView>
@@ -71,40 +98,88 @@ export default RecentSearch;
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
-    paddingHorizontal: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 25,
+    marginHorizontal: 12,
+    marginVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
   },
   label: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 16 : 17,
     fontWeight: '600',
-    marginBottom: 6,
+    color: '#333',
+    letterSpacing: 0.3,
   },
   scroll: {
     flexDirection: 'row',
   },
+  scrollContent: {
+    paddingRight: 20,
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#eaeaea',
+    paddingVertical: isSmallScreen ? 8 : 10,
+    paddingHorizontal: isSmallScreen ? 12 : 14,
+    backgroundColor: '#f8f9fa',
     borderRadius: 20,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
+    gap: 6,
+    maxWidth: 120,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   chipText: {
-    fontSize: 14,
-    marginLeft: 6,
+    fontSize: isSmallScreen ? 13 : 14,
+    color: '#333',
+    fontWeight: '500',
+    flex: 1,
+  },
+  emptyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: isSmallScreen ? 8 : 10,
+    paddingHorizontal: isSmallScreen ? 12 : 14,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
+    gap: 6,
+    opacity: 0.7,
+  },
+  emptyChipText: {
+    fontSize: isSmallScreen ? 13 : 14,
+    color: '#999',
+    fontWeight: '400',
+    fontStyle: 'italic',
   },
 });
-// import { View, Text } from 'react-native'
-// import React from 'react'
-
-// const RecentSearch = () => {
-//   return (
-//     <View>
-//       <Text>RecentSearch</Text>
-//     </View>
-//   )
-// }
-
-// export default RecentSearch

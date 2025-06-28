@@ -3,7 +3,7 @@ import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { Picker } from '@react-native-picker/picker';
-import { handleSearchCity, updateFilters } from '../redux/SearchBox/SearchSlice';
+import { handleSearchCity, updateFilters } from './SearchSlice';
 import cityList from './cityList'; // Same list as before
 
 const CityDropdown = () => {
