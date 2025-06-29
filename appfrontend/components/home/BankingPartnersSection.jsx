@@ -20,13 +20,13 @@ export default function BankingPartnersSection() {
   const [error, setError] = useState(null);
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const fetchBankingPartners = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        "http://localhost:8000/api/banking-partners?limit=20&isActive=true"
+        `${BASE_URL}/api/banking-partners?limit=20&isActive=true`
       );
 
       if (!response.ok) {

@@ -10,12 +10,13 @@ const AdminDashUserDetails = ({ adminProfile }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/admin/users-details?adminId=${adminProfile.adminId}`
+          `${BASE_URL}/api/admin/users-details?adminId=${adminProfile.adminId}`
         );
         setUsers(res.data);
       } catch (error) {

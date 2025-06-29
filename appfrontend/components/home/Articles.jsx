@@ -14,12 +14,12 @@ const Articles = () => {
   const [article, setArticle] = useState(null);
   const [previousIndex, setPreviousIndex] = useState(null);
   const chosenIndices = [0, 2, 3, 8, 9, 17, 43];
-
+  const API_KEY = process.env.EXPO_PUBLIC_NEWS_API_KEY;
   useEffect(() => {
     const fetchArticles = async () => {
       try {
         const response = await fetch(
-          'https://newsapi.org/v2/everything?q=real%20estate&apiKey=cc543b56a9f4473f99a9b75372096e94'
+          `https://newsapi.org/v2/everything?q=real%20estate&apiKey=${API_KEY}`
         );
         const data = await response.json();
 

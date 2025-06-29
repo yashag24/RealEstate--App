@@ -17,6 +17,7 @@ export const PropertyDetails = ({property}) => {
   const [selectedLoanAmount, setSelectedLoanAmount] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [showAllOffers, setShowAllOffers] = useState(false);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const toTitleCase = (str = "") => {
   return str
@@ -36,7 +37,7 @@ export const PropertyDetails = ({property}) => {
       }
 
       const response = await fetch(
-        "http://localhost:8000/api/user-update/save-property",
+        `${BASE_URL}/api/user-update/save-property`,
         {
           method: "POST",
           headers: {

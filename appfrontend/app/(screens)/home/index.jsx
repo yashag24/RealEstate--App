@@ -37,10 +37,10 @@ const HomePage = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const router = useRouter();
-
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const fetchProperties = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/allproperty`, {
+      const response = await fetch(`${BASE_URL}/api/allproperty`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
