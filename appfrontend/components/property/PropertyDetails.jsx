@@ -196,7 +196,7 @@ useEffect(() => {
             <View style={styles.propertyName}>
               {property.verification && (
                 <Image
-                  source={require('../assets/verified.png')}
+                  source={require('@/assets/images/verified.png')}
                   style={styles.verify}
                 />
               )}
@@ -275,14 +275,14 @@ useEffect(() => {
         <Text style={styles.heading}>Facilities and Amenities</Text>
         <View style={styles.gridContainer}>
           {[
-            { src: require('../assets/image-5@2x.png'), label: "Elevator" },
-            { src: require('../assets/image-61@2x.png'), label: "Library" },
-            { src: require('../assets/image-8@2x.png'), label: "Laundry Room" },
-            { src: require('../assets/image-11@2x.png'), label: "24/7 CCTV Surveillance" },
-            { src: require('../assets/image-7@2x.png'), label: "Reception" },
-            { src: require('../assets/image-8@2x.png'), label: "Lorem, ipsum dolor." },
-            { src: require('../assets/image-9@2x.png'), label: "Wifi Connectivity" },
-            { src: require('../assets/image-10@2x.png'), label: "Basketball Court" },
+            { src: require('@/assets/images/image5.png'), label: "Elevator" },
+            { src: require('@/assets/images/image6.png'), label: "Library" },
+            { src: require('@/assets/images/image8.png'), label: "Laundry Room" },
+            { src: require('@/assets/images/image11.png'), label: "24/7 CCTV Surveillance" },
+            { src: require('@/assets/images/image7.png'), label: "Reception" },
+            { src: require('@/assets/images/image8.png'), label: "Lorem, ipsum dolor." },
+            { src: require('@/assets/images/image9.png'), label: "Wifi Connectivity" },
+            { src: require('@/assets/images/image10.png'), label: "Basketball Court" },
           ].map((item, idx) => (
             <View key={idx} style={styles.gridItem}>
               <Image style={styles.img} source={item.src} />
@@ -578,7 +578,7 @@ useEffect(() => {
 
         <View style={styles.address}>
           <Image
-            source={require('../assets/image-13@2x.png')}
+            source={require('@/assets/images/image13.png')}
             style={styles.mapicon}
           />
           <View style={styles.location}>
