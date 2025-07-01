@@ -1,7 +1,12 @@
+import { View, Text } from 'react-native'
 import React from 'react'
 
-export const ReviewPage = () => {
+const index = () => {
   return (
-    <div>Admin Dashboard</div>
+    <View>
+      <Text>index</Text>
+    </View>
   )
 }
+
+export default index
