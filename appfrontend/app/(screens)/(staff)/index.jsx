@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const AdminPage = () => {
+const StaffPage = () => {
   return (
     <View>
-      <Text>Admin</Text>
+      <Text>StaffPage</Text>
     </View>
   )
 }
 
-export default AdminPage
+export default StaffPage
