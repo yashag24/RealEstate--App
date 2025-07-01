@@ -1,16 +1,3 @@
-// import { View, Text } from 'react-native'
-// import React from 'react'
-
-// const ReviewForm = () => {
-//   return (
-//     <View>
-//       <Text>ReviewForm</Text>
-//     </View>
-//   )
-// }
-
-// export default ReviewForm
-
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -22,7 +9,9 @@ const ReviewForm = ({ propertyId }) => {
     rating: 0,
   });
 
-  const [hover, setHover] = useState(null); // For hover effect simulation
+  const [hover, setHover] = useState(null);
+
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const handleInputChange = (name, value) => {
     setData((prev) => ({
@@ -38,7 +27,7 @@ const ReviewForm = ({ propertyId }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/reviews/add-property-review', {
+      const response = await fetch(`${BASE_URL}/api/reviews/add-property-review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,6 +64,7 @@ const ReviewForm = ({ propertyId }) => {
         placeholder="Your name"
         value={data.name}
         onChangeText={(text) => handleInputChange('name', text)}
+        placeholderTextColor="#94a3b8"
       />
 
       <TextInput
@@ -84,6 +74,7 @@ const ReviewForm = ({ propertyId }) => {
         onChangeText={(text) => handleInputChange('review', text)}
         multiline
         numberOfLines={5}
+        placeholderTextColor="#94a3b8"
       />
 
       <View style={styles.starRating}>
@@ -93,11 +84,12 @@ const ReviewForm = ({ propertyId }) => {
             onPress={() => handleInputChange('rating', star)}
             onPressIn={() => setHover(star)}
             onPressOut={() => setHover(null)}
+            activeOpacity={0.8}
           >
             <FontAwesome
               name="star"
-              size={30}
-              color={star <= (hover || data.rating) ? '#ffc107' : '#e4e5e9'}
+              size={32}
+              color={star <= (hover || data.rating) ? '#fbbf24' : '#e5e7eb'}
             />
           </TouchableOpacity>
         ))}
@@ -118,32 +110,40 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     elevation: 3,
-    margin: 20,
+    margin: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 16,
-    textTransform: 'uppercase',
-    color: '#000',
+    marginBottom: 18,
+    color: '#16a34a', // green accent
+    letterSpacing: 0.2,
   },
   input: {
-    borderColor: '#ccc',
+    borderColor: '#e2e8f0',
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
     marginBottom: 12,
+    backgroundColor: '#f8fafc',
+    color: '#1f2937',
   },
   textarea: {
-    borderColor: '#ccc',
+    borderColor: '#e2e8f0',
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    height: 120,
+    height: 100,
     marginBottom: 12,
+    backgroundColor: '#f8fafc',
+    color: '#1f2937',
     textAlignVertical: 'top',
   },
   starRating: {
@@ -151,16 +151,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginBottom: 20,
+    marginTop: 4,
   },
   submitButton: {
-    backgroundColor: '#6f42c1',
+    backgroundColor: '#3b82f6', // blue accent
     paddingVertical: 14,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
+    marginTop: 8,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
