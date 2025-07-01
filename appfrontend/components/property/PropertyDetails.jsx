@@ -4,7 +4,8 @@ import { ContactForm } from './ContactForm';
 import ReviewForm from '../home/ReviewForm';
 import { ReviewPage } from './ReviewPage';
 import {
-  View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, TextInput
+  View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, TextInput,
+  Pressable
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -133,43 +134,43 @@ export const PropertyDetails = ({ property }) => {
   const averageRating = getAverageRating(reviews);
 
   useEffect(() => {
-  if (token) {
-    const decoded = jwtDecode(token);
-    console.log(decoded, "token");
-    setUserId(decoded._id);
-  }
-  fetchReviews();
-  fetchLoanOffers();
-}, [token, property._id]);
-
-useEffect(() => {
-  const checkIfSaved = async () => {
-    if (!userId || !property?._id) return;
-
-    try {
-      const response = await fetch(
-        `${BASE_URL}/api/user-update/is-property-saved`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId,
-            propertyId: property._id,
-          }),
-        }
-      );
-
-      const data = await response.json();
-      setIsSaved(data.isSaved);
-    } catch (error) {
-      console.error('Failed to check saved status', error);
+    if (token) {
+      const decoded = jwtDecode(token);
+      console.log(decoded, "token");
+      setUserId(decoded._id);
     }
-  };
+    fetchReviews();
+    fetchLoanOffers();
+  }, [token, property._id]);
 
-  checkIfSaved();
-}, [userId, property._id]);
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!userId || !property?._id) return;
+
+      try {
+        const response = await fetch(
+          `${BASE_URL}/api/user-update/is-property-saved`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId,
+              propertyId: property._id,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        setIsSaved(data.isSaved);
+      } catch (error) {
+        console.error('Failed to check saved status', error);
+      }
+    };
+
+    checkIfSaved();
+  }, [userId, property._id]);
 
 
 
@@ -197,7 +198,8 @@ useEffect(() => {
               {property.verification && (
                 <Image
                   source={require('@/assets/images/verified.png')}
-                  style={styles.verify}
+                  style={styles.verify }
+                  resizeMode="contain"
                 />
               )}
               <Text style={styles.propertyTitle}>{property.title}</Text>
@@ -215,7 +217,7 @@ useEffect(() => {
             </View>
           </View>
 
-          <View style={styles.ratingAndSave}>
+          <View style={styles.ratingANdSave}>
             <View style={styles.ratings}>
               <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -227,11 +229,11 @@ useEffect(() => {
               <Text style={styles.reviews}>({reviews.length} Reviews)</Text>
             </View>
 
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProperty}>
+            <Pressable style={styles.saveBtn} onPress={handleSaveProperty}>
               <Text style={styles.saveBtnText}>
                 {isSaved ? "Unsave Property" : "Save Property"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -246,7 +248,7 @@ useEffect(() => {
             <Image
               key={idx}
               source={{ uri: url }}
-              style={styles.image}
+              style={styles.image }resizeMode='cover'
             />
           ))}
         </ScrollView>
@@ -285,7 +287,7 @@ useEffect(() => {
             { src: require('@/assets/images/image10.png'), label: "Basketball Court" },
           ].map((item, idx) => (
             <View key={idx} style={styles.gridItem}>
-              <Image style={styles.img} source={item.src} />
+              <Image style={styles.img} resizeMode='contain' source={item.src} />
               <Text style={styles.facilityamenity}>{item.label}</Text>
             </View>
           ))}
@@ -341,7 +343,7 @@ useEffect(() => {
               }}
             />
           </View>
-          <TouchableOpacity
+          <Pressable
             onPress={handleLoanFilterChange}
             style={{
               width: '100%',
@@ -357,7 +359,7 @@ useEffect(() => {
             }}>
               Get Personalized Offers
             </Text>
-          </TouchableOpacity>
+          </Pressable>
           {
             loadingLoanOffers ? (
               <View style={{ alignItems: 'center', padding: 20 }}>
@@ -373,9 +375,9 @@ useEffect(() => {
                   {loanOffers.length} loan offers available
                 </Text>
                 {/* Scrollable container for loan offers */}
-                <View style={{
+                <ScrollView style={{
                   maxHeight: 800,
-                  overflowY: 'auto',
+
                   paddingRight: 5,
                 }}>
                   {
@@ -396,13 +398,13 @@ useEffect(() => {
                           alignItems: 'center',
                           marginBottom: 8,
                         }}>
-                          <View style={{
+                          <Text style={{
                             fontWeight: 'bold',
                             fontSize: 16
                           }}>
                             {offer.bankName}
+                          </Text>
 
-                          </View>
                           <View
                             style={{
                               flexDirection: 'row',
@@ -434,12 +436,13 @@ useEffect(() => {
                           }}
                         >
                           <View>
-                            <View style={{
+                            <Text style={{
                               fontSize: 12,
                               color: '#888'
                             }}>
                               Max Loan Amount
-                            </View>
+                            </Text>
+
                             <Text style={{ fontWeight: 'bold', color: '#28a745' }}>
                               {formatCurrency(offer.maxLoanAmount)}
                             </Text>
@@ -520,7 +523,7 @@ useEffect(() => {
                     ))
                   }
 
-                </View>
+                </ScrollView>
               </View>
             ) : (
               <View style={{ alignItems: 'center', padding: 20 }}>
@@ -580,6 +583,7 @@ useEffect(() => {
           <Image
             source={require('@/assets/images/image13.png')}
             style={styles.mapicon}
+            resizeMode='contain'
           />
           <View style={styles.location}>
             <Text>
@@ -616,14 +620,14 @@ useEffect(() => {
 
 const styles = StyleSheet.create({
   breadcrumb: {
-    fontFamily: 'Montserrat', // must load this font via expo-font
+    fontFamily: 'Montserrat',
     width: '100%',
     fontSize: 16,
     fontWeight: '600',
   },
   ratingANDsave: {
     flexDirection: 'column',
-    gap: 15,
+    marginVertical: 15,
   },
   saveProBtn: {
     padding: 10,
@@ -632,29 +636,21 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: '8%',
     paddingVertical: '4%',
-    flexDirection: 'column',
-    gap: 40,
   },
   FacilitiesAmenities: {
     width: '100%',
     paddingHorizontal: '8%',
     paddingVertical: '4%',
-    flexDirection: 'column',
-    gap: 40,
   },
   Location: {
     width: '100%',
     paddingHorizontal: '8%',
     paddingVertical: '4%',
-    flexDirection: 'column',
-    gap: 40,
   },
   heading: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
     fontSize: 30,
     fontWeight: '600',
+    marginBottom: 20,
   },
   header: {
     flexDirection: 'row',
@@ -665,13 +661,10 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: '8%',
     paddingHorizontal: '8%',
-    flexDirection: 'column',
-    gap: 40,
   },
   verify: {
     height: 30,
     width: 30,
-    resizeMode: 'contain',
   },
   title: {
     width: '100%',
@@ -684,23 +677,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
   },
   details: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 5,
-    fontSize: 18,
-    lineHeight: 20,
-    gap: 5,
   },
   ratings: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    lineHeight: 40,
   },
   stars: {
     fontSize: 25,
@@ -708,7 +694,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'black',
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 1,
-    paddingHorizontal: 5,
+    marginRight: 5,
   },
   reviews: {
     fontSize: 20,
@@ -717,20 +703,16 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: '2%',
     paddingHorizontal: '8%',
-    flexDirection: 'column',
-    gap: 40,
   },
   images: {
     flexDirection: 'row',
-    flexWrap: 'nowrap',
-    overflow: 'scroll',
-    gap: 5,
     paddingVertical: 10,
   },
   image: {
     width: 400,
     height: 400,
-    resizeMode: 'cover',
+   
+    marginRight: 5,
   },
   PropertyDetails: {
     flexDirection: 'column',
@@ -749,34 +731,31 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   gridContainer: {
-    fontSize: 18,
-    lineHeight: 30,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 10,
   },
   gridItem: {
     marginBottom: 10,
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
     width: '48%',
   },
   img: {
     height: 30,
     width: 30,
     resizeMode: 'contain',
+    marginRight: 10,
   },
   address: {
     flexDirection: 'row',
     alignItems: 'center',
-    fontSize: 18,
-    gap: 20,
+    marginVertical: 10,
   },
   mapicon: {
     height: 30,
     width: 30,
-    resizeMode: 'contain',
+    marginRight: 20,
   },
   map: {
     height: 500,
@@ -787,7 +766,6 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flexDirection: 'row',
-    gap: 20,
+    marginVertical: 20,
   },
 });
-
