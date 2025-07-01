@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
-import { checkAuth } from '../redux/Auth/AuthSlice';
+import { checkAuth } from '@/redux/Auth/AuthSlice';
 
 
 const LoginPopup = ({ onClose }) => {
@@ -44,17 +44,6 @@ const LoginPopup = ({ onClose }) => {
       else if (userType === 'user') router.replace('/(user)');
     }
   }, [authUser, userType, dispatch, router]);
-
-  // const handleLogin = async () => {
-  //   // Simulate a login request (replace with actual API call if needed)
-  //   try {
-  //     await dispatch(checkAuth()).unwrap();
-  //     // Redirect handled by useEffect
-  //   } catch (error) {
-  //     console.error('Login failed:', error);
-  //     alert('Authentication failed. Please check your credentials.');
-  //   }
-  // };
 
 
   const handleSubmit = async () => {

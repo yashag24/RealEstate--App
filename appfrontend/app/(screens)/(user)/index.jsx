@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import Navbar from "@/components/home/Navbar";
 import Footer from "@/components/home/Footer";
 import CustomerReviewCard from "@/components/home/CustomerReviewCard";
-import LoginPopup from "@/components/home/LoginPopup";
+import LoginPopup from "../index";
 import PropertyCard from "@/components/home/PropertyCard";
 import BuilderCard from "@/components/home/BuilderCard";
 import CardLayout from "@/components/home/Insights";

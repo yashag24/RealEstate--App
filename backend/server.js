@@ -21,6 +21,9 @@ const PropertyReviewRouter = require("./controllers/PropertyReviewsControllers.j
 const BankingPartnerRouter = require("./routes/BankingPartner.js");
 // const staffRoutes = require("./routes/staffRoutes");
 const contractorRoutes = require("./routes/contractorRoutes.js");
+const { authenticate, checkAuth } = require("./middleware/authenticate");
+const AuthRoutes = require("./routes/AuthRoutes.js");
+
 
 require("dotenv").config();
 const mongoDB = require("./db");
@@ -34,9 +37,15 @@ const port = process.env.PORT || 8000;
 mongoDB();
 app.use(cors());
 
+app.use(cors({
+  origin: 'http://localhost:8081',  // instead of '*'
+  credentials: true
+}));
+
 app.use(express.json());
 
 // API Routes
+app.get('/api/check-auth', authenticate, checkAuth);
 app.use("/api/users", usersRouter);
 app.use("/api/users", loginRouter);
 app.use("/api/user-update", userProfileRoutes);
@@ -56,6 +65,8 @@ app.use("/api/enquiry", EnquiryRouter);
 app.use("/api/title-search", TitleSearch);
 app.use("/api/Pre-Purchase-Property-Verification", PrePurchaseProVerRouter);
 app.use("/api/banking-partners", BankingPartnerRouter);
+app.use("/api/auth", AuthRoutes);
+
 
 // app.use("/api/staff", staffRoutes);
 
