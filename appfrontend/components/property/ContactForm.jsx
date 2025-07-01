@@ -1,7 +1,12 @@
+import { View, Text } from 'react-native'
 import React from 'react'
 
-export const ContactForm = () => {
+const ContactForm = () => {
   return (
-    <div>ContactForm</div>
+    <View>
+      <Text>ContactForm</Text>
+    </View>
   )
 }
+
+export default ContactForm
