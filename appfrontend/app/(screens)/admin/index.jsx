@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const index = () => {
+const AdminPage = () => {
   return (
     <View>
-      <Text>index</Text>
+      <Text>Admin</Text>
     </View>
   )
 }
 
-export default index
+export default AdminPage

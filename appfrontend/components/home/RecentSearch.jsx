@@ -13,10 +13,10 @@ const RecentSearch = ({ onCitySelect }) => {
   const sentSearchesRef = useRef(new Set());
 
   const token = null; // Replace with async storage retrieval if necessary
-
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const getUserSearchHistory = async (search_text, userId) => {
     try {
-      await axios.post('http://localhost:8000/api/user-update/search-history', {
+      await axios.post(`${BASE_URL}/api/user-update/search-history`, {
         search_text,
         userId,
       });

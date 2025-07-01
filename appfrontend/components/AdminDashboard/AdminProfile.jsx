@@ -19,6 +19,7 @@ const AdminProfile = ({ adminProfile }) => {
   const [formData, setFormData] = useState(adminProfile);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const handleChange = (name, value) => {
     setFormData((prev) => ({
@@ -31,7 +32,7 @@ const AdminProfile = ({ adminProfile }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/admin/update', {
+      const response = await fetch(`${BASE_URL}/api/admin/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

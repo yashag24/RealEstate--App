@@ -41,3 +41,5 @@ app-example
 package-lock.json
 
 .env
+
+eas.json

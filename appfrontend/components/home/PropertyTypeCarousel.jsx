@@ -39,7 +39,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Independent Builder Floor",
       description: "210+ Properties",
-      imageSrc: require("../../assets/images/builder.jpg"),
+      imageSrc: require("../../assets/images/builder1.jpg"),
     },
     {
       title: "Plots",

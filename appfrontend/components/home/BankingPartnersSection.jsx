@@ -12,7 +12,8 @@ import BankCard from "./BankCard";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.75;
-const CARDS_PER_VIEW = 1;
+const CARD_MARGIN = 10; // Gap between cards
+const SIDE_SPACING = (width - CARD_WIDTH) / 2; // Calculate proper centering
 
 export default function BankingPartnersSection() {
   const [banks, setBanks] = useState([]);
@@ -20,13 +21,14 @@ export default function BankingPartnersSection() {
   const [error, setError] = useState(null);
   const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  
   const fetchBankingPartners = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        "http://localhost:8000/api/banking-partners?limit=20&isActive=true"
+        `${BASE_URL}/api/banking-partners?limit=20&isActive=true`
       );
 
       if (!response.ok) {
@@ -47,21 +49,9 @@ export default function BankingPartnersSection() {
     fetchBankingPartners();
   }, []);
 
-  const handleNext = () => {
-    if (!banks.length) return;
-    const nextIndex = (currentIndex + 1) % banks.length;
-    setCurrentIndex(nextIndex);
-    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-  };
 
-  const handlePrev = () => {
-    if (!banks.length) return;
-    const prevIndex = (currentIndex - 1 + banks.length) % banks.length;
-    setCurrentIndex(prevIndex);
-    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
-  };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     const loanCount = item.loanProducts?.length || 0;
     const firstRate =
       loanCount > 0
@@ -69,7 +59,12 @@ export default function BankingPartnersSection() {
         : "N/A";
 
     return (
-      <View style={styles.cardWrapper}>
+      <View style={[
+        styles.cardWrapper,
+        index === 0 && { marginLeft: SIDE_SPACING }, // First item gets left margin
+        index === banks.length - 1 && { marginRight: SIDE_SPACING }, // Last item gets right margin
+        index > 0 && { marginLeft: CARD_MARGIN } // Add gap between cards
+      ]}>
         <BankCard
           bankName={item.bankName}
           logo={item.logo}
@@ -82,8 +77,8 @@ export default function BankingPartnersSection() {
   };
 
   const onMomentumScrollEnd = ({ nativeEvent }) => {
-    const index = Math.round(nativeEvent.contentOffset.x / (CARD_WIDTH + 20));
-    setCurrentIndex(index);
+    const index = Math.round(nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_MARGIN));
+    setCurrentIndex(Math.max(0, Math.min(index, banks.length - 1)));
   };
 
   if (loading) {
@@ -130,10 +125,6 @@ export default function BankingPartnersSection() {
     <View style={styles.section}>
       <Text style={styles.heading}>BANKING PARTNERS</Text>
       <View style={styles.carouselContainer}>
-        <TouchableOpacity style={[styles.navButton]} onPress={handlePrev}>
-          <Text style={styles.navButtonText}>‹</Text>
-        </TouchableOpacity>
-
         <FlatList
           ref={flatListRef}
           data={banks}
@@ -141,15 +132,13 @@ export default function BankingPartnersSection() {
           keyExtractor={(item) => item._id.$oid || item._id}
           horizontal
           showsHorizontalScrollIndicator={false}
-          snapToInterval={CARD_WIDTH + 20}
+          snapToInterval={CARD_WIDTH + CARD_MARGIN}
           decelerationRate="fast"
-          contentContainerStyle={styles.carousel}
           onMomentumScrollEnd={onMomentumScrollEnd}
+          contentContainerStyle={styles.carousel}
+          pagingEnabled={false}
+          snapToAlignment="start"
         />
-
-        <TouchableOpacity style={[styles.navButton]} onPress={handleNext}>
-          <Text style={styles.navButtonText}>›</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.indicators}>
@@ -225,37 +214,17 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
   carouselContainer: {
-    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 15,
   },
   carousel: {
-    paddingHorizontal: 5,
+    alignItems: "center",
   },
   cardWrapper: {
     width: CARD_WIDTH,
-    marginHorizontal: 10,
-  },
-  navButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
   },
-  navButtonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#374151",
-  },
+
   indicators: {
     flexDirection: "row",
     justifyContent: "center",

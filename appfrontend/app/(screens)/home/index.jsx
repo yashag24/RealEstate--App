@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ImageBackground,
-  Dimensions
+  Dimensions,
+  FlatList
 } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -30,17 +31,26 @@ import RecentSearch from "@/components/home/RecentSearch";
 import StaffPerformanceCategories from "@/components/home/StaffPerformanceCategories";
 
 const { width, height } = Dimensions.get('window');
+const PROPERTY_CARD_WIDTH = width * 0.95;
+const PROPERTY_CARD_MARGIN = 10;
+const PROPERTY_SIDE_SPACING = (width - PROPERTY_CARD_WIDTH) / 2;
+const AUTO_SCROLL_INTERVAL = 4000; // 4 seconds
 
 const HomePage = () => {
   const [isLoginPopupVisible, setIsLoginPopupVisible] = useState(false);
   const [properties, setProperties] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
 
   const router = useRouter();
+  const propertyFlatListRef = useRef(null);
+  const autoScrollTimerRef = useRef(null);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const fetchProperties = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/allproperty`, {
+      const response = await fetch(`${BASE_URL}/api/allproperty`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -58,12 +68,123 @@ const HomePage = () => {
     }
   };
 
+  // Auto-scroll functionality
+  const startAutoScroll = () => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+    }
+
+    autoScrollTimerRef.current = setInterval(() => {
+      if (isAutoScrollEnabled && properties.length > 0) {
+        setCurrentPropertyIndex((prevIndex) => {
+          const maxIndex = Math.min(properties.length, 6) - 1;
+          const nextIndex = prevIndex >= maxIndex ? 0 : prevIndex + 1;
+          
+          // Scroll to next property
+          const scrollPosition = nextIndex * (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN);
+          propertyFlatListRef.current?.scrollToOffset({
+            offset: scrollPosition,
+            animated: true,
+          });
+          
+          return nextIndex;
+        });
+      }
+    }, AUTO_SCROLL_INTERVAL);
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  };
+
+  // Start auto-scroll when properties are loaded
+  useEffect(() => {
+    if (properties.length > 0 && isAutoScrollEnabled) {
+      startAutoScroll();
+    }
+
+    return () => {
+      stopAutoScroll();
+    };
+  }, [properties, isAutoScrollEnabled]);
+
   useEffect(() => {
     fetchProperties();
   }, []);
 
-  const handlePropertyPress = (propertyId) => {
-    router.push(`/property-details/${propertyId}`);
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
+
+
+
+  const renderPropertyItem = ({ item, index }) => {
+    return (
+      <View style={[
+        styles.propertyCardWrapper,
+        index === 0 && { marginLeft: PROPERTY_SIDE_SPACING },
+        index === properties.slice(0, 6).length - 1 && { marginRight: PROPERTY_SIDE_SPACING },
+        index > 0 && { marginLeft: PROPERTY_CARD_MARGIN }
+      ]}>
+        <TouchableOpacity
+          // onPress={() => handlePropertyPress(item._id)}
+          activeOpacity={0.7}
+        >
+          <PropertyCard
+            id={item._id}
+            title={item.title}
+            bhk={item.Bhk}
+            city={item.city}
+            price={item.price?.toString()}
+            area={item.area?.toString()}
+            images={item.images}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const onPropertyMomentumScrollEnd = ({ nativeEvent }) => {
+    const index = Math.round(nativeEvent.contentOffset.x / (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN));
+    const maxIndex = Math.min(properties.length, 6) - 1;
+    const newIndex = Math.max(0, Math.min(index, maxIndex));
+    setCurrentPropertyIndex(newIndex);
+  };
+
+  // Handle manual indicator press
+  const handleIndicatorPress = (index) => {
+    // Temporarily disable auto-scroll when user manually navigates
+    setIsAutoScrollEnabled(false);
+    setCurrentPropertyIndex(index);
+    
+    const scrollPosition = index * (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN);
+    propertyFlatListRef.current?.scrollToOffset({
+      offset: scrollPosition,
+      animated: true,
+    });
+
+    // Re-enable auto-scroll after a delay
+    setTimeout(() => {
+      setIsAutoScrollEnabled(true);
+    }, 5000); // Resume auto-scroll after 5 seconds
+  };
+
+  // Handle touch events to pause auto-scroll during user interaction
+  const handleScrollBeginDrag = () => {
+    setIsAutoScrollEnabled(false);
+  };
+
+  const handleScrollEndDrag = () => {
+    // Resume auto-scroll after user finishes dragging
+    setTimeout(() => {
+      setIsAutoScrollEnabled(true);
+    }, 3000); // Resume after 3 seconds
   };
 
   return (
@@ -97,22 +218,35 @@ const HomePage = () => {
 
         <View style={styles.popularProperties}>
           <Text style={styles.heading}>POPULAR PROPERTIES</Text>
-          <View style={styles.listings}>
-            {properties.slice(0, 4).map((property) => (
+          <View style={styles.propertyCarouselContainer}>
+            <FlatList
+              ref={propertyFlatListRef}
+              data={properties.slice(0, 6)}
+              renderItem={renderPropertyItem}
+              keyExtractor={(item) => item._id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN}
+              decelerationRate="fast"
+              onMomentumScrollEnd={onPropertyMomentumScrollEnd}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              onScrollEndDrag={handleScrollEndDrag}
+              contentContainerStyle={styles.propertyCarousel}
+              pagingEnabled={false}
+              snapToAlignment="start"
+            />
+          </View>
+
+          <View style={styles.propertyIndicators}>
+            {properties.slice(0, 6).map((_, idx) => (
               <TouchableOpacity
-                key={property._id}
-                onPress={() => handlePropertyPress(property._id)}
-                style={styles.propertyCardWrapper}
-                activeOpacity={0.7}
-              >
-                <PropertyCard
-                  title={property.title}
-                  bhk={property.Bhk}
-                  city={property.city}
-                  price={property.price?.toString()}
-                  area={property.area?.toString()}
-                />
-              </TouchableOpacity>
+                key={idx}
+                style={[
+                  styles.propertyIndicator,
+                  idx === currentPropertyIndex && styles.activePropertyIndicator,
+                ]}
+                onPress={() => handleIndicatorPress(idx)}
+              />
             ))}
           </View>
         </View>
@@ -231,18 +365,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   popularProperties: {
-    padding: 20,
+    paddingVertical: 40,
+    backgroundColor: "#f8fafc",
   },
   popularBuilders: {
     padding: 20,
   },
   heading: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: 20,
-    color: "#333",
-    letterSpacing: 0.5,
+    color: "#1f2937",
+    letterSpacing: 1,
   },
   subheading: {
     fontSize: 18,
@@ -251,18 +386,50 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#666",
   },
-  listings: {
+  propertyCarouselContainer: {
+    alignItems: "center",
+  },
+  propertyCarousel: {
+    alignItems: "center",
+  },
+  propertyCardWrapper: {
+    width: PROPERTY_CARD_WIDTH,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  propertyIndicators: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 10,
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  propertyIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#d1d5db",
+    marginHorizontal: 4,
+  },
+  activePropertyIndicator: {
+    backgroundColor: "#667eea",
+    transform: [{ scale: 1.2 }],
+  },
+  autoScrollToggle: {
+    alignSelf: 'center',
+    marginTop: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  autoScrollToggleText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
   },
   builderListings: {
     alignItems: 'center',
-  },
-  propertyCardWrapper: {
-    width: (width - 50) / 2,
-    marginBottom: 15,
   },
   builderCardWrapper: {
     width: "100%",

@@ -61,7 +61,9 @@ app.use("/api/banking-partners", BankingPartnerRouter);
 
 // Static file access
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.get("/", (req, res) => {
+  res.send("Backend is alive!");
+})
 // General error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

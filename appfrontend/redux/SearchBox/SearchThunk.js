@@ -2,7 +2,9 @@
 
 export const searchSuggestionsThunk = async (url, searchTerm, thunkAPI) => {
   try {
-    const response = await fetch('http://localhost:8000/api/allproperty'); // Replace with your local IP
+    const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+    const response = await fetch(`${BASE_URL}/api/allproperty`); // Replace with your local IP
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
