@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -9,276 +9,418 @@ export const ReviewPage = ({ reviewsProperty = [] }) => {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  const averageRating = (
-    sortedReviews.reduce((sum, review) => sum + review.rating, 0) /
-    (totalReviews || 1)
-  ).toFixed(2);
+  const averageRating = totalReviews > 0 ? 
+    (sortedReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1) : '0.0';
 
-  const ratingCounts = [0, 0, 0, 0, 0];
-  sortedReviews.forEach((r) => {
-    const rating = r?.rating || 0;
-    if (rating >= 1 && rating <= 5) {
-      ratingCounts[rating - 1]++;
-    }
-  });
-
-  const getRatingPercentage = (count) =>
-    ((count / (totalReviews || 1)) * 100).toFixed(0);
-
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(4);
 
   const handleReadMore = () => {
-    setVisibleCount((prev) => {
-      const newCount = prev + 5;
-      return newCount > totalReviews ? totalReviews : newCount;
-    });
+    setVisibleCount((prev) => Math.min(prev + 4, totalReviews));
+  };
+
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return 'Today';
+    if (diffDays === 2) return 'Yesterday';
+    if (diffDays <= 7) return `${diffDays}d ago`;
+    if (diffDays <= 30) return `${Math.ceil(diffDays / 7)}w ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getRatingColor = (rating) => {
+    if (rating >= 4.5) return '#10b981'; // emerald-500
+    if (rating >= 4.0) return '#22c55e'; // green-500
+    if (rating >= 3.5) return '#eab308'; // yellow-500
+    if (rating >= 3.0) return '#f59e0b'; // amber-500
+    return '#ef4444'; // red-500
+  };
+
+  const getAvatarColor = (name) => {
+    const colors = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+    const index = name ? name.charCodeAt(0) % colors.length : 0;
+    return colors[index];
   };
 
   return (
-    <View style={styles.reviewPage}>
-      <View style={styles.ratingSummary}>
-        <Text style={styles.sectionTitle}>Rating Overview</Text>
-        <View style={styles.overallRating}>
-          <Text style={styles.ratingValue}>{averageRating}</Text>
-          <Text style={styles.ratingSubtitle}>out of 5</Text>
-        </View>
-        <View style={styles.ratingsDetail}>
-          {[5, 4, 3, 2, 1].map((star) => {
-            const percent = Number(getRatingPercentage(ratingCounts[star - 1]));
-            const emoji = ["😄", "😊", "😐", "😕", "😭"][5 - star];
-            return (
-              <View style={styles.ratingItem} key={star}>
-                <Text style={styles.ratingEmoji}>{emoji}</Text>
-                <View style={styles.barContainer}>
-                  <View style={[styles.barFill, { width: `${percent}%` }]} />
-                </View>
-                <Text style={styles.ratingScore}>{percent}%</Text>
-              </View>
-            );
-          })}
-        </View>
+    <View style={styles.container}>
+      <View style={styles.titleContainer}>
+        <Text style={styles.sectionTitle}>Reviews & Ratings</Text>
+        <View style={styles.titleAccent} />
       </View>
+      
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
+        style={styles.scrollView}
+      >
+        {/* Rating Summary Card */}
+        <View style={[styles.ratingCard, { borderLeftColor: getRatingColor(parseFloat(averageRating)) }]}>
+          <View style={styles.ratingValueContainer}>
+            <Text style={[styles.ratingValue, { color: getRatingColor(parseFloat(averageRating)) }]}>
+              {averageRating}
+            </Text>
+          
+          </View>
+          <View style={styles.starsRow}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Text key={star} style={[
+                styles.starIcon,
+                { color: parseFloat(averageRating) >= star ? '#fbbf24' : '#e5e7eb' }
+              ]}>
+                ★
+              </Text>
+            ))}
+          </View>
+          <Text style={styles.totalReviewsText}>
+            {totalReviews} {totalReviews === 1 ? 'Review' : 'Reviews'}
+          </Text>
+        </View>
 
-      <View style={styles.reviewsList}>
-        <Text style={styles.sectionTitle}>
-          User Reviews <Text style={styles.reviewCount}>({totalReviews})</Text>
-        </Text>
+        {/* Review Cards */}
         {totalReviews === 0 ? (
-          <View style={styles.noReviewsContainer}>
-            <Text style={styles.noReviews}>No reviews yet.</Text>
-            <Text style={styles.noReviewsSubtitle}>Be the first to review!</Text>
+          <View style={styles.noReviewsCard}>
+            <View style={styles.noReviewsIconContainer}>
+              <Text style={styles.noReviewsEmoji}>💭</Text>
+            </View>
+            <Text style={styles.noReviewsTitle}>No reviews yet</Text>
+            <Text style={styles.noReviewsText}>Be the first to share your experience!</Text>
           </View>
         ) : (
           <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScroll}
-            >
-              {sortedReviews.slice(0, visibleCount).map((review) => (
-                <View style={styles.reviewCard} key={review._id}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewAuthor}>{review.name}</Text>
-                    <Text style={styles.reviewDate}>
-                      {new Date(review.timestamp).toLocaleDateString()}
-                    </Text>
+            {sortedReviews.slice(0, visibleCount).map((review) => (
+              <View key={review._id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewerInfo}>
+                    <View style={[styles.avatarCircle, { backgroundColor: getAvatarColor(review.name) }]}>
+                      <Text style={styles.avatarText}>
+                        {review.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </Text>
+                    </View>
+                    <View style={styles.reviewerDetails}>
+                      <Text style={styles.reviewerName} numberOfLines={1}>
+                        {review.name || 'Anonymous'}
+                      </Text>
+                      <Text style={styles.reviewDate}>
+                        {formatDate(review.timestamp)}
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={styles.reviewStars}>
-                    {"★".repeat(review.rating)}
-                    <Text style={styles.starInactive}>
-                      {"☆".repeat(5 - review.rating)}
+                  <View style={[styles.ratingBadge, { backgroundColor: `${getRatingColor(review.rating)}15` }]}>
+                    <Text style={[styles.ratingBadgeText, { color: getRatingColor(review.rating) }]}>
+                      {review.rating}
                     </Text>
-                  </Text>
-                  <Text style={styles.reviewComment}>{review.comment}</Text>
+                    <Text style={[styles.ratingBadgeStar, { color: getRatingColor(review.rating) }]}>★</Text>
+                  </View>
                 </View>
-              ))}
-            </ScrollView>
+                
+                <Text style={styles.reviewText} numberOfLines={3}>
+                  {review.comment}
+                </Text>
+                
+                <View style={styles.reviewFooter}>
+                  <View style={styles.helpfulBadge}>
+                    <Text style={styles.helpfulText}>👍 Helpful</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+            
             {visibleCount < totalReviews && (
-              <Pressable style={styles.readMoreButton} onPress={handleReadMore}>
-                <Text style={styles.readMoreButtonText}>Load More Reviews</Text>
+              <Pressable style={styles.loadMoreCard} onPress={handleReadMore}>
+                <View style={styles.loadMoreIconContainer}>
+                  <Text style={styles.loadMoreIcon}>+</Text>
+                </View>
+                <Text style={styles.loadMoreText}>Load More</Text>
+                <Text style={styles.loadMoreCount}>
+                  {totalReviews - visibleCount} more reviews
+                </Text>
               </Pressable>
             )}
           </>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  reviewPage: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#f8fafc',
-    minHeight: 260,
-    alignItems: 'flex-start',
-  },
-  ratingSummary: {
+  container: {
     backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    flex: 1,
-    minWidth: 180,
-    maxWidth: 220,
-    marginRight: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
-  reviewsList: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    flex: 2,
-    minHeight: 220,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  horizontalScroll: {
+  titleContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingBottom: 8,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 14,
-  },
-  overallRating: {
-    alignItems: 'center',
-    marginBottom: 14,
-    paddingVertical: 8,
-    backgroundColor: '#f0fdf4',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  ratingValue: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#15803d',
+    color: '#0f172a',
+    letterSpacing: -0.5,
   },
-  ratingSubtitle: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '500',
+  titleAccent: {
+    width: 4,
+    height: 24,
+    backgroundColor: '#8b5cf6',
+    borderRadius: 2,
+    marginLeft: 12,
   },
-  ratingsDetail: {
-    marginTop: 4,
+  scrollView: {
+    maxHeight: 140,
   },
-  ratingItem: {
-    flexDirection: 'row',
+  scrollContainer: {
+    paddingRight: 4,
+    alignItems: 'flex-start',
+  },
+  
+  // Rating Summary Card - Modern gradient-like design
+  ratingCard: {
+    width: 130,
+    height: 120,
+    backgroundColor: '#ffffff',
+    borderRadius: 32,
+    padding: 16,
+    marginRight: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderLeftWidth: 4,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  ratingValueContainer: {
+    position: 'relative',
     alignItems: 'center',
     marginBottom: 8,
   },
-  ratingEmoji: {
-    fontSize: 20,
+  ratingValue: {
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  ratingBurst: {
+    position: 'absolute',
+    top: -8,
+    width: 20,
+    height: 20,
+    backgroundColor: '#fbbf24',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  burstText: {
+    fontSize: 12,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 1,
+    marginBottom: 8,
+  },
+  starIcon: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  totalReviewsText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  
+  // No Reviews Card - Elegant empty state
+  noReviewsCard: {
+    width: 170,
+    height: 120,
+    backgroundColor: '#fafafa',
+    borderRadius: 32,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    borderStyle: 'dashed',
+    marginRight: 16,
+  },
+  noReviewsIconContainer: {
     width: 32,
+    height: 32,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  noReviewsEmoji: {
+    fontSize: 18,
+  },
+  noReviewsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 4,
     textAlign: 'center',
   },
-  barContainer: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginHorizontal: 8,
-  },
-  barFill: {
-    height: '100%',
-    backgroundColor: '#3b82f6',
-    borderRadius: 5,
-  },
-  ratingScore: {
-    width: 36,
-    textAlign: 'right',
-    fontWeight: '600',
-    color: '#4b5563',
-    fontSize: 13,
-  },
-  reviewCount: {
-    color: '#6b7280',
+  noReviewsText: {
+    fontSize: 11,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 14,
     fontWeight: '500',
   },
-  noReviewsContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  noReviews: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4b5563',
-    marginBottom: 4,
-  },
-  noReviewsSubtitle: {
-    fontSize: 13,
-    color: '#9ca3af',
-  },
+  
+  // Review Cards - Premium card design
   reviewCard: {
-    width: screenWidth * 0.5,
-    minWidth: 220,
+    width: screenWidth * 0.65,
     maxWidth: 300,
-    backgroundColor: '#f8fafc',
-    borderRadius: 10,
-    marginRight: 14,
-    padding: 14,
+    height: 120,
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    padding: 16,
+    marginRight: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: '#f1f5f9',
+    shadowColor: '#64748b',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
-  reviewAuthor: {
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  avatarText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1f2937',
-    fontSize: 15,
+  },
+  reviewerDetails: {
+    flex: 1,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 2,
   },
   reviewDate: {
-    color: '#6b7280',
-    fontSize: 13,
+    fontSize: 11,
+    color: '#64748b',
     fontWeight: '500',
   },
-  reviewStars: {
-    color: '#fbbf24',
-    fontSize: 17,
-    marginVertical: 2,
-    letterSpacing: 1,
-  },
-  starInactive: {
-    color: '#e5e7eb',
-  },
-  reviewComment: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#4b5563',
-    marginTop: 4,
-  },
-  readMoreButton: {
-    backgroundColor: '#3b82f6',
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 12,
+  ratingBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    minWidth: 160,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    gap: 2,
   },
-  readMoreButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
+  ratingBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  ratingBadgeStar: {
+    fontSize: 12,
     fontWeight: '600',
+  },
+  reviewText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#475569',
+    fontWeight: '400',
+    marginBottom: 8,
+  },
+  reviewFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  helpfulBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  helpfulText: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  
+  // Load More Card - Interactive design
+  loadMoreCard: {
+    width: 130,
+    height: 120,
+    backgroundColor: '#fafafa',
+    borderRadius: 32,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    borderStyle: 'dashed',
+  },
+  loadMoreIconContainer: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#8b5cf6',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loadMoreIcon: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontWeight: '300',
+  },
+  loadMoreText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 2,
+  },
+  loadMoreCount: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
