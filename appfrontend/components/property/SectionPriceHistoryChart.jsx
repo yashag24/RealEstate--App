@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   header: {
-    paddingTop: 16,
+  
     paddingBottom: 8,
     fontSize: 22,
     fontWeight: "700",
