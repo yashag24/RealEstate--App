@@ -10,8 +10,6 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { FaUserCircle } from 'react-icons/fa'; // Will be replaced
-
 // Use a React Native Icon instead of react-icons
 import { FontAwesome } from '@expo/vector-icons'; // or use react-native-vector-icons
 

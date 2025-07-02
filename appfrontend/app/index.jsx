@@ -6,8 +6,8 @@ export default function Index() {
   return (
     <View>
       <Redirect href="/(screens)/home" />;
+      <Redirect href="/(screens)/admin" />
     </View>
-    
 
   );
 }

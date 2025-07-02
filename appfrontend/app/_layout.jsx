@@ -3,8 +3,9 @@ import { Stack } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
-import Toast from 'react-native-toast-message';
+import Toast  from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function RootLayout() {
   return (

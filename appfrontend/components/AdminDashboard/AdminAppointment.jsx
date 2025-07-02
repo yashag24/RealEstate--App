@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet } from 'react-native';
-import { FaTrash, FaEye } from "react-icons/fa";
-import Modal from "react-modal";
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { Modal } from 'react-native';
 
 const AdminAppointment = ({
   appointments,
@@ -124,14 +124,14 @@ const AdminAppointment = ({
                         className={styles.detailsBtn}
                         title="Details"
                       >
-                        <FaEye />
+                        <Icon />
                       </p>
                       <button
                         onClick={() => handleRemoveAppointment(a._id)}
                         className={styles.deleteBtn}
                         title="Delete"
                       >
-                        <FaTrash />
+                        <Icon />
                       </button>
                     </td>
                   </tr>

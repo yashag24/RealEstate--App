@@ -12,6 +12,10 @@ const AdminDashUserDetails = ({ adminProfile }) => {
   const [roleFilter, setRoleFilter] = useState("all");
   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+  if (!adminProfile) return null;
+
+  const { adminId } = adminProfile;
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {

@@ -7,7 +7,6 @@ import {
   Modal,
   StyleSheet,
   ScrollView,
-  StyleSheet,
 } from 'react-native';
 
 
