@@ -13,7 +13,8 @@ import Toast from "react-native-toast-message";
 
 const CustomModal = ({ show, handleClose }) => {
   const [addAdmin, setAddAdmin] = useState({ adminId: "", password: "" });
-  const baseUrl = "http://localhost:8000/api/admin/signup";
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const baseUrl = "${BASE_URL}/api/admin/signup";
 
   const onSubmit = async () => {
     try {

@@ -8,16 +8,16 @@ import {
   Modal,
   Image,
 } from "react-native";
-import { FaStar } from "react-icons/fa";
-import { BiUserCircle } from "react-icons/bi";
-import { IoClose } from "react-icons/io5"; // You can replace this with a Text or another icon if needed
+import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon1 from 'react-native-vector-icons/FontAwesome';
+import IoIcon from 'react-native-vector-icons/FontAwesome'; // You can replace this with a Text or another icon if needed
 
 const AdminReviews = ({ reviews }) => {
   const [selectedProperty, setSelectedProperty] = useState(null);
 
   const renderStars = (rating) =>
     Array.from({ length: 5 }, (_, index) => (
-      <FaStar
+      <Icon
         key={index}
         color={index < rating ? "#facc15" : "#d1d5db"}
         style={styles.star}
@@ -39,7 +39,7 @@ const AdminReviews = ({ reviews }) => {
         {flattenedReviews.reverse().map((review) => (
           <View key={review._id} style={styles.reviewRow}>
             <View style={styles.reviewer}>
-              <BiUserCircle style={styles.icon} />
+              <Icon1 style={styles.icon} />
               <Text>{review.name}</Text>
             </View>
             <Text style={styles.comment}>{review.comment}</Text>
@@ -65,7 +65,7 @@ const AdminReviews = ({ reviews }) => {
               onPress={() => setSelectedProperty(null)}
               style={styles.closeBtn}
             >
-              <IoClose size={24} />
+              <IoIcon size={24} />
             </TouchableOpacity>
 
             <Text style={styles.modalTitle}>{selectedProperty?.title}</Text>
@@ -117,8 +117,6 @@ const AdminReviews = ({ reviews }) => {
     </ScrollView>
   );
 };
-
-import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   tableWrapper: {

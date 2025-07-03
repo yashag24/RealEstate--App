@@ -22,13 +22,13 @@ const StaffManagement = () => {
     password: "",
     role: "",
   });
-
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const nameInputRef = useRef(null);
 
   const fetchStaff = async () => {
     const token = await AsyncStorage.getItem("authToken");
     try {
-      const res = await axios.get("http://localhost:8000/api/staff/all", {
+      const res = await axios.get(`${BASE_URL}/api/staff/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStaffList(res.data.reverse());
@@ -61,7 +61,7 @@ const StaffManagement = () => {
 
     const token = await AsyncStorage.getItem("authToken");
     try {
-      await axios.post("http://localhost:8000/api/staff/signup", form, {
+      await axios.post(`${BASE_URL}/api/staff/signup`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Toast.show({ type: "success", text1: "Staff created successfully!" });
@@ -85,7 +85,7 @@ const StaffManagement = () => {
         onPress: async () => {
           const token = await AsyncStorage.getItem("authToken");
           try {
-            await axios.delete(`http://localhost:8000/api/staff/${id}`, {
+            await axios.delete(`${BASE_URL}/api/staff/${id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             Toast.show({ type: "success", text1: "Staff deleted successfully." });
