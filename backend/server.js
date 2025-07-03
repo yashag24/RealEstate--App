@@ -37,10 +37,7 @@ const port = process.env.PORT || 8000;
 mongoDB();
 app.use(cors());
 
-app.use(cors({
-  origin: 'http://localhost:8081',  // instead of '*'
-  credentials: true
-}));
+app.use(cors());
 
 app.use(express.json());
 

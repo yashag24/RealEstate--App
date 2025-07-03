@@ -33,7 +33,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { View, Text, ActivityIndicator,StyleSheet } from 'react-native';
-import { PropertyDetails } from '../../../components/property/PropertyDetails'; // adjust import path if needed
+import { PropertyDetails } from '@/components/property/PropertyDetails'; // adjust import path if needed
 
 const PropertyDetailsScreen = () => {
   const { id } = useLocalSearchParams();
