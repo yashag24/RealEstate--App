@@ -276,6 +276,13 @@ export const PropertyDetails = ({ property }) => {
         setShowReviewForm={setShowReviewForm}
         propertyId={property._id}
       />
+      <View style={styles.contactFormContainer}>
+        <ContactForm
+          userId={userId}
+          phone={property.Propreiter_contact}
+          propertyId={property._id}
+        />
+      </View>
       {/* Location Section */}
 
       <LocationSection
