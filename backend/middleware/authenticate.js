@@ -16,10 +16,16 @@ const authenticate = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, SECRET);
     console.log("Decoded Token:", decoded);
+    // console.log("Decoded User adminID:", decoded.newUser.adminId);
 
-    const user = await User.findById(decoded._id || decoded.id);
-    const admin = await Admin.findOne({ adminId: decoded.adminId });
-    const staff = await Staff.findOne({ staffId: decoded.staffId });
+    const user = await User.findById(decoded.id);
+    // const admin = await Admin.findById({ adminId: decoded.newUser.adminId });
+    const admin = await Admin.findById(decoded.id);
+    const staff = await Staff.findById(decoded.id);
+
+    console.log("User:", user);
+    console.log("Admin:", admin);
+    console.log("Staff:", staff);
 
     if (user) {
       req.userData = user;

@@ -74,6 +74,7 @@ export const checkAuth = () => async (dispatch) => {
 export const login = (credentials) => async (dispatch) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/auth/login`, credentials);
+    console.log('Login response:', response.data); // Debugging log
 
     if (response.status === 200) {
       const { token, userType, ...userData } = response.data;
@@ -97,7 +98,7 @@ export const login = (credentials) => async (dispatch) => {
 export const signup = (credentials) => async (dispatch) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/auth/signup`, credentials);
-    
+
     if (response.status === 200) {
       const { token, userType, ...userData } = response.data;
       
@@ -124,5 +125,19 @@ export const initializeAuth = () => async (dispatch) => {
     dispatch(checkAuth());
   }
 };
+
+
+export const performLogout = () => async (dispatch) => {
+  try {
+    await AsyncStorage.removeItem('authToken');
+    dispatch(logout());
+    console.log('Logout successful: Token cleared and state reset');
+  } catch (error) {
+    console.error('Error during logout:', error);
+    // Still dispatch logout to ensure state is reset even if AsyncStorage fails
+    dispatch(logout());
+  }
+};
+
 
 export default authSlice.reducer;
