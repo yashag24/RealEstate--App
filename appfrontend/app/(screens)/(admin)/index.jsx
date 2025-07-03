@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Text, StyleSheet, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-import  Toast  from 'react-native-toast-message';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
-//import { router } from 'expo-router';
-import { View, ScrollView,Text,StyleSheet , Platform } from 'react-native';
+
 import Navbar from '@/components/home/Navbar';
 import AdminSideBar from '@/components/AdminDashboard/AdminSideBar';
 import AdminProfile from '@/components/AdminDashboard/AdminProfile';
@@ -29,27 +30,35 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [contractors, setContractors] = useState([]);
-
-  useEffect(() => {
-    const savedSection = localStorage.getItem('activeSection') || 'adminProfile';
-    setActiveSection(savedSection);
-
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setAdminProfile(decoded);
-      } catch (error) {
-        console.error('Invalid token:', error);
-      }
-    }
-  }, []);
+  const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
 
   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+  useEffect(() => {
+    const loadInitialData = async () => {
+      const savedSection = await AsyncStorage.getItem('activeSection') || 'adminProfile';
+      setActiveSection(savedSection);
+
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          setAdminProfile(decoded);
+        } catch (error) {
+          console.error('Invalid token:', error);
+        }
+      }
+
+      fetchData();
+    };
+
+    loadInitialData();
+  }, []);
+
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('authToken'); // You may replace with SecureStore/AsyncStorage for production
+      const token = await AsyncStorage.getItem('authToken');
 
       const [
         appointmentsRes,
@@ -57,64 +66,36 @@ const AdminDashboard = () => {
         reviewsRes,
         enquiriesRes,
         adminsRes,
-        contractorsRes,
+        contractorsRes
       ] = await Promise.all([
-        fetch(${BASE_URL}/api/appointments, {
-          headers: {
-            Authorization: Bearer ${token},
-          },
+        fetch(`${BASE_URL}/api/appointments`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(${BASE_URL}/api/property/verification),
-        fetch(${BASE_URL}/api/reviews/get-all-reviews),
-        fetch(${BASE_URL}/api/enquiry/get-all-enquiry),
-        fetch(${BASE_URL}/api/admin, {
-          headers: {
-            Authorization: Bearer ${token},
-          },
+        fetch(`${BASE_URL}/api/property/verification`),
+        fetch(`${BASE_URL}/api/reviews/get-all-reviews`),
+        fetch(`${BASE_URL}/api/enquiry/get-all-enquiry`),
+        fetch(`${BASE_URL}/api/admin`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(${BASE_URL}/api/contractor/, {
-          headers: {
-            Authorization: Bearer ${token},
-          },
+        fetch(`${BASE_URL}/api/contractor/`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
-      if (
-        !appointmentsRes.ok ||
-        !propertiesRes.ok ||
-        !reviewsRes.ok ||
-        !enquiriesRes.ok ||
-        !adminsRes.ok ||
-        !contractorsRes.ok
-      ) {
-        throw new Error('Failed to fetch data.');
-      }
+      const [appointmentsData, propertiesData, reviewsData, enquiriesData, adminsData, contractorsData] = await Promise.all([
+        appointmentsRes.json(),
+        propertiesRes.json(),
+        reviewsRes.json(),
+        enquiriesRes.json(),
+        adminsRes.json(),
+        contractorsRes.json()
+      ]);
 
-      const appointmentsData = await appointmentsRes.json();
-      const propertiesData = await propertiesRes.json();
-      const reviewsData = await reviewsRes.json();
-      const enquiriesData = await enquiriesRes.json();
-      const adminsData = await adminsRes.json();
-      const contractorsData = await contractorsRes.json();
-
-      console.log('All Contractors Data:', contractorsData);
-      console.log(propertiesData);
-
-      if (appointmentsData.success) {
-        setAppointments(appointmentsData.appointments);
-      }
-      if (propertiesData.success) {
-        setProperties(propertiesData.property_verify);
-      }
-      if (adminsData.success) {
-        setAdmins(adminsData.data);
-      }
-      if (reviewsData.success) {
-        setReviews(reviewsData.reviews);
-      }
-      if (enquiriesData.success) {
-        setEnquiries(enquiriesData.enquiries);
-      }
+      if (appointmentsData.success) setAppointments(appointmentsData.appointments);
+      if (propertiesData.success) setProperties(propertiesData.property_verify);
+      if (adminsData.success) setAdmins(adminsData.data);
+      if (reviewsData.success) setReviews(reviewsData.reviews);
+      if (enquiriesData.success) setEnquiries(enquiriesData.enquiries);
 
       if (Array.isArray(contractorsData)) {
         setContractors(contractorsData);
@@ -126,286 +107,142 @@ const AdminDashboard = () => {
         setContractors([]);
       }
     } catch (err) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to fetch data. Please try again.',
-      });
       setError(err.message);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to fetch data.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const router = useRouter();
-
-  console.log(adminProfile);
-
   const handleRemoveAppointment = async (id) => {
     try {
-      const token = localStorage.getItem('authToken'); // Replace with AsyncStorage for production
-      if (!token) {
-        throw new Error('No authorization token found');
-      }
-
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/appointments/${id},
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: Bearer ${token},
-          },
-        }
-      );
-
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${BASE_URL}/api/appointments/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to delete the appointment');
-      }
-
+      if (!response.ok || !result.success) throw new Error(result.message);
       setAppointments((prev) => prev.filter((a) => a._id !== id));
-
-      Toast.show({
-        type: 'success',
-        text1: 'Appointment deleted successfully!',
-      });
+      Toast.show({ type: 'success', text1: 'Appointment deleted' });
     } catch (error) {
-      console.error(error.message);
-      Toast.show({
-        type: 'error',
-        text1: error.message || 'Something went wrong while deleting.',
-      });
+      Toast.show({ type: 'error', text1: error.message });
     }
   };
 
   const handleAcceptProperty = async (id) => {
     try {
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/accept,
-        { method: 'PUT' }
-      );
+      const response = await fetch(`${BASE_URL}/api/property/${id}/accept`, { method: 'PUT' });
       const result = await response.json();
-      if (!result.success || !response.ok) {
-        alert('Accepting property failed, please try later');
-        return;
-      }
+      if (!result.success || !response.ok) throw new Error('Accepting property failed');
       setProperties((prev) => prev.filter((p) => p._id !== id));
-      Toast.show({
-        type: 'success',
-        text1: 'Property accepted successfully',
-      });
+      Toast.show({ type: 'success', text1: 'Property accepted' });
     } catch (error) {
-      console.error('Error accepting property:', error);
+      console.error(error);
     }
   };
 
   const handleRejectProperty = async (id) => {
     try {
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/reject,
-        { method: 'PUT' }
-      );
+      const response = await fetch(`${BASE_URL}/api/property/${id}/reject`, { method: 'PUT' });
       const result = await response.json();
-      if (!result.success || !response.ok) {
-        alert('Rejecting property failed, please try later');
-        return;
-      }
+      if (!result.success || !response.ok) throw new Error('Rejecting property failed');
       setProperties((prev) => prev.filter((p) => p._id !== id));
-      Toast.show({
-        type: 'success',
-        text1: 'Property rejected successfully',
-      });
+      Toast.show({ type: 'success', text1: 'Property rejected' });
     } catch (error) {
-      console.error('Error rejecting property:', error);
+      console.error(error);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('activeSection');
-    localStorage.removeItem('role');
-
-    Toast.show({
-      type: 'success',
-      text1: 'Logged out successfully!',
-    });
-
-    router.push('/admin-login'); // navigate replacement
+  const handleLogout = async () => {
+    await AsyncStorage.multiRemove(['authToken', 'activeSection', 'role']);
+    Toast.show({ type: 'success', text1: 'Logged out successfully!' });
+    router.push('/admin-login');
   };
 
   const handleRemoveAdmin = async (adminId) => {
     try {
-      const token = localStorage.getItem('authToken');
-
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/admin/${adminId},
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: Bearer ${token},
-          },
-        }
-      );
-
-      const text = await response.text();
-      const result = text ? JSON.parse(text) : { success: response.ok };
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to delete admin');
-      }
-
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${BASE_URL}/api/admin/${adminId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message);
       setAdmins((prev) => prev.filter((admin) => admin._id !== adminId));
-
-      Toast.show({
-        type: 'success',
-        text1: 'Admin deleted successfully!',
-      });
+      Toast.show({ type: 'success', text1: 'Admin deleted' });
     } catch (error) {
-      console.error(error.message);
-      Toast.show({
-        type: 'error',
-        text1: error.message || 'Something went wrong while deleting.',
-      });
+      Toast.show({ type: 'error', text1: error.message });
     }
   };
 
-  const [showModal, setShowModal] = useState(false);
-
-  const handleSectionChange = (section) => {
+  const handleSectionChange = async (section) => {
     setActiveSection(section);
-    localStorage.setItem('activeSection', section); // Replace with AsyncStorage if needed
+    await AsyncStorage.setItem('activeSection', section);
   };
 
-  const handleCloseModal = () => setShowModal(false);
-  const handleShowModal = () => setShowModal(true);
-
-  const handleDeleteEnquiry = async (enquiryId) => {
+  const handleDeleteEnquiry = async (id) => {
     try {
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/enquiry/${enquiryId}/delete,
-        { method: 'DELETE' }
-      );
-
+      const response = await fetch(`${BASE_URL}/api/enquiry/${id}/delete`, { method: 'DELETE' });
       const data = await response.json();
-
       if (response.ok && data.success) {
-        Toast.show({
-          type: 'success',
-          text1: 'Enquiry deleted successfully',
-        });
-        setEnquiries((prev) => prev.filter((e) => e._id !== enquiryId));
+        Toast.show({ type: 'success', text1: 'Enquiry deleted' });
+        setEnquiries((prev) => prev.filter((e) => e._id !== id));
       } else {
-        Toast.show({
-          type: 'error',
-          text1: data.message || 'Failed to delete enquiry',
-        });
+        Toast.show({ type: 'error', text1: data.message });
       }
-      fetchData();
     } catch (error) {
-      console.error('Error deleting enquiry:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'An error occurred while deleting the enquiry',
-      });
+      Toast.show({ type: 'error', text1: 'Failed to delete enquiry' });
     }
   };
 
-  // contractor
   const handleAcceptContractor = async (id) => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/verify/${id},
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: Bearer ${token},
-          },
-        }
-      );
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${BASE_URL}/api/contractor/verify/${id}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await response.json();
-      if (!response.ok) {
-        alert('Accepting contractor failed, please try later');
-        return;
-      }
+      if (!response.ok) throw new Error();
       setContractors((prev) => prev.filter((c) => c._id !== id));
-      Toast.show({
-        type: 'success',
-        text1: 'Contractor verified successfully',
-      });
-    } catch (error) {
-      console.error('Error accepting contractor:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to verify contractor',
-      });
+      Toast.show({ type: 'success', text1: 'Contractor verified' });
+    } catch {
+      Toast.show({ type: 'error', text1: 'Failed to verify contractor' });
     }
   };
 
   const handleRejectContractor = async (id) => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(
-        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/${id},
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: Bearer ${token},
-          },
-        }
-      );
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(`${BASE_URL}/api/contractor/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await response.json();
-      if (!response.ok) {
-        alert('Rejecting contractor failed, please try later');
-        return;
-      }
+      if (!response.ok) throw new Error();
       setContractors((prev) => prev.filter((c) => c._id !== id));
-      Toast.show({
-        type: 'success',
-        text1: 'Contractor rejected successfully',
-      });
-    } catch (error) {
-      console.error('Error rejecting contractor:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to reject contractor',
-      });
+      Toast.show({ type: 'success', text1: 'Contractor rejected' });
+    } catch {
+      Toast.show({ type: 'error', text1: 'Failed to reject contractor' });
     }
   };
 
-  // run fetchData when navigating here
-  useEffect(() => {
-    fetchData();
-  }, [router]);
-
-  console.log(enquiries);
-
-    return (
+  return (
     <View style={styles.wrapper}>
       <Navbar />
       <View style={styles.dashboardContainer}>
         <AdminSideBar
           activeSection={activeSection}
           handleSectionChange={handleSectionChange}
-          handleShowModal={handleShowModal}
+          handleShowModal={() => setShowModal(true)}
           handleLogout={handleLogout}
         />
-
         <ScrollView contentContainerStyle={styles.content}>
-          {activeSection === 'adminProfile' && adminProfile && (
-            <AdminProfile adminProfile={adminProfile} />
-          )}
-          {activeSection === 'adminDashUserDetails' && (
-            <AdminDashUserDetails adminProfile={adminProfile} />
-          )}
+          {activeSection === 'adminProfile' && <AdminProfile adminProfile={adminProfile} />}
+          {activeSection === 'adminDashUserDetails' && <AdminDashUserDetails adminProfile={adminProfile} />}
           {activeSection === 'appointments' && (
-            <AdminAppointment
-              appointments={appointments}
-              loading={loading}
-              error={error}
-              handleRemoveAppointment={handleRemoveAppointment}
-            />
+            <AdminAppointment appointments={appointments} loading={loading} error={error} handleRemoveAppointment={handleRemoveAppointment} />
           )}
           {activeSection === 'propertyVerification' && (
             <AdminPropertyVerification
@@ -417,30 +254,22 @@ const AdminDashboard = () => {
             />
           )}
           {activeSection === 'reviews' && (
-            <AdminReviews
-              reviews={reviews || []}
-              adminId={adminProfile?.adminId}
-            />
+            <AdminReviews reviews={reviews || []} adminId={adminProfile?.adminId} />
           )}
           {activeSection === 'enquiries' && (
-            <AdminEnquiries
-              enquiries={enquiries}
-              onDeleteEnquiry={handleDeleteEnquiry}
-            />
+            <AdminEnquiries enquiries={enquiries} onDeleteEnquiry={handleDeleteEnquiry} />
           )}
           {activeSection === 'adminsList' && (
             <AdminList
-              admins={admins || []}
-              onAddAdminClick={handleShowModal}
+              admins={admins}
+              onAddAdminClick={() => setShowModal(true)}
               handleRemoveAdmin={handleRemoveAdmin}
               loading={loading}
               error={error}
             />
           )}
           {activeSection === 'staffManagement' && <StaffManagement />}
-          {activeSection === 'staffPerformance' && (
-            <StaffPerformanceCategories />
-          )}
+          {activeSection === 'staffPerformance' && <StaffPerformanceCategories />}
           {activeSection === 'contractorVerification' && (
             <AdminContractorVerification
               contractors={contractors}
@@ -451,89 +280,22 @@ const AdminDashboard = () => {
             />
           )}
         </ScrollView>
-        <CustomModal show={showModal} handleClose={handleCloseModal} />
+        <CustomModal show={showModal} handleClose={() => setShowModal(false)} />
       </View>
+      <Toast />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  adminDashboard: {
+  wrapper: { flex: 1 },
+  dashboardContainer: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#f5f7fa',
-    paddingTop: Platform.OS === 'web' ? 72 : 0, // To mimic margin-top
+    paddingTop: Platform.OS === 'web' ? 72 : 0,
   },
-  sidebar: {
-    width: 220,
-    backgroundColor: '#1f2937',
-    color: '#fff',
-    flexDirection: 'column',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-    gap: 16, // requires React Native 0.71+ or use marginBottom on children
-    position: 'relative',
-    height: '100%',
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 4, // shadow for Android
-    shadowColor: '#000', // shadow for iOS
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    zIndex: 1,
-  },
-  sidebarText: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  activeSidebarText: {
-    backgroundColor: '#2563eb',
-    color: '#fff',
-  },
-  sidebarTextHover: {
-    backgroundColor: '#374151', // optional; may need TouchableOpacity with pressIn/out
-  },
-  logoutButton: {
-    marginTop: 'auto',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#ef4444',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  logoutButtonHover: {
-    backgroundColor: '#dc2626',
-  },
-  content: {
-    flex: 1,
-    // paddingHorizontal: 32,
-  },
-
-  /** For responsive layout simulation (optional) **/
-  mobileDashboard: {
-    flexDirection: 'column',
-  },
-  mobileSidebar: {
-    width: '100%',
-    height: 'auto',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    gap: 8,
-    padding: 16,
-  },
-  mobileLogoutButton: {
-    width: '100%',
-    marginTop: 16,
-  },
+  content: { flex: 1 },
 });
 
 export default AdminDashboard;
