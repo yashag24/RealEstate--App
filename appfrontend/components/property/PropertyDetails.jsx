@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PriceHistoryChart from "./SectionPriceHistoryChart";
-import { ContactForm } from "./ContactForm";
+import  ContactForm  from "./ContactForm";
 import ReviewForm from "./ReviewForm";
 import { ReviewSection } from "./SectionReview";
 import { ReviewPage } from "./ReviewPage";
@@ -276,13 +276,13 @@ export const PropertyDetails = ({ property }) => {
         setShowReviewForm={setShowReviewForm}
         propertyId={property._id}
       />
-      <View style={styles.contactFormContainer}>
+      {/* <View style={styles.contactFormContainer}> */}
         <ContactForm
           userId={userId}
           phone={property.Propreiter_contact}
           propertyId={property._id}
         />
-      </View>
+      {/* </View> */}
       {/* Location Section */}
 
       <LocationSection
