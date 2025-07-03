@@ -13,7 +13,7 @@ import AdminPropertyVerification from '@/components/AdminDashboard/AdminProperty
 import AdminReviews from '@/components/AdminDashboard/AdminReviews';
 import AdminEnquiries from '@/components/AdminDashboard/AdminEnquiries';
 import AdminList from '@/components/AdminDashboard/AdminList';
-//import StaffManagement from '@/components/AdminDashboard/StaffManagement';
+import StaffManagement from '@/components/StaffDashboard/StaffManagement';
 //import StaffPerformanceCategories from '@/components/AdminDashboard/StaffPerformanceCategories';
 //import AdminContractorVerification from '@/components/AdminDashboard/AdminContractorVerification';
 import CustomModal from '@/components/AdminDashboard/Modal';
