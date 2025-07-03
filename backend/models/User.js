@@ -3,11 +3,11 @@ const mongoose = require("mongoose");
 const Userschema = new mongoose.Schema({
   phoneNumber: {
     type: String,
-    required: true,
+    // required: true,
   },
   firstName: {
     type: String,
-    required: true,
+    // required: true,
   },
   lastName: {
     type: String,
@@ -22,6 +22,8 @@ const Userschema = new mongoose.Schema({
   },
   role: {
     type: String,
+    required: true,
+    default: "user",
   },
   image: {
     type: String,

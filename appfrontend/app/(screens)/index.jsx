@@ -1,361 +1,491 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
+  ScrollView,
   StyleSheet,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+  TouchableOpacity,
+  ImageBackground,
+  Dimensions,
+  FlatList
+} from "react-native";
+import { useRouter } from "expo-router";
 
+// Import components
+import Navbar from "@/components/home/Navbar";
+import Footer from "@/components/home/Footer";
+import CustomerReviewCard from "@/components/home/CustomerReviewCard";
+import LoginPopup from "@/components/home/LoginPopup";
+import PropertyCard from "@/components/home/PropertyCard";
+import BuilderCard from "@/components/home/BuilderCard";
+import CardLayout from "@/components/home/Insights";
+import CityWiseReviews from "@/components/home/CityWiseReviews";
+import Upcoming from "@/components/home/upcoming";
+import EmergingLocalities from "@/components/home/EmergingLocalities";
+import Articles from "@/components/home/Articles";
+import PropertyTypeCarousel from "@/components/home/PropertyTypeCarousel";
+import SearchBar from "@/components/home/SearchBar";
+import AppointmentForm from "@/components/home/AppointmentForm";
+import BankingPartnersSection from "@/components/home/BankingPartnersSection";
+import RecentSearch from "@/components/home/RecentSearch";
+import StaffPerformanceCategories from "@/components/home/StaffPerformanceCategories";
+import { checkAuth } from "@/redux/Auth/AuthSlice";
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { checkAuth } from '@/redux/Auth/AuthSlice';
+import { Alert } from "react-native";
 
+const { width, height } = Dimensions.get('window');
+const PROPERTY_CARD_WIDTH = width * 0.95;
+const PROPERTY_CARD_MARGIN = 10;
+const PROPERTY_SIDE_SPACING = (width - PROPERTY_CARD_WIDTH) / 2;
+const AUTO_SCROLL_INTERVAL = 4000; // 4 seconds
 
-const LoginPopup = ({ onClose }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
+const HomePage = () => {
+  const [isLoginPopupVisible, setIsLoginPopupVisible] = useState(false);
+  const [properties, setProperties] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+
   const router = useRouter();
+  const propertyFlatListRef = useRef(null);
+  const autoScrollTimerRef = useRef(null);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const { authUser, userType } = useSelector((state) => state.auth);
 
 
-
-
-  useEffect(() => {
-    // Check authentication status on mount
-    dispatch(checkAuth());
-
-    // Redirect to role-specific screen if authenticated
-    if (authUser && userType) {
-      if (userType === 'admin') router.replace('/(admin)');
-      else if (userType === 'staff') router.replace('/(staff)');
-      else if (userType === 'user') router.replace('/(user)');
-    }
-  }, [authUser, userType, dispatch, router]);
-
-
-  const handleSubmit = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    if (!isLogin && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-    
+  const fetchProperties = async () => {
     try {
-      // Mock API call
-      await dispatch(checkAuth()).unwrap();
-      
-      Alert.alert(
-        'Success', 
-        isLogin ? 'Login successful!' : 'Account created successfully!',
-        [{ text: 'OK', onPress: onClose }]
-      );
+      const response = await fetch(`${BASE_URL}/api/allproperty`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch properties");
+      }
+
+      const result = await response.json();
+      setProperties(result);
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+      console.log("Error fetching property cards:", error);
     }
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setName('');
-    setPhone('');
+  // Auto-scroll functionality
+  const startAutoScroll = () => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+    }
+
+    autoScrollTimerRef.current = setInterval(() => {
+      if (isAutoScrollEnabled && properties.length > 0) {
+        setCurrentPropertyIndex((prevIndex) => {
+          const maxIndex = Math.min(properties.length, 6) - 1;
+          const nextIndex = prevIndex >= maxIndex ? 0 : prevIndex + 1;
+          
+          // Scroll to next property
+          const scrollPosition = nextIndex * (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN);
+          propertyFlatListRef.current?.scrollToOffset({
+            offset: scrollPosition,
+            animated: true,
+          });
+          
+          return nextIndex;
+        });
+      }
+    }, AUTO_SCROLL_INTERVAL);
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  };
+
+  // Start auto-scroll when properties are loaded
+  useEffect(() => {
+    if (properties.length > 0 && isAutoScrollEnabled) {
+      startAutoScroll();
+    }
+
+    return () => {
+      stopAutoScroll();
+    };
+  }, [properties, isAutoScrollEnabled]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
+
+
+
+  const renderPropertyItem = ({ item, index }) => {
+    return (
+      <View style={[
+        styles.propertyCardWrapper,
+        index === 0 && { marginLeft: PROPERTY_SIDE_SPACING },
+        index === properties.slice(0, 6).length - 1 && { marginRight: PROPERTY_SIDE_SPACING },
+        index > 0 && { marginLeft: PROPERTY_CARD_MARGIN }
+      ]}>
+        <TouchableOpacity
+          // onPress={() => handlePropertyPress(item._id)}
+          activeOpacity={0.7}
+        >
+          <PropertyCard
+            id={item._id}
+            title={item.title}
+            bhk={item.Bhk}
+            city={item.city}
+            price={item.price?.toString()}
+            area={item.area?.toString()}
+            images={item.images}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const onPropertyMomentumScrollEnd = ({ nativeEvent }) => {
+    const index = Math.round(nativeEvent.contentOffset.x / (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN));
+    const maxIndex = Math.min(properties.length, 6) - 1;
+    const newIndex = Math.max(0, Math.min(index, maxIndex));
+    setCurrentPropertyIndex(newIndex);
+  };
+
+  // Handle manual indicator press
+  const handleIndicatorPress = (index) => {
+    // Temporarily disable auto-scroll when user manually navigates
+    setIsAutoScrollEnabled(false);
+    setCurrentPropertyIndex(index);
+    
+    const scrollPosition = index * (PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN);
+    propertyFlatListRef.current?.scrollToOffset({
+      offset: scrollPosition,
+      animated: true,
+    });
+
+    // Re-enable auto-scroll after a delay
+    setTimeout(() => {
+      setIsAutoScrollEnabled(true);
+    }, 5000); // Resume auto-scroll after 5 seconds
+  };
+
+  // Handle touch events to pause auto-scroll during user interaction
+  const handleScrollBeginDrag = () => {
+    setIsAutoScrollEnabled(false);
+  };
+
+  const handleScrollEndDrag = () => {
+    // Resume auto-scroll after user finishes dragging
+    setTimeout(() => {
+      setIsAutoScrollEnabled(true);
+    }, 3000); // Resume after 3 seconds
   };
 
   return (
-    <Modal
-      visible={true}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView 
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <View style={styles.container}>
+      <ScrollView
+        style={[styles.pageContainer, isLoginPopupVisible && styles.blur]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+        <Navbar
+          onLoginClick={() => setIsLoginPopupVisible(true)}
+          onSearch={fetchProperties}
+        />
+
+        <View style={styles.heroContainer}>
+          <ImageBackground 
+            source={require('@/assets/images/bg.jpg')}
+            style={styles.heroBackground}
+            resizeMode="cover"
+          >
+            <View style={styles.heroOverlay}>
+              <View style={styles.searchWrapper}>
+                <SearchBar />
+              </View>
+            </View>
+          </ImageBackground>
+        </View>
+
+        <RecentSearch />
+        <PropertyTypeCarousel />
+
+        <View style={styles.popularProperties}>
+          <Text style={styles.heading}>POPULAR PROPERTIES</Text>
+          <View style={styles.propertyCarouselContainer}>
+            <FlatList
+              ref={propertyFlatListRef}
+              data={properties.slice(0, 6)}
+              renderItem={renderPropertyItem}
+              keyExtractor={(item) => item._id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={PROPERTY_CARD_WIDTH + PROPERTY_CARD_MARGIN}
+              decelerationRate="fast"
+              onMomentumScrollEnd={onPropertyMomentumScrollEnd}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              onScrollEndDrag={handleScrollEndDrag}
+              contentContainerStyle={styles.propertyCarousel}
+              pagingEnabled={false}
+              snapToAlignment="start"
+            />
           </View>
 
-          <View style={styles.form}>
-            {!isLogin && (
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color="#666" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder="Email Address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
+          <View style={styles.propertyIndicators}>
+            {properties.slice(0, 6).map((_, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.propertyIndicator,
+                  idx === currentPropertyIndex && styles.activePropertyIndicator,
+                ]}
+                onPress={() => handleIndicatorPress(idx)}
               />
-            </View>
-
-            {!isLogin && (
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color="#666" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Phone Number"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity 
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-              >
-                <Ionicons 
-                  name={showPassword ? "eye-off" : "eye"} 
-                  size={20} 
-                  color="#666" 
-                />
-              </TouchableOpacity>
-            </View>
-
-            {!isLogin && (
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#666" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-              </View>
-            )}
-
-            {isLogin && (
-              <TouchableOpacity style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity 
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              <Text style={styles.submitButtonText}>
-                {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Sign Up')}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-google" size={20} color="#db4437" />
-                <Text style={styles.socialButtonText}>Google</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-facebook" size={20} color="#3b5998" />
-                <Text style={styles.socialButtonText}>Facebook</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-              </Text>
-              <TouchableOpacity onPress={toggleMode}>
-                <Text style={styles.footerLink}>
-                  {isLogin ? 'Sign Up' : 'Login'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        <BankingPartnersSection />
+
+        <View style={styles.popularBuilders}>
+          <Text style={styles.heading}>POPULAR BUILDERS</Text>
+          <View style={styles.builderListings}>
+            {properties.slice(0, 1).map((builder) => (
+              <View key={builder._id} style={styles.builderCardWrapper}>
+                <BuilderCard
+                  name="MV Kiran Sooraj"
+                  properties="1500+ Properties"
+                  imageUrl={properties.images}
+                />
+                <BuilderCard name="Raj" properties="2000+ Properties" />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <Upcoming />
+        <CityWiseReviews />
+        <EmergingLocalities />
+
+        <View style={styles.insightsContainer}>
+          <CardLayout />
+        </View>
+
+        <View style={styles.happyCustomers}>
+          <Text style={styles.heading}>HAPPY CUSTOMERS</Text>
+          <Text style={styles.subheading}>HAPPY TRADE</Text>
+          <View style={styles.reviews}>
+            <CustomerReviewCard
+              imageSource={require("@/assets/images/reviewimage.png")}
+              name="Raghav"
+              review="I was blown away by the exceptional service I received from your website! The website was easy to navigate, and the real estate agents were knowledgeable and responsive. I found my dream home in no time, and the entire process was stress-free. I highly recommend this to anyone looking to buy or sell a property. Thanks a lot to the team of BasilAbode."
+            />
+            <CustomerReviewCard
+              imageSource={require("@/assets/images/reviewimage.png")}
+              name="Kishore"
+              review="As a first-time homebuyer, I was nervous about the process, but this made it a breeze! The website's resources and guides were incredibly helpful, and the agents were patient and understanding. I found my dream home in no time, and the entire process was stress-free. I felt supported every step of the way, and I couldn't be happier with my new home."
+            />
+            <CustomerReviewCard
+              imageSource={require("@/assets/images/reviewimage.png")}
+              name="Ravi"
+              review="I had a great experience using this real estate website. The search functionality was user-friendly, and the property listings were accurate and detailed. The customer support team was always available to assist me with any questions I had. I found the perfect property and closed the deal smoothly. I will definitely use this website again for future real estate needs!"
+            />
+          </View>
+        </View>
+
+        <StaffPerformanceCategories />
+        <Articles />
+        <Footer />
+      </ScrollView>
+
+      {isLoginPopupVisible && (
+        <View style={styles.modalOverlay}>
+          <LoginPopup onClose={() => setIsLoginPopupVisible(false)} />
+        </View>
+      )}
+
+      {isFormVisible && (
+        <View style={styles.modalOverlay}>
+          <AppointmentForm onClose={() => setIsFormVisible(false)} />
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.fixedIcon}
+        onPress={() => setIsFormVisible(!isFormVisible)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.fixedIconText}>Book an{"\n"}Appointment</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    width: '90%',
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  pageContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+  blur: {
+    opacity: 0.5,
+  },
+  heroContainer: {
+    height: height * 0.4,
+    position: 'relative',
+  },
+  heroBackground: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  searchWrapper: {
+    width: '100%',
     maxWidth: 400,
-    maxHeight: '80%',
+    alignItems: "center",
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  popularProperties: {
+    paddingVertical: 40,
+    backgroundColor: "#f8fafc",
+  },
+  popularBuilders: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  title: {
+  heading: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#1f2937",
+    letterSpacing: 1,
   },
-  closeButton: {
-    padding: 5,
-  },
-  form: {
-    padding: 20,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    paddingHorizontal: 15,
+  subheading: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
     marginBottom: 15,
-    backgroundColor: '#f9f9f9',
+    color: "#666",
   },
-  input: {
-    flex: 1,
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    fontSize: 16,
+  propertyCarouselContainer: {
+    alignItems: "center",
   },
-  eyeButton: {
-    padding: 5,
+  propertyCarousel: {
+    alignItems: "center",
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
+  propertyCardWrapper: {
+    width: PROPERTY_CARD_WIDTH,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  forgotPasswordText: {
-    color: '#007bff',
-    fontSize: 14,
+  propertyIndicators: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
   },
-  submitButton: {
-    backgroundColor: '#007bff',
-    borderRadius: 10,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginBottom: 20,
+  propertyIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#d1d5db",
+    marginHorizontal: 4,
   },
-  submitButtonDisabled: {
-    backgroundColor: '#ccc',
+  activePropertyIndicator: {
+    backgroundColor: "#667eea",
+    transform: [{ scale: 1.2 }],
   },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    paddingHorizontal: 15,
-    color: '#666',
-    fontSize: 14,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  autoScrollToggle: {
+    alignSelf: 'center',
+    marginTop: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    paddingVertical: 12,
-    gap: 8,
+    borderColor: '#d1d5db',
   },
-  socialButtonText: {
+  autoScrollToggleText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    color: '#374151',
+    fontWeight: '500',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  builderListings: {
     alignItems: 'center',
   },
-  footerText: {
-    color: '#666',
-    fontSize: 14,
+  builderCardWrapper: {
+    width: "100%",
+    marginBottom: 15,
+    gap: 10,
   },
-  footerLink: {
-    color: '#007bff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  insightsContainer: {
+    marginVertical: 10,
+  },
+  happyCustomers: {
+    padding: 20,
+    backgroundColor: "#f9f9f9",
+  },
+  reviews: {
+    gap: 20,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  fixedIcon: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007bff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 999,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fixedIconText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+    lineHeight: 16,
   },
 });
 
-export default LoginPopup;
+export default HomePage;

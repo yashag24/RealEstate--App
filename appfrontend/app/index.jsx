@@ -5,7 +5,7 @@ import { Link, Redirect } from "expo-router";
 export default function Index() {
   return (
     <View>
-      <Redirect href="/(screens)/(user)" />;
+      <Redirect href="/(screens)" />;
     </View>
     
 

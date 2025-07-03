@@ -8,6 +8,8 @@ const User = require('../models/User');
 exports.signup = async (req, res) => {
   try {
     const { email, password, role, ...otherFields } = req.body;
+        console.log('Signup request body:', req.body); // Log incoming data
+
 
     // Validate required fields
     if (!email || !password || !role) {
@@ -29,12 +31,12 @@ exports.signup = async (req, res) => {
         Model = Staff;
         userType = 'staff';
         userData.staffId = otherFields.staffId || `STAFF${Date.now()}`;
-        userData.fullName = otherFields.fullName || '';
+        userData.fullName = otherFields.name || '';
         break;
       case 'user':
         Model = User;
         userType = 'user';
-        userData.firstName = otherFields.firstName || '';
+        userData.firstName = otherFields.name || '';
         break;
       default:
         return res.status(400).json({ error: 'Invalid role specified' });
@@ -47,15 +49,30 @@ exports.signup = async (req, res) => {
     }
 
     // Create new user
+    console.log('Creating new user with data:', userData); // Log user data before saving
     const newUser = new Model(userData);
     await newUser.save();
 
     // Generate JWT
     const token = jwt.sign(
-      { id: newUser._id, userType },
+      { id: newUser._id, newUser },
       process.env.JWT_SECRET || 'your_jwt_secret',
       { expiresIn: '7d' }
     );
+
+
+    //     const token = "";
+    
+    // if (userType === 'admin') {
+    //   token = jwt.sign({ adminId: newUser.adminId }, SECRET);
+    // } else if (userType === 'staff') {
+    //   token = jwt.sign({ staffId: newUser.staffId }, SECRET);
+    // } else if(userType === 'user') {
+    //   token = jwt.sign({ id: newUser._id, userType }, SECRET);
+    // } else {
+    //   return res.status(500).json({ error: 'Failed to generate token' });
+    // }
+
 
     // Prepare response data
     const responseData = {

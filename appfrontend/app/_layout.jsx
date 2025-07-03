@@ -1,5 +1,5 @@
 // app/_layout.jsx or app/(screens)/_layout.jsx
-import { Stack } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
@@ -11,7 +11,6 @@ export default function RootLayout() {
     <Provider store={store}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* <Navbar /> */}
           <View style={styles.content}>
             <Stack
               screenOptions={{
@@ -19,7 +18,6 @@ export default function RootLayout() {
               }}
             />
           </View>
-          {/* <Footer /> */}
           <Toast />
         </View>
       </SafeAreaView>
