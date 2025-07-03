@@ -59,22 +59,22 @@ const AdminDashboard = () => {
         adminsRes,
         contractorsRes,
       ] = await Promise.all([
-        fetch(`${BASE_URL}/api/appointments`, {
+        fetch(${BASE_URL}/api/appointments, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }),
-        fetch(`${BASE_URL}/api/property/verification`),
-        fetch(`${BASE_URL}/api/reviews/get-all-reviews`),
-        fetch(`${BASE_URL}/api/enquiry/get-all-enquiry`),
-        fetch(`${BASE_URL}/api/admin`, {
+        fetch(${BASE_URL}/api/property/verification),
+        fetch(${BASE_URL}/api/reviews/get-all-reviews),
+        fetch(${BASE_URL}/api/enquiry/get-all-enquiry),
+        fetch(${BASE_URL}/api/admin, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }),
-        fetch(`${BASE_URL}/api/contractor/`, {
+        fetch(${BASE_URL}/api/contractor/, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }),
       ]);
@@ -149,11 +149,11 @@ const AdminDashboard = () => {
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/appointments/${id}`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/appointments/${id},
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }
       );
@@ -182,7 +182,7 @@ const AdminDashboard = () => {
   const handleAcceptProperty = async (id) => {
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/accept`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/accept,
         { method: 'PUT' }
       );
       const result = await response.json();
@@ -203,7 +203,7 @@ const AdminDashboard = () => {
   const handleRejectProperty = async (id) => {
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/reject`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/property/${id}/reject,
         { method: 'PUT' }
       );
       const result = await response.json();
@@ -239,11 +239,11 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('authToken');
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/admin/${adminId}`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/admin/${adminId},
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }
       );
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
   const handleDeleteEnquiry = async (enquiryId) => {
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/enquiry/${enquiryId}/delete`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/enquiry/${enquiryId}/delete,
         { method: 'DELETE' }
       );
 
@@ -316,11 +316,11 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/verify/${id}`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/verify/${id},
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }
       );
@@ -347,11 +347,11 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/${id}`,
+        ${process.env.EXPO_PUBLIC_API_BASE_URL}/api/contractor/${id},
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }
       );
