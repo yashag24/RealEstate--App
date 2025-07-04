@@ -25,7 +25,7 @@ const PropertyCard = ({
   const router = useRouter();
 
   const handleViewPress = () => {
-    router.push(`/propertyDetails/${id}`);
+    router.push(`(screens)/(property)/propertyDetails/${id}`);
   };
 
   const formatPrice = (price) => {

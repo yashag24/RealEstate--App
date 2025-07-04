@@ -175,7 +175,7 @@ const SearchBar = () => {
       }),
     ]).start();
     setSelectedOpt(option.label);
-    router.push(option.path);
+    router.replace(option.path);
   };
 
   // Enhanced modal animation
@@ -294,7 +294,7 @@ const SearchBar = () => {
       dispatch(handleCity(capitalizedCity));
       const cityQuery = `city=${encodeURIComponent(capitalizedCity)}&query=${encodeURIComponent(searchCity)}`;
       const fullQuery = `${cityQuery}&type=${encodeURIComponent(selectedOpt)}`;
-      router.push(`/propertyListing?${fullQuery}`);
+      router.replace(`/propertyListing?${fullQuery}`);
       setIsSearching(false);
       stopRotation();
       setShowSuggestions(false);

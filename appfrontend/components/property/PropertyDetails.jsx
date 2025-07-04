@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { jwtDecode } from "jwt-decode";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router"; // Add this import
 const { width: screenWidth } = Dimensions.get("window");
 import { LocationSection } from "./SectionLocation";
 import { LoanSection } from "./SectionLoan";
@@ -25,7 +25,7 @@ import { ImageGallery } from "./SectionImageGallery";
 import { PropertyHeaderSection } from "./SectionPropertyHeader";
 import { PropertyDescriptionSection } from "./SectionPropertyDescription";
 export const PropertyDetails = ({ property }) => {
-  const navigation = useNavigation(); // Add this hook
+ const router = useRouter(); // Use Expo Router's hook
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState("");
   const [reviews, setReviews] = useState([]);
@@ -49,7 +49,7 @@ export const PropertyDetails = ({ property }) => {
   };
   // Add back button handler
   const handleGoBack = () => {
-    navigation.goBack();
+       router.back();
   };
   const handleSaveProperty = async () => {
     try {
