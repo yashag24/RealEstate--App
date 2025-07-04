@@ -23,9 +23,14 @@ const VerifyPropertiesForm = ({
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.container}
+    >
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#007bff" />
+        </View>
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : properties.length === 0 ? (
@@ -96,44 +101,46 @@ const VerifyPropertiesForm = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    padding: 16,
+    alignItems: "center",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 35,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    padding: 24,
     width: '100%',
     maxWidth: 550,
     elevation: 4, // Android shadow
     shadowColor: '#000', // iOS shadow
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    margin: 12,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginBottom: 20,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 28,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '600',
     color: '#2a2a2a',
-    textAlign: 'left',
     flex: 1,
+    paddingRight: 10,
   },
   status: {
     fontSize: 12,
     fontWeight: '600',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 8,
     textTransform: 'uppercase',
     color: 'white',
@@ -147,59 +154,44 @@ const styles = StyleSheet.create({
   rejected: {
     backgroundColor: '#dc3545',
   },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10, // You might need to use margin on children instead
-    marginBottom: 8,
-  },
   buttons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
-    width: '100%',
+    marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    marginHorizontal: 5,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
   },
   acceptBtn: {
-    width: '48%',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     backgroundColor: '#d4edda',
-    color: '#155724',
     borderWidth: 1,
     borderColor: '#c3e6cb',
-    borderRadius: 6,
-    fontWeight: '500',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   rejectBtn: {
-    width: '48%',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     backgroundColor: '#f8d7da',
-    color: '#721c24',
     borderWidth: 1,
     borderColor: '#f5c6cb',
-    borderRadius: 6,
-    fontWeight: '500',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   buttonText: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#333',
   },
   infoGroup: {
     marginTop: 10,
   },
   infoRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   label: {
     fontWeight: '600',
     color: '#444',
-    width: 100,
+    width: 110,
     textAlign: 'right',
     marginRight: 10,
   },
@@ -210,17 +202,16 @@ const styles = StyleSheet.create({
   message: {
     textAlign: 'center',
     marginVertical: 40,
-    fontSize: 26,
+    fontSize: 20,
     fontWeight: '600',
     color: '#555',
   },
   error: {
     color: 'red',
-    textAlign: 'left',
+    textAlign: 'center',
     fontWeight: 'bold',
     marginVertical: 20,
   },
 });
-
 
 export default VerifyPropertiesForm;

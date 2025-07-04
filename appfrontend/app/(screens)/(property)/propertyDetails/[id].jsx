@@ -1,6 +1,6 @@
 // app/(screens)/propertyDetails/[id].jsx
 // import React from 'react';
-// import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+// import { View, Text, StyleSheet, , Image } from 'react-native';
 // import { useLocalSearchParams } from 'expo-router';
 
 // const PropertyDetailsScreen = () => {
