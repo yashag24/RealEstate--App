@@ -1,5 +1,4 @@
-// Keep all the imports as in your original code
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -14,6 +13,8 @@ import {
   SafeAreaView,
   Keyboard,
   Vibration,
+  StatusBar,
+  Easing,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -56,11 +57,23 @@ const SearchBar = () => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [modalClosing, setModalClosing] = useState(false);
+  const [searchContainerLayout, setSearchContainerLayout] = useState({ y: 0, height: 0 });
 
+  // Enhanced animation values
   const [scaleAnim] = useState(new Animated.Value(1));
   const [slideAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [rotateAnim] = useState(new Animated.Value(0));
+  const [backdropAnim] = useState(new Animated.Value(0));
+  const [modalContentAnim] = useState(new Animated.Value(0));
+  const [chevronRotateAnim] = useState(new Animated.Value(0));
+  const [dropdownScaleAnim] = useState(new Animated.Value(1));
+
+  // Refs for animation control
+  const modalAnimationRef = useRef(null);
+  const chevronAnimationRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", (event) => {
@@ -89,12 +102,54 @@ const SearchBar = () => {
         toValue: filtered.length > 0 ? 1 : 0,
         duration: 200,
         useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
       }).start();
     } else {
       setShowSuggestions(false);
       setFilteredSuggestions([]);
     }
   }, [searchCity, city, fadeAnim]);
+
+  // Measure search container layout
+  const onSearchContainerLayout = (event) => {
+    const { y, height } = event.nativeEvent.layout;
+    setSearchContainerLayout({ y, height });
+  };
+
+  // Calculate suggestions container position
+  const getSuggestionsPosition = () => {
+    if (keyboardHeight > 0) {
+      // When keyboard is up, position suggestions above the search bar
+      const availableSpaceAbove = searchContainerLayout.y;
+      const suggestionsHeight = Math.min(180, filteredSuggestions.length * 44); // 44 is approximate item height
+      
+      if (availableSpaceAbove >= suggestionsHeight + 10) {
+        // Enough space above, show suggestions above the search bar
+        return {
+          top: undefined,
+          bottom: height - searchContainerLayout.y + 5,
+          maxHeight: Math.min(180, availableSpaceAbove - 10),
+        };
+      } else {
+        // Not enough space above, show below but limit height to available space
+        const availableSpaceBelow = height - keyboardHeight - (searchContainerLayout.y + searchContainerLayout.height);
+        return {
+          top: searchContainerLayout.height + 5,
+          bottom: undefined,
+          maxHeight: Math.min(180, availableSpaceBelow - 10),
+        };
+      }
+    } else {
+      // When keyboard is down, show suggestions below the search bar
+      return {
+        top: searchContainerLayout.height + 5,
+        bottom: undefined,
+        maxHeight: 180,
+      };
+    }
+  };
+
+  const suggestionsPosition = getSuggestionsPosition();
 
   const tabOptions = [
     { label: "Buy", path: "/properties/sell" },
@@ -110,46 +165,104 @@ const SearchBar = () => {
         toValue: 0.95,
         duration: 100,
         useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
         duration: 100,
         useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
       }),
     ]).start();
     setSelectedOpt(option.label);
     router.push(option.path);
   };
 
+  // Enhanced modal animation
   useEffect(() => {
     if (showCityModal) {
-      Animated.parallel([
+      setModalClosing(false);
+      // Animate chevron rotation
+      Animated.timing(chevronRotateAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }).start();
+
+      // Animate dropdown scale
+      Animated.timing(dropdownScaleAnim, {
+        toValue: 1.02,
+        duration: 150,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }).start(() => {
+        Animated.timing(dropdownScaleAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }).start();
+      });
+
+      // Enhanced modal opening animation
+      modalAnimationRef.current = Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }),
         Animated.timing(slideAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 400,
           useNativeDriver: true,
+          easing: Easing.out(Easing.bezier(0.25, 0.46, 0.45, 0.94)),
         }),
-        Animated.timing(fadeAnim, {
+        Animated.timing(modalContentAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 450,
           useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
         }),
-      ]).start();
+      ]);
+      modalAnimationRef.current.start();
     } else {
-      Animated.parallel([
+      setModalClosing(true);
+      // Animate chevron back
+      Animated.timing(chevronRotateAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }).start();
+
+      // Enhanced modal closing animation
+      modalAnimationRef.current = Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.cubic),
+        }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true,
+          easing: Easing.in(Easing.bezier(0.55, 0.06, 0.68, 0.19)),
         }),
-        Animated.timing(fadeAnim, {
+        Animated.timing(modalContentAnim, {
           toValue: 0,
           duration: 250,
           useNativeDriver: true,
+          easing: Easing.in(Easing.cubic),
         }),
-      ]).start();
+      ]);
+      modalAnimationRef.current.start(() => {
+        setModalClosing(false);
+      });
     }
-  }, [showCityModal, slideAnim, fadeAnim]);
+  }, [showCityModal]);
 
   const startRotation = () => {
     Animated.loop(
@@ -157,6 +270,7 @@ const SearchBar = () => {
         toValue: 1,
         duration: 1000,
         useNativeDriver: true,
+        easing: Easing.linear,
       })
     ).start();
   };
@@ -180,7 +294,7 @@ const SearchBar = () => {
       dispatch(handleCity(capitalizedCity));
       const cityQuery = `city=${encodeURIComponent(capitalizedCity)}&query=${encodeURIComponent(searchCity)}`;
       const fullQuery = `${cityQuery}&type=${encodeURIComponent(selectedOpt)}`;
-      router.push(`/property-listings-page?${fullQuery}`);
+      router.push(`/propertyListing?${fullQuery}`);
       setIsSearching(false);
       stopRotation();
       setShowSuggestions(false);
@@ -209,33 +323,83 @@ const SearchBar = () => {
     Keyboard.dismiss();
   };
 
+  const selectCity = (selectedCity) => {
+    // Add selection feedback animation
+    Animated.sequence([
+      Animated.timing(dropdownScaleAnim, {
+        toValue: 1.05,
+        duration: 100,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(dropdownScaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+
+    setCity(selectedCity);
+    setSearchCity("");
+    closeModal();
+    
+    if (Platform.OS === "ios") {
+      Vibration.vibrate(10);
+    }
+  };
+
   const rotation = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
 
-  return (
-  
-      <View style={styles.container}>
-        <Animated.View style={[styles.tabRow, { transform: [{ scale: scaleAnim }] }]}>
-          {tabOptions.map((option) => (
-            <TouchableOpacity
-              key={option.label}
-              style={[styles.tab, selectedOpt === option.label && styles.tabActive]}
-              onPress={() => switchTab(option)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[styles.tabText, selectedOpt === option.label && styles.tabTextActive]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
+  const chevronRotation = chevronRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
 
-        <View style={styles.searchWrapper}>
-          <View style={styles.searchContainer}>
+  const modalTranslateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [height * 0.75, 0],
+  });
+
+  const modalScale = modalContentAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.95, 1],
+  });
+
+  const backdropOpacity = backdropAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.94],
+  });
+
+  return (
+    <View style={styles.container}>
+      <Animated.View style={[styles.tabRow, { transform: [{ scale: scaleAnim }] }]}>
+        {tabOptions.map((option) => (
+          <TouchableOpacity
+            key={option.label}
+            style={[styles.tab, selectedOpt === option.label && styles.tabActive]}
+            onPress={() => switchTab(option)}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[styles.tabText, selectedOpt === option.label && styles.tabTextActive]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </Animated.View>
+
+      <View style={styles.searchWrapper}>
+        <View 
+          style={styles.searchContainer}
+          ref={searchContainerRef}
+          onLayout={onSearchContainerLayout}
+        >
+          <Animated.View style={{ transform: [{ scale: dropdownScaleAnim }] }}>
             <TouchableOpacity
               style={[styles.dropdown, city && styles.dropdownSelected]}
               onPress={() => setShowCityModal(true)}
@@ -249,194 +413,195 @@ const SearchBar = () => {
               <Text style={[styles.dropdownText, !city && styles.placeholder]}>
                 {city || "City"}
               </Text>
-              <Ionicons name="chevron-down" size={12} color="#666" />
+              <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+                <Ionicons name="chevron-down" size={12} color="#666" />
+              </Animated.View>
             </TouchableOpacity>
+          </Animated.View>
 
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Search locality..."
-                placeholderTextColor="#999"
-                value={searchCity}
-                onChangeText={setSearchCity}
-                onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)}
-                returnKeyType="search"
-                onSubmitEditing={handleSearch}
-                autoCorrect={false}
-                autoCapitalize="words"
-                clearButtonMode="while-editing"
-              />
-              {searchCity.length > 0 && Platform.OS === "android" && (
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={clearSearch}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close-circle" size={16} color="#999" />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.searchButton, isSearching && styles.searchButtonLoading]}
-              onPress={handleSearch}
-              disabled={isSearching}
-              activeOpacity={0.7}
-            >
-              {isSearching ? (
-                <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-                  <Ionicons name="refresh" size={16} color="#fff" />
-                </Animated.View>
-              ) : (
-                <Ionicons name="search" size={16} color="#fff" />
-              )}
-            </TouchableOpacity>
+          <View style={styles.textInputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Search locality..."
+              placeholderTextColor="#999"
+              value={searchCity}
+              onChangeText={setSearchCity}
+              onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)}
+              returnKeyType="search"
+              onSubmitEditing={handleSearch}
+              autoCorrect={false}
+              autoCapitalize="words"
+              clearButtonMode="while-editing"
+            />
+            {searchCity.length > 0 && Platform.OS === "android" && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={clearSearch}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={16} color="#999" />
+              </TouchableOpacity>
+            )}
           </View>
 
-          {showSuggestions && (
-            <Animated.View
-              style={[
-                styles.suggestionsContainer,
-                {
-                  opacity: fadeAnim,
-                  bottom: keyboardHeight > 0 ? keyboardHeight - 50 : "auto",
-                  top: keyboardHeight > 0 ? "auto" : 65,
-                },
-              ]}
-            >
-              <ScrollView
-                style={styles.suggestionsList}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-              >
-                {filteredSuggestions.map((suggestion, index) => (
-                  <TouchableOpacity
-                    key={`${suggestion}-${index}`}
-                    style={[
-                      styles.suggestionItem,
-                      index === filteredSuggestions.length - 1 && styles.lastSuggestionItem,
-                    ]}
-                    onPress={() => selectSuggestion(suggestion)}
-                    activeOpacity={0.6}
-                  >
-                    <Ionicons name="location" size={14} color="#007bff" />
-                    <Text style={styles.suggestionText} numberOfLines={1}>
-                      {suggestion}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </Animated.View>
-          )}
+          <TouchableOpacity
+            style={[styles.searchButton, isSearching && styles.searchButtonLoading]}
+            onPress={handleSearch}
+            disabled={isSearching}
+            activeOpacity={0.7}
+          >
+            {isSearching ? (
+              <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+                <Ionicons name="refresh" size={16} color="#fff" />
+              </Animated.View>
+            ) : (
+              <Ionicons name="search" size={16} color="#fff" />
+            )}
+          </TouchableOpacity>
         </View>
 
-        <Modal
-          visible={showCityModal}
-          transparent
-          animationType="none"
-          statusBarTranslucent={true}
-          onRequestClose={closeModal}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={closeModal}
+        {showSuggestions && (
+          <Animated.View
+            style={[
+              styles.suggestionsContainer,
+              {
+                opacity: fadeAnim,
+                top: suggestionsPosition.top,
+                bottom: suggestionsPosition.bottom,
+                maxHeight: suggestionsPosition.maxHeight,
+              },
+            ]}
           >
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [height, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-              onStartShouldSetResponder={() => true}
+            <ScrollView
+              style={styles.suggestionsList}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
             >
-              <View style={styles.modalHandle} />
-              <View style={styles.modalHeader}>
-                <View style={styles.modalHeaderContent}>
-                  <Ionicons name="location" size={20} color="#007bff" />
-                  <Text style={styles.modalTitle}>Select City</Text>
-                </View>
-                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                  <Ionicons name="close" size={20} color="#333" />
+              {filteredSuggestions.map((suggestion, index) => (
+                <TouchableOpacity
+                  key={`${suggestion}-${index}`}
+                  style={[
+                    styles.suggestionItem,
+                    index === filteredSuggestions.length - 1 && styles.lastSuggestionItem,
+                  ]}
+                  onPress={() => selectSuggestion(suggestion)}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="location" size={14} color="#007bff" />
+                  <Text style={styles.suggestionText} numberOfLines={1}>
+                    {suggestion}
+                  </Text>
                 </TouchableOpacity>
-              </View>
-              <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-                <Text style={styles.sectionTitle}>Popular Cities</Text>
-                {["All", ...locations.slice(0, 6)].map((loc) => (
-                  <TouchableOpacity
-                    key={loc}
-                    style={[styles.modalItem, city === loc && styles.selectedItem]}
-                    onPress={() => {
-                      setCity(loc);
-                      setSearchCity("");
-                      closeModal();
-                    }}
-                  >
-                    <View style={styles.modalItemContent}>
-                      <Text
-                        style={[
-                          styles.modalItemText,
-                          city === loc && styles.selectedItemText,
-                        ]}
-                      >
-                        {loc}
-                      </Text>
-                      {city === loc && (
-                        <Ionicons name="checkmark-circle" size={16} color="#007bff" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-                <Text style={styles.sectionTitle}>Other Cities</Text>
-                {locations.slice(6).map((loc) => (
-                  <TouchableOpacity
-                    key={loc}
-                    style={[styles.modalItem, city === loc && styles.selectedItem]}
-                    onPress={() => {
-                      setCity(loc);
-                      setSearchCity("");
-                      closeModal();
-                    }}
-                  >
-                    <View style={styles.modalItemContent}>
-                      <Text
-                        style={[
-                          styles.modalItemText,
-                          city === loc && styles.selectedItemText,
-                        ]}
-                      >
-                        {loc}
-                      </Text>
-                      {city === loc && (
-                        <Ionicons name="checkmark-circle" size={16} color="#007bff" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-                <View style={{ height: 40 }} />
-              </ScrollView>
-            </Animated.View>
-          </TouchableOpacity>
-        </Modal>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        )}
       </View>
 
+      <Modal
+        visible={showCityModal}
+        transparent
+        animationType="none"
+        statusBarTranslucent={true}
+        onRequestClose={closeModal}
+      >
+        <Animated.View
+          style={[
+            styles.modalOverlay,
+            {
+              opacity: backdropOpacity,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFillObject}
+            activeOpacity={1}
+            onPress={closeModal}
+          />
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [
+                  { translateY: modalTranslateY },
+                  { scale: modalScale },
+                ],
+              },
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderContent}>
+                <Ionicons name="location" size={20} color="#007bff" />
+                <Text style={styles.modalTitle}>Select City</Text>
+              </View>
+              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                <Ionicons name="close" size={20} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              style={styles.modalBody} 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 50 }}
+            >
+              <Text style={styles.sectionTitle}>Popular Cities</Text>
+              {["All", ...locations.slice(0, 6)].map((loc) => (
+                <TouchableOpacity
+                  key={loc}
+                  style={[styles.modalItem, city === loc && styles.selectedItem]}
+                  onPress={() => selectCity(loc)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.modalItemContent}>
+                    <Text
+                      style={[
+                        styles.modalItemText,
+                        city === loc && styles.selectedItemText,
+                      ]}
+                    >
+                      {loc}
+                    </Text>
+                    {city === loc && (
+                      <Ionicons name="checkmark-circle" size={16} color="#007bff" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <Text style={styles.sectionTitle}>Other Cities</Text>
+              {locations.slice(6).map((loc) => (
+                <TouchableOpacity
+                  key={loc}
+                  style={[styles.modalItem, city === loc && styles.selectedItem]}
+                  onPress={() => selectCity(loc)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.modalItemContent}>
+                    <Text
+                      style={[
+                        styles.modalItemText,
+                        city === loc && styles.selectedItemText,
+                      ]}
+                    >
+                      {loc}
+                    </Text>
+                    {city === loc && (
+                      <Ionicons name="checkmark-circle" size={16} color="#007bff" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <View style={{ height: 30 }} />
+            </ScrollView>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: "transparent",
-  },
   container: {
     alignItems: "center",
     paddingHorizontal: 8,
@@ -447,8 +612,8 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     width: "97%",
     maxWidth: 350,
-    height: "90%",
-    maxHeight: 100,
+    height: "auto",
+    minHeight: 100,
     alignSelf: "center",
     ...Platform.select({
       ios: {
@@ -512,6 +677,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     gap: 4,
     minHeight: 36,
+    minWidth: 110,
   },
   dropdownSelected: {
     borderColor: "#007bff",
@@ -568,8 +734,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     backgroundColor: "#fff",
     borderRadius: 8,
-    maxHeight: 180,
-    top: 65,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -583,7 +747,7 @@ const styles = StyleSheet.create({
     }),
   },
   suggestionsList: {
-    maxHeight: 180,
+    flexGrow: 0,
   },
   suggestionItem: {
     flexDirection: "row",
@@ -593,6 +757,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+    minHeight: 44,
   },
   lastSuggestionItem: {
     borderBottomWidth: 0,
@@ -611,7 +776,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: height * 0.8,
+    height: height * 0.75,
     paddingTop: 8,
     ...Platform.select({
       ios: {
@@ -660,6 +825,7 @@ const styles = StyleSheet.create({
   modalBody: {
     paddingHorizontal: 14,
     flex: 1,
+    paddingBottom: 20,
   },
   sectionTitle: {
     fontSize: 12,
@@ -671,9 +837,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   modalItem: {
-    paddingVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#f8f9fa",
+    minHeight: 45,
   },
   selectedItem: {
     backgroundColor: "#e3f2fd",
@@ -687,9 +855,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   modalItemText: {
-    fontSize: 13,
+    fontSize: 15,
     color: "#333",
     fontWeight: "500",
+    lineHeight: 20,
   },
   selectedItemText: {
     color: "#007bff",
