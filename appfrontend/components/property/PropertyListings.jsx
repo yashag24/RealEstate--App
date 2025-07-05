@@ -3,12 +3,13 @@ import {
   Text,
   StyleSheet,
   Alert,
-  Pressable
+  Pressable,
+  ScrollView
 } from 'react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import PropertyCard from '../home/PropertyCard';
-import SortandFilter from './SortandFilter';
+import FiltersSection from './FiltersSection';
 import Footer from '../home/Footer';
 
 const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
@@ -80,9 +81,9 @@ const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
   }, [cityParam, queryParam, fetchProperties]);
 
   return (
-    <View style={styles.propertyListingsPage}>
+    <ScrollView style={styles.propertyListingsPage}>
       <View style={styles.sortAndFilterParent}>
-        <SortandFilter />
+        <FiltersSection />
 
         {loading ? (
           <Text>Loading Properties...</Text>
@@ -149,7 +150,7 @@ const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
         )}
       </View>
       <Footer />
-    </View>
+    </ScrollView>
   );
 };
 
