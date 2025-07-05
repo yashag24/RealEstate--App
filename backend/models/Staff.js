@@ -29,7 +29,7 @@ const staffSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["appointment_manager", "verifier", "support"],
+      enum: ["appointment_manager", "verifier", "support", "staff"],
       default: "appointment_manager",
     },
     appointmentsHandled: [
