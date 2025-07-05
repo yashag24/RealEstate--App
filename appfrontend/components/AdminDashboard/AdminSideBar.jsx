@@ -5,92 +5,282 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
+  Modal,
+  Dimensions,
+  Platform,
+  SafeAreaView
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+
+const { width, height } = Dimensions.get('window');
+const isTablet = width >= 768;
 
 const AdminSideBar = ({
   activeSection,
   handleSectionChange,
+  handleShowModal,
   handleLogout,
+  isLoggingOut,
+  sidebarVisible,
+  setSidebarVisible
 }) => {
   const menuItems = [
-    { label: "Admin Profile", key: "adminProfile" },
-    { label: "Users Detail", key: "adminDashUserDetails" },
-    { label: "Appointments Management", key: "appointments" },
-    { label: "Property Verification", key: "propertyVerification" },
-    { label: "Reviews Management", key: "reviews" },
-    { label: "Enquiries Management", key: "enquiries" },
-    { label: "Admins", key: "adminsList" },
-    { label: "Staff Management", key: "staffManagement" },
+    { label: "Admin Profile", key: "adminProfile", icon: "person" },
+    { label: "Users Detail", key: "adminDashUserDetails", icon: "people" },
+    { label: "Appointments", key: "appointments", icon: "calendar" },
+    { label: "Property Verification", key: "propertyVerification", icon: "home" },
+    { label: "Reviews", key: "reviews", icon: "star" },
+    { label: "Enquiries", key: "enquiries", icon: "mail" },
+    { label: "Admins", key: "adminsList", icon: "shield" },
+    { label: "Staff Management", key: "staffManagement", icon: "people-circle" },
   ];
 
-  return (
-    <ScrollView style={styles.sidebar}>
-      {menuItems.map((item) => (
-        <TouchableOpacity
-          key={item.key}
-          onPress={() => handleSectionChange(item.key)}
-          style={[
-            styles.sidebarText,
-            activeSection === item.key && styles.activeSidebarText,
-          ]}
-        >
-          <Text
+  const SidebarContent = () => (
+    <SafeAreaView style={styles.sidebarContainer}>
+      <View style={styles.sidebarHeader}>
+        {!isTablet && (
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setSidebarVisible(false)}
+          >
+            <Ionicons name="close" size={24} color="#4b5563" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>Admin Panel</Text>
+      </View>
+
+      <ScrollView style={styles.sidebar} showsVerticalScrollIndicator={false}>
+        {menuItems.map((item) => (
+          <TouchableOpacity
+            key={item.key}
+            onPress={() => handleSectionChange(item.key)}
             style={[
-              styles.text,
-              activeSection === item.key && styles.activeText,
+              styles.menuItem,
+              activeSection === item.key && styles.activeMenuItem
             ]}
           >
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Ionicons 
+              name={item.icon} 
+              size={20} 
+              color={activeSection === item.key ? "#ffffff" : "#4b5563"} 
+              style={styles.icon}
+            />
+            <Text style={[
+              styles.menuText,
+              activeSection === item.key && styles.activeMenuText
+            ]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
 
-      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-        <Text style={styles.logoutText}>Logout</Text>
+        {/* Add Admin Button */}
+        <TouchableOpacity 
+          onPress={() => {
+            handleShowModal();
+            if (!isTablet) setSidebarVisible(false);
+          }}
+          style={styles.addAdminButton}
+        >
+          <Ionicons name="add-circle" size={20} color="#ffffff" />
+          <Text style={styles.addAdminText}>Add Admin</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Logout Button */}
+      <TouchableOpacity 
+        onPress={() => {
+          handleLogout();
+          if (!isTablet) setSidebarVisible(false);
+        }}
+        style={styles.logoutButton}
+        disabled={isLoggingOut}
+      >
+        {isLoggingOut ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <>
+            <Ionicons name="log-out-outline" size={20} color="#ffffff" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </>
+        )}
       </TouchableOpacity>
-    </ScrollView>
+    </SafeAreaView>
+  );
+
+  if (isTablet) {
+    // For tablets and larger screens, show sidebar directly
+    return <SidebarContent />;
+  }
+
+  // For mobile phones, show sidebar in a modal
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      <TouchableOpacity
+        style={styles.menuButton}
+        onPress={() => setSidebarVisible(true)}
+      >
+        <Ionicons name="menu" size={24} color="#4b5563" />
+      </TouchableOpacity>
+
+      {/* Mobile Sidebar Modal */}
+      <Modal
+        visible={sidebarVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSidebarVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <SidebarContent />
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  sidebar: {
-    width: "100%",
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    backgroundColor: "#f0f4f8",
+  sidebarContainer: {
+    width: isTablet ? 250 : '100%',
+    backgroundColor: "#f3f4f6",
+    borderRightWidth: isTablet ? 1 : 0,
+    borderRightColor: "#e5e7eb",
+    flex: 1,
+    maxHeight: height
   },
-  sidebarText: {
+  sidebarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: isTablet ? "center" : "space-between",
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    backgroundColor: "#ffffff"
   },
-  activeSidebarText: {
-    backgroundColor: "#2563eb",
+  closeButton: {
+    padding: 4,
   },
-  text: {
-    fontSize: 16,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#1f2937",
-    fontWeight: "500",
+    flex: isTablet ? 0 : 1,
+    textAlign: isTablet ? "center" : "left"
   },
-  activeText: {
+  sidebar: {
+    paddingVertical: 16,
+    flex: 1
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginHorizontal: 8,
+    marginVertical: 2,
+    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1
+  },
+  activeMenuItem: {
+    backgroundColor: "#3b82f6",
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  icon: {
+    marginRight: 12,
+  },
+  menuText: {
+    fontSize: 14,
+    color: "#4b5563",
+    fontWeight: "500",
+    flex: 1
+  },
+  activeMenuText: {
     color: "#ffffff",
+    fontWeight: "600"
+  },
+  addAdminButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#10b981",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginHorizontal: 8,
+    marginTop: 16,
+    marginBottom: 8,
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  addAdminText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8
   },
   logoutButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    backgroundColor: "#dc2626",
-    borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ef4444",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginHorizontal: 8,
+    borderRadius: 10,
+    marginBottom: Platform.OS === 'ios' ? 34 : 16,
+    shadowColor: "#ef4444",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3
   },
   logoutText: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
+    marginLeft: 8
   },
+  menuButton: {
+    position: "absolute",
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 16,
+    zIndex: 1000,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start"
+  },
+  modalContent: {
+    width: width * 0.8,
+    maxWidth: 300,
+    height: "100%",
+    backgroundColor: "#f3f4f6"
+  }
 });
 
 export default AdminSideBar;

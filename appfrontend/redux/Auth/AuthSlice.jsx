@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
+// import { createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 console.log('BASE_URL:', BASE_URL);
 
@@ -127,17 +127,19 @@ export const initializeAuth = () => async (dispatch) => {
 };
 
 
-export const performLogout = () => async (dispatch) => {
-  try {
-    await AsyncStorage.removeItem('authToken');
-    dispatch(logout());
-    console.log('Logout successful: Token cleared and state reset');
-  } catch (error) {
-    console.error('Error during logout:', error);
-    // Still dispatch logout to ensure state is reset even if AsyncStorage fails
-    dispatch(logout());
+export const performLogout = createAsyncThunk(
+  'auth/logout',
+  async (_, { dispatch }) => {
+    try {
+      await AsyncStorage.removeItem('authToken');
+      dispatch(logout()); // Call your existing logout reducer
+      return true;
+    } catch (error) {
+      console.error('Error during logout:', error);
+      throw error;
+    }
   }
-};
+);
 
 
 export default authSlice.reducer;
