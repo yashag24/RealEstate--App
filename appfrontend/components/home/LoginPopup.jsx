@@ -15,6 +15,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '../../toastConfig.js'; // Adjust the path as necessary
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import { initializeAuth, login, signup } from '@/redux/Auth/AuthSlice';
@@ -83,11 +85,17 @@ const LoginPopup = ({ visible = true, onClose }) => {
       
       // Show success message
       if (userType === "admin") {
-        router.push("/(screens)/admin");
+        requestAnimationFrame(() => {
+          router.push("/(screens)/admin");
+      });
       } else if (userType === "staff") {
-        router.push("/(screens)/staff");
+        requestAnimationFrame(() => {
+          router.push("/(screens)/staff");
+      });
       } else if (userType === "user") {
-        router.push("/(screens)/user");
+        requestAnimationFrame(() => {
+          router.push("/(screens)/user");
+      });
       }
 
       onClose?.();
@@ -187,30 +195,82 @@ const LoginPopup = ({ visible = true, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors below and try again.');
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    Toast.show({
+      type: 'error',
+      text1: 'Validation Error',
+      text2: 'Please fix the errors and try again.',
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  let credentials;
+
+ try {
+  if (isLogin) {
+    credentials = { email, password };
+    const res =  await dispatch(login(credentials));
+
+    if (res?.error || res?.payload?.error) {
+      const errorMessage =
+        res?.error?.message ||
+        res?.payload?.error ||
+        res?.payload?.message ||
+        'Invalid credentials';
+
+      Toast.show({
+        type: 'error',
+        text1: 'Login Failed',
+        text2: errorMessage,
+      });
+
       return;
     }
 
-    setLoading(true);
-    
-    let credentials;
-    
-    if (isLogin) {
-      credentials = { email, password };
-      dispatch(login(credentials));
-    } else {
-      credentials = {
-        email,
-        password,
-        name,
-        role
-      };
-      dispatch(signup(credentials));
+    Toast.show({
+      type: 'success',
+      text1: 'Login Successful',
+    });
+
+  } else {
+    credentials = { email, password, name, role };
+    const res =  await dispatch(signup(credentials));
+
+    if (res?.error || res?.payload?.error) {
+      const errorMessage =
+        res?.error?.message ||
+        res?.payload?.error ||
+        res?.payload?.message ||
+        'Signup failed. Try again.';
+
+      Toast.show({
+        type: 'error',
+        text1: 'Signup Failed',
+        text2: errorMessage,
+      });
+
+      return;
     }
-  };
+
+    Toast.show({
+      type: 'success',
+      text1: 'Signup Successful',
+    });
+  }
+} catch (err) {
+  // Catches truly unexpected errors
+  Toast.show({
+    type: 'error',
+    text1: 'Unexpected Error',
+    text2: err.message || 'Something went wrong.',
+  });
+} finally {
+    setLoading(false);
+  }
+};
 
   // Toggle between login and signup modes
   const toggleMode = () => {
@@ -456,6 +516,7 @@ const LoginPopup = ({ visible = true, onClose }) => {
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
+            <Toast config={toastConfig} topOffset={50} style={{ zIndex: 9999, elevation: 9999, position: 'absolute' }} />
       </SafeAreaView>
     </Modal>
   );
@@ -513,6 +574,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 16,
+    zIndex: -1, // Ensure fields are above the background
   },
   inputContainer: {
     flexDirection: 'row',
