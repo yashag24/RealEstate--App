@@ -37,6 +37,7 @@ exports.signup = async (req, res) => {
         Model = User;
         userType = 'user';
         userData.firstName = otherFields.name || '';
+        // userData.role = role.toLowerCase(); // Ensure role is set for user
         break;
       default:
         return res.status(400).json({ error: 'Invalid role specified' });
