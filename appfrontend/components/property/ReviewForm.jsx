@@ -111,7 +111,7 @@ const ReviewForm = ({ propertyId, onClose }) => {
             onFocus={() => setFocusedField('review')}
             onBlur={() => setFocusedField(null)}
             multiline
-            numberOfLines={5}
+            numberOfLines={3}
             placeholderTextColor="#94a3b8"
           />
           <Text style={styles.characterCount}>{data.review.length}/500</Text>
@@ -131,7 +131,7 @@ const ReviewForm = ({ propertyId, onClose }) => {
               >
                 <FontAwesome
                   name="star"
-                  size={36}
+                  size={30}
                   color={star <= (hover || data.rating) ? '#fbbf24' : '#e5e7eb'}
                   style={styles.starIcon}
                 />
@@ -172,8 +172,8 @@ export default ReviewForm;
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    borderRadius: 28,
+    padding: 20,
+    borderRadius: 24,
     backgroundColor: '#ffffff',
     elevation: 12,
     margin: 0,
@@ -187,14 +187,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: 12,
+    right: 12,
     zIndex: 10,
   },
   closeButtonCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -205,24 +205,24 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   closeButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#64748b',
     fontWeight: '300',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 32,
-    paddingTop: 8,
+    marginBottom: 20,
+    paddingTop: 4,
   },
   headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#fef3c7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#f59e0b',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -230,25 +230,25 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   headerEmoji: {
-    fontSize: 28,
+    fontSize: 24,
   },
   heading: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
     color: '#0f172a',
     letterSpacing: -0.5,
   },
   subheading: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
     textAlign: 'center',
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   formContainer: {
-    gap: 24,
+    gap: 18,
   },
   inputContainer: {
     position: 'relative',
@@ -257,14 +257,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: 0.2,
   },
   input: {
     borderColor: '#e2e8f0',
     borderWidth: 2,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 14,
+    padding: 14,
     fontSize: 16,
     backgroundColor: '#fafafa',
     color: '#1f2937',
@@ -291,10 +291,10 @@ const styles = StyleSheet.create({
   textarea: {
     borderColor: '#e2e8f0',
     borderWidth: 2,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 14,
+    padding: 14,
     fontSize: 16,
-    height: 120,
+    height: 90,
     backgroundColor: '#fafafa',
     color: '#1f2937',
     textAlignVertical: 'top',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94a3b8',
     textAlign: 'right',
-    marginTop: 6,
+    marginTop: 4,
     fontWeight: '500',
   },
   ratingContainer: {
@@ -327,9 +327,9 @@ const styles = StyleSheet.create({
   starRating: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 12,
-    marginTop: 8,
+    gap: 8,
+    marginBottom: 8,
+    marginTop: 6,
   },
   starButton: {
     padding: 4,
@@ -346,19 +346,19 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   ratingText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#16a34a',
     textAlign: 'center',
     letterSpacing: 0.5,
-    marginTop: 4,
+    marginTop: 2,
   },
   submitButton: {
     backgroundColor: '#8b5cf6',
-    paddingVertical: 18,
-    borderRadius: 20,
+    paddingVertical: 16,
+    borderRadius: 18,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
     shadowColor: '#8b5cf6',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   submitButtonIcon: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     marginLeft: 4,
   },
