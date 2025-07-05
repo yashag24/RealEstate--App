@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
  
 const { width, height } = Dimensions.get('window');
-const isTablet = width >= 768;
+// const isTablet = width >= 768;
  
 const AdminSideBar = ({
   activeSection,
@@ -34,8 +34,8 @@ const AdminSideBar = ({
     { label: "Enquiries", key: "enquiries", icon: "mail" },
     { label: "Admins", key: "adminsList", icon: "shield" },
     { label: "Staff Management", key: "staffManagement", icon: "people-circle" },
-    { label: "Staff Performance", key: "staffPerformance", icon: "bar-chart" },
-    { label: "Contractor Verification", key: "contractorVerification", icon: "shield-checkmark" },
+    { label: "Staff Performance", key: "staffPerformance" },
+    { label: "Contractor Verification", key: "contractorVerification" },
   ];
  
   const SidebarContent = () => (
@@ -97,16 +97,16 @@ const AdminSideBar = ({
           if (!isTablet) setSidebarVisible(false);
         }}
         style={styles.logoutButton}
-        // disabled={isLoggingOut}
+        disabled={isLoggingOut}
       >
-        {/* {isLoggingOut ? (
+        {isLoggingOut ? (
           <ActivityIndicator size="small" color="#ffffff" />
         ) : (
           <>
             <Ionicons name="log-out-outline" size={20} color="#ffffff" />
             <Text style={styles.logoutText}>Logout</Text>
           </>
-        )} */}<Text>LogOut</Text>
+        )}
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#ef4444",
-    paddingVertical: 1,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginHorizontal: 8,
     borderRadius: 10,
@@ -250,12 +250,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
-    minHeight:40,
-    maxHeight:80
+    elevation: 3
   },
   logoutText: {
-    color: "white",
+    color: "#ffffff",
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 8
