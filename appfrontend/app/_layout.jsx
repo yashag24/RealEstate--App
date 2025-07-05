@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '../toastConfig.js';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
@@ -18,7 +19,8 @@ export default function RootLayout() {
               }}
             />
           </View>
-          <Toast />
+    <Toast config={toastConfig} />
+
         </View>
       </SafeAreaView>
     </Provider>

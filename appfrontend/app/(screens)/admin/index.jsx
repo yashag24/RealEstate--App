@@ -58,7 +58,9 @@ const AdminDashboard = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (userType !== 'admin' || !authUser) {
-      router.replace('/(screens)');
+      requestAnimationFrame(() => {
+        router.replace('/(screens)');
+      });
     }
   }, [authUser, router, userType]);
  
