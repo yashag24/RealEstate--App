@@ -17,8 +17,8 @@ import AdminReviews from '@/components/AdminDashboard/AdminReviews';
 import AdminEnquiries from '@/components/AdminDashboard/AdminEnquiries';
 import AdminList from '@/components/AdminDashboard/AdminList';
 import StaffManagement from '@/components/StaffDashboard/StaffManagement';
-// import StaffPerformanceCategories from '@/components/AdminDashboard/StaffPerformanceCategories';
-// import AdminContractorVerification from '@/components/AdminDashboard/AdminContractorVerification';
+import StaffPerformanceCategories from '@/components/AdminDashboard/StaffPerformanceCategories';
+import AdminContractorVerification from '@/components/AdminDashboard/AdminContractorVerification';
 import CustomModal from '@/components/AdminDashboard/Modal';
 
 const AdminDashboard = () => {
@@ -310,8 +310,8 @@ const AdminDashboard = () => {
             />
           )}
           {activeSection === 'staffManagement' && <StaffManagement />}
-          {/* {activeSection === 'staffPerformance' && <StaffPerformanceCategories />} */}
-          {/* {activeSection === 'contractorVerification' && (
+          {activeSection === 'staffPerformance' && <StaffPerformanceCategories />} 
+          {activeSection === 'contractorVerification' && (
             <AdminContractorVerification
               contractors={contractors}
               loading={loading}
@@ -319,7 +319,7 @@ const AdminDashboard = () => {
               handleAcceptContractor={handleAcceptContractor}
               handleRejectContractor={handleRejectContractor}
             />
-          )} */}
+          )}
         </ScrollView>
         <CustomModal show={showModal} handleClose={() => setShowModal(false)} />
       </View>
