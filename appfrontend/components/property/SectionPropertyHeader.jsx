@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { StyleSheet, Dimensions } from "react-native";
+import TopBar from "./SectionTopBar";
 
 export const PropertyHeaderSection = ({
   property,
@@ -12,36 +12,29 @@ export const PropertyHeaderSection = ({
   handleSaveProperty,
   toTitleCase,
   showBackButton = true,
-
 }) => (
   <>
-    {/* Back Button */}
-    {showBackButton && (
-      <View style={styles.backButtonContainer}>
-        <Pressable style={styles.backButton} onPress={handleGoBack}>
-          <FontAwesome5 name="arrow-left" size={18} color="#374151" />
-        </Pressable>
-      </View>
-    )}
+    {/* Top Bar: Back Button + Property Name */}
 
-    {/* Property Header */}
+
+    {/* Gap between topBar and headerSection */}
+    <View style={styles.headerGap} />
+
+    {/* Section: Verified Badge (left), Subtitle */}
     <View style={styles.headerSection}>
-      <View style={styles.headerRow}>
-        <Text style={styles.propertyTitle} numberOfLines={2}>
-          {property.title}
-        </Text>
+      <View style={styles.verifiedRow}>
         {property.verification && (
           <View style={styles.verifiedBadge}>
             <FontAwesome5 name="check-circle" size={16} color="#22c55e" />
             <Text style={styles.verifiedText}>Verified</Text>
           </View>
         )}
+        <Text style={styles.propertySubtitle}>
+          {toTitleCase(property.type)} &bull; {toTitleCase(property.city)}
+        </Text>
       </View>
 
-      <Text style={styles.propertySubtitle}>
-        {toTitleCase(property.type)} &bull; {toTitleCase(property.city)}
-      </Text>
-
+      {/* Property Details */}
       <View style={styles.propertyDetailsRow}>
         <View style={styles.detailItem}>
           <FontAwesome5 name="ruler-combined" size={14} color="#6b7280" />
@@ -57,6 +50,7 @@ export const PropertyHeaderSection = ({
         </View>
       </View>
 
+      {/* Ratings and Save Button */}
       <View style={styles.headerBottomRow}>
         <View style={styles.ratingContainer}>
           <View style={styles.starsContainer}>
@@ -91,33 +85,22 @@ export const PropertyHeaderSection = ({
     </View>
   </>
 );
+
 const styles = StyleSheet.create({
-  backButtonContainer: {
-    position: "absolute",
-    left: 20,
-    marginTop:4,
-    zIndex: 1000,
+  // Gap between top bar and header section
+  headerGap: {
+    height: 12,
+    backgroundColor: "transparent",
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: "rgba(229, 231, 235, 0.3)",
-  },
+
+  // Section below top bar
   headerSection: {
     backgroundColor: "#fff",
     paddingHorizontal: 22,
-    paddingTop: 45,
+    paddingTop: 12,
     paddingBottom: 18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     shadowColor: "#000",
@@ -127,18 +110,12 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 8,
   },
-  headerRow: {
+
+  verifiedRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 4,
     gap: 8,
-  },
-  propertyTitle: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#22223b",
-    flex: 1,
   },
   verifiedBadge: {
     flexDirection: "row",
@@ -147,7 +124,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    marginLeft: 8,
+    marginRight: 8,
   },
   verifiedText: {
     fontSize: 12,
@@ -159,7 +136,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6c757d",
     fontWeight: "600",
-    marginBottom: 8,
   },
   propertyDetailsRow: {
     flexDirection: "row",
@@ -224,3 +200,5 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
+
+export default PropertyHeaderSection;

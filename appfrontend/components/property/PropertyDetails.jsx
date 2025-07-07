@@ -22,8 +22,9 @@ const { width: screenWidth } = Dimensions.get("window");
 import { LocationSection } from "./SectionLocation";
 import { LoanSection } from "./SectionLoan";
 import { ImageGallery } from "./SectionImageGallery";
-import { PropertyHeaderSection } from "./SectionPropertyHeader";
+import  PropertyHeaderSection  from "./SectionPropertyHeader";
 import { PropertyDescriptionSection } from "./SectionPropertyDescription";
+import TopBar from "./SectionTopBar";
 export const PropertyDetails = ({ property }) => {
  const router = useRouter(); // Use Expo Router's hook
   const [token, setToken] = useState(null);
@@ -195,7 +196,12 @@ export const PropertyDetails = ({ property }) => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}   stickyHeaderIndices={[0]}>
+      <TopBar
+        propertyTitle={property.title}
+        // showBackButton={showBackButton}
+        handleGoBack={handleGoBack}
+      />  
       <PropertyHeaderSection
         property={property}
         reviews={reviews}
