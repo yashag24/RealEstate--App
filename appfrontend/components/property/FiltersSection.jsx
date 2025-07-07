@@ -1,6 +1,6 @@
 // FiltersSection.js
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,Dimensions } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Slider } from "@miblanchard/react-native-slider";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -13,13 +13,13 @@ import {
   clearSearchState
 } from "@/redux/SearchBox/SearchSlice";
 import CityDropdown from "@/redux/SearchBox/CityDropDown";
-
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const FiltersSection = () => {
   const { noOfBedrooms, budgetRange, area, selectedCity, expanded } =
     useSelector((store) => store.search);
 
   const dispatch = useDispatch();
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [bedroomInput, setBedroomInput] = useState("");
 
   const handleSliderChange = (name, newValue) => {
@@ -139,7 +139,7 @@ const FiltersSection = () => {
   return (
     <View style={styles.container}>
       {/* Toggle Button */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.toggleButton}
         onPress={toggleFilters}
         activeOpacity={0.7}
@@ -147,18 +147,18 @@ const FiltersSection = () => {
         <View style={styles.toggleButtonContent}>
           <Icon name="filter-list" size={24} color="#2C92FF" />
           <Text style={styles.toggleButtonText}>Filters</Text>
-          {/* {activeFiltersCount > 0 && (
+          {activeFiltersCount > 0 && (
             <View style={styles.filtersBadge}>
               <Text style={styles.filtersBadgeText}>{activeFiltersCount}</Text>
             </View>
-          )} */}
+          )}
         </View>
         <Icon
           name={showFilters ? "expand-less" : "expand-more"}
           size={24}
           color="#666"
         />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Filters Content */}
       {showFilters && (
@@ -350,16 +350,18 @@ const FiltersSection = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    margin: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+ container: {
+  backgroundColor: "#fff",
+  borderRadius: 8,
+  width: screenWidth * 0.99,  // Add this line
+  alignSelf: "center",        // Center it horizontally
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 2,
+},
+
   toggleButton: {
     flexDirection: "row",
     justifyContent: "space-between",
