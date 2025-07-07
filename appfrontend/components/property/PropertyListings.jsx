@@ -4,7 +4,9 @@ import {
   StyleSheet,
   Alert,
   Pressable,
-  ScrollView
+  ScrollView,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -12,38 +14,44 @@ import PropertyCard from '../home/PropertyCard';
 import FiltersSection from './FiltersSection';
 import Footer from '../home/Footer';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const {
-    noOfBedrooms,
-    budgetRange,
-    propertyType,
-    area,
-    verifiedProperties,
-  } = useSelector((store) => store.search);
+    noOfBedrooms = [],
+    budgetRange = [0, 20000000],
+    propertyType = [],
+    area = [0, 4000],
+    verifiedProperties = false,
+  } = useSelector((store) => store.search) || {};
+
   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const fetchProperties = useCallback(
     async (city = "", query = "") => {
       setLoading(true);
+      setError(null);
+      
       try {
         const params = new URLSearchParams();
         if (city) params.append("city", city);
         if (query) params.append("query", query);
-        if (noOfBedrooms.length) {
+        if (noOfBedrooms?.length) {
           params.append("bedrooms", noOfBedrooms.join(","));
         }
-        if (budgetRange.length === 2) {
+        if (budgetRange?.length === 2) {
           params.append("minBudget", budgetRange[0].toString());
           params.append("maxBudget", budgetRange[1].toString());
         }
-        if (area.length === 2) {
+        if (area?.length === 2) {
           params.append("minArea", area[0].toString());
           params.append("maxArea", area[1].toString());
         }
-        if (propertyType.length) {
+        if (propertyType?.length) {
           params.append("propertyType", propertyType.join(","));
         }
         if (verifiedProperties) {
@@ -52,7 +60,11 @@ const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
 
         const response = await fetch(
           `${BASE_URL}/api/property?${params.toString()}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } }
+          { 
+            method: "GET", 
+            headers: { "Content-Type": "application/json" },
+            timeout: 10000, // 10 second timeout
+          }
         );
 
         if (!response.ok) {
@@ -61,132 +73,190 @@ const PropertyListings = ({ cityParam = "", queryParam = "" }) => {
 
         const result = await response.json();
 
-        if (Array.isArray(result) && result.length === 0) {
-          Alert.alert("No properties found", "Try another city.");
-        } else {
+        if (Array.isArray(result)) {
           setProperties(result);
+          if (result.length === 0) {
+            setError("No properties found matching your criteria.");
+          }
+        } else {
+          setProperties([]);
+          setError("Invalid response format from server.");
         }
       } catch (error) {
         console.error("Error fetching properties:", error);
-        Alert.alert("Error", "Error fetching properties. Please try again later.");
+        setError(error.message || "Error fetching properties. Please try again later.");
+        setProperties([]);
       } finally {
         setLoading(false);
       }
     },
-    [noOfBedrooms, budgetRange, area, propertyType, verifiedProperties]
+    [noOfBedrooms, budgetRange, area, propertyType, verifiedProperties, BASE_URL]
   );
 
   useEffect(() => {
     fetchProperties(cityParam, queryParam);
   }, [cityParam, queryParam, fetchProperties]);
 
-  return (
-    <ScrollView style={styles.propertyListingsPage}>
-      <View style={styles.sortAndFilterParent}>
-        <FiltersSection />
+  const filteredProperties = properties.filter((property) => {
+    const price = parseFloat(property.price) || 0;
+    const bhk = parseInt(property.Bhk || property.bhk) || 0;
+    const propArea = parseFloat(property.area) || 0;
+    const type = property.type || "";
 
-        {loading ? (
-          <Text>Loading Properties...</Text>
-        ) : (
-          <View style={{ width: '100%' }}>
-            <Text style={styles.headDetail}>
-              {properties.length} results | Property from {cityParam || "All Cities"} India
-            </Text>
-            <View style={styles.propertyContainer}>
-              {properties.slice().reverse().map((property) => {
-                const price = property.price ?? 0;
-                const bhk = property.Bhk ?? property.bhk ?? 0;
-                const propArea = property.area ?? 0;
-                const type = property.type ?? "";
+    // Budget filter
+    const isBudgetValid = price >= (budgetRange[0] || 0) && price <= (budgetRange[1] || 20000000);
+    
+    // Area filter
+    const isAreaValid = propArea >= (area[0] || 0) && propArea <= (area[1] || 4000);
+    
+    // Bedroom filter
+    const isBedroomValid = !noOfBedrooms?.length || noOfBedrooms.includes(bhk);
+    
+    // Property type filter
+    const isTypeValid = !propertyType?.length || propertyType.includes(type);
+    
+    // City filter
+    const isCityValid = !cityParam || 
+      (property.city && property.city.toLowerCase().includes(cityParam.toLowerCase()));
 
-                // Redux filters
-                const filters = {
-                  minBudget: budgetRange[0],
-                  maxBudget: budgetRange[1],
-                  minArea: area[0],
-                  maxArea: area[1],
-                  bedrooms: noOfBedrooms,
-                  types: propertyType,
-                  city: cityParam,
-                };
+    return isBudgetValid && isAreaValid && isBedroomValid && isTypeValid && isCityValid;
+  });
 
-                // Validation
-                const isBudgetValid = price >= filters.minBudget && price <= filters.maxBudget;
-                const isAreaValid = propArea >= filters.minArea && propArea <= filters.maxArea;
-                const isBedroomValid = filters.bedrooms.length === 0 || filters.bedrooms.includes(bhk);
-                const isTypeValid = filters.types.length === 0 || filters.types.includes(type);
-                const isCityValid =
-                  !filters.city ||
-                  (typeof filters.city === "string" &&
-                    property.city?.toLowerCase() === filters.city.toLowerCase());
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#2C92FF" />
+          <Text style={styles.loadingText}>Loading Properties...</Text>
+        </View>
+      );
+    }
 
-                if (!(isBudgetValid && isAreaValid && isBedroomValid && isTypeValid && isCityValid)) {
-                  return null;
-                }
+    if (error) {
+      return (
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable 
+            style={styles.retryButton}
+            onPress={() => fetchProperties(cityParam, queryParam)}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      );
+    }
 
-                return (
-                  <View key={property._id} style={styles.propertyCardWrapper}>
-                    <Pressable
-                      style={styles.linkWrapper}
-                      onPress={() =>
-                        /* adjust this to your navigation or router.push call */
-                        console.log('Navigate to details of', property._id)
-                      }
-                    >
-                      <PropertyCard
-                      id={property._id}
-                        title={property.title}
-                        city={property.city}
-                        price={price.toString()}
-                        area={propArea.toString()}
-                        bhk={bhk}
-                      />
-                    </Pressable>
-                  </View>
-                );
-              })}
+    return (
+      <View style={styles.contentContainer}>
+        <Text style={styles.headDetail}>
+          {filteredProperties.length} results | Property from {cityParam || "All Cities"} India
+        </Text>
+        
+        <View style={styles.propertyContainer}>
+          {filteredProperties.map((property) => (
+            <View key={property._id} style={styles.propertyCardWrapper}>
+              <Pressable
+                style={styles.linkWrapper}
+                onPress={() => {
+                  // Navigate to property details
+                  console.log('Navigate to details of', property._id);
+                }}
+                android_ripple={{ color: 'rgba(0, 0, 0, 0.1)' }}
+              >
+                <PropertyCard
+                  id={property._id}
+                  title={property.title}
+                  city={property.city}
+                  price={(property.price || 0).toString()}
+                  area={(property.area || 0).toString()}
+                  bhk={property.Bhk || property.bhk || 0}
+                />
+              </Pressable>
             </View>
-          </View>
-        )}
+          ))}
+        </View>
       </View>
-      <Footer />
-    </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <FiltersSection />
+        {renderContent()}
+        <Footer />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  sortAndFilterParent: {
-    marginTop: 90,
-    paddingHorizontal: 90,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  propertyCardWrapper: {
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  centerContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    padding: 20,
+    minHeight: 200,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff4444',
+    textAlign: 'center',
     marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#2C92FF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  headDetail: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "600",
+    color: "#091E42",
+    marginBottom: 16,
+  },
+  propertyContainer: {
+    flexDirection: "column",
+  },
+  propertyCardWrapper: {
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   linkWrapper: {
     width: '100%',
-  },
-  propertyListingsPage: {
-    flex: 1,
-    padding: 16,
-  },
-  headDetail: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: "600",
-    color: "#091E42",
-    fontFamily: "Open Sans",
-    marginVertical: 22,
-  },
-  propertyContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: 'flex-start',
   },
 });
 

@@ -1,365 +1,534 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Modal,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
-import { useDispatch, useSelector } from 'react-redux';
-import CityDropdown from '@/redux/SearchBox/CityDropDown';
+// FiltersSection.js
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { Slider } from "@miblanchard/react-native-slider";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import {
   handleChange,
   handleBudgetRange,
   handleArea,
   handleNoOfBedrooms,
   handleCity,
-} from '@/redux/SearchBox/SearchSlice';
-
-
-const noOfBedroomsList = [1, 2, 3, 4];
+  clearSearchState
+} from "@/redux/SearchBox/SearchSlice";
+import CityDropdown from "@/redux/SearchBox/CityDropDown";
 
 const FiltersSection = () => {
   const { noOfBedrooms, budgetRange, area, selectedCity, expanded } =
     useSelector((store) => store.search);
 
   const dispatch = useDispatch();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [bedroomInput, setBedroomInput] = useState("");
 
   const handleSliderChange = (name, newValue) => {
-    if (name === 'budgetRange') {
+    if (name === "budgetRange") {
       dispatch(handleBudgetRange(newValue));
-    } else if (name === 'area') {
+    } else if (name === "area") {
       dispatch(handleArea(newValue));
     }
   };
 
+  // Fixed city change handler - now properly dispatches the action
   const handleCityChange = (city) => {
+    console.log("City selected:", city); // Debug log
     dispatch(handleCity(city));
   };
 
+  const toggleSection = (panel) => {
+    dispatch(handleChange(panel));
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  // Handle bedroom input change
+  const handleBedroomInputChange = (text) => {
+    setBedroomInput(text);
+    
+    // If input is empty, clear the filter (show all properties)
+    if (text === "") {
+      dispatch(handleNoOfBedrooms(null)); // or whatever value represents "all"
+      return;
+    }
+
+    // Parse the input number
+    const numBedrooms = parseInt(text, 10);
+    
+    // Validate input (only allow positive numbers)
+    if (!isNaN(numBedrooms) && numBedrooms > 0) {
+      dispatch(handleNoOfBedrooms(numBedrooms));
+    }
+  };
+
+  // Clear bedroom input
+  const clearBedroomInput = () => {
+    setBedroomInput("");
+    dispatch(handleNoOfBedrooms(null)); // Clear filter to show all properties
+  };
+
   const formatCurrency = (value) => {
+    if (value >= 10000000) {
+      return `₹${(value / 10000000).toFixed(1)} Cr`;
+    } else if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)} L`;
+    } else if (value >= 1000) {
+      return `₹${(value / 1000).toFixed(1)} K`;
+    }
     return `₹${value.toLocaleString()}`;
   };
 
-  const formatArea = (value) => {
-    return `${value.toLocaleString()} acres`;
+  // Count active filters for badge
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (selectedCity) count++;
+    if (noOfBedrooms !== null && noOfBedrooms !== undefined) count++;
+    if (budgetRange && (budgetRange[0] > 0 || budgetRange[1] < 100000000)) count++;
+    if (area && (area[0] > 0 || area[1] < 10000)) count++;
+    return count;
   };
 
-  const AccordionItem = ({ title, children, panelKey }) => {
-    const isExpanded = expanded.includes(panelKey);
-    
-    return (
-      <View style={styles.accordionItem}>
-        <TouchableOpacity
-          style={styles.accordionHeader}
-          onPress={() => dispatch(handleChange(panelKey))}
-        >
-          <Text style={styles.accordionTitle}>{title}</Text>
-          <Ionicons
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={24}
-            color="#42526E"
-          />
-        </TouchableOpacity>
-        {isExpanded && (
-          <View style={styles.accordionContent}>
-            {children}
-          </View>
-        )}
-      </View>
+  const activeFiltersCount = getActiveFiltersCount();
+
+  // Enhanced Clear All functionality
+  const handleClearAll = () => {
+    // Show confirmation dialog for better UX
+    Alert.alert(
+      "Clear All Filters",
+      "Are you sure you want to clear all applied filters?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Clear All",
+          style: "destructive",
+          onPress: () => {
+            // Clear Redux state
+            dispatch(clearSearchState());
+            
+            // Clear local component state
+            setBedroomInput("");
+            
+            // Optional: Show success feedback
+            // You could add a toast notification here
+            console.log("All filters cleared successfully");
+          }
+        }
+      ]
     );
   };
 
+  // Quick clear without confirmation (alternative approach)
+  const handleQuickClearAll = () => {
+    // Clear Redux state
+    dispatch(clearSearchState());
+    
+    // Clear local component state
+    setBedroomInput("");
+    
+    // Optional: Collapse filters after clearing
+    setShowFilters(false);
+    
+    console.log("All filters cleared successfully");
+  };
+
   return (
-    <>
-      {/* Filter Button */}
+    <View style={styles.container}>
+      {/* Toggle Button */}
       <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setModalVisible(true)}
+        style={styles.toggleButton}
+        onPress={toggleFilters}
+        activeOpacity={0.7}
       >
-        <Ionicons name="filter" size={20} color="#fff" />
-        <Text style={styles.filterButtonText}>Filters</Text>
+        <View style={styles.toggleButtonContent}>
+          <Icon name="filter-list" size={24} color="#2C92FF" />
+          <Text style={styles.toggleButtonText}>Filters</Text>
+          {/* {activeFiltersCount > 0 && (
+            <View style={styles.filtersBadge}>
+              <Text style={styles.filtersBadgeText}>{activeFiltersCount}</Text>
+            </View>
+          )} */}
+        </View>
+        <Icon
+          name={showFilters ? "expand-less" : "expand-more"}
+          size={24}
+          color="#666"
+        />
       </TouchableOpacity>
 
-      {/* Filter Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filters</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#42526E" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalContent}>
-              {/* City Dropdown */}
-              <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>City</Text>
-                <CityDropdown
-                  selectedCity={selectedCity}
-                  onCityChange={handleCityChange}
-                />
-              </View>
-
-              {/* No. of Bedrooms */}
-              <AccordionItem title="No. of Bedrooms" panelKey="panel1">
-                <View style={styles.chipContainer}>
-                  {noOfBedroomsList.map((room, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={[
-                        styles.chip,
-                        noOfBedrooms.includes(room) && styles.chipSelected,
-                      ]}
-                      onPress={() => dispatch(handleNoOfBedrooms(room))}
-                    >
-                      <Ionicons
-                        name={noOfBedrooms.includes(room) ? 'checkmark' : 'add'}
-                        size={16}
-                        color={noOfBedrooms.includes(room) ? '#000' : '#42526E'}
-                        style={styles.chipIcon}
-                      />
-                      <Text
-                        style={[
-                          styles.chipText,
-                          noOfBedrooms.includes(room) && styles.chipTextSelected,
-                        ]}
-                      >
-                        {room} BHK
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </AccordionItem>
-
-              {/* Budget Range */}
-              <AccordionItem title="Budget Range" panelKey="panel3">
-                <View style={styles.sliderContainer}>
-                  <Text style={styles.sliderLabel}>
-                    {formatCurrency(budgetRange[0])} - {formatCurrency(budgetRange[1])}
-                  </Text>
-                  <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={20000000}
-                    step={1000}
-                    value={budgetRange[0]}
-                    onValueChange={(value) =>
-                      handleSliderChange('budgetRange', [value, budgetRange[1]])
-                    }
-                    minimumTrackTintColor="#007AFF"
-                    maximumTrackTintColor="#E1E1E1"
-                    thumbStyle={styles.sliderThumb}
-                  />
-                  <View style={styles.sliderLabels}>
-                    <Text style={styles.sliderLabelText}>₹0</Text>
-                    <Text style={styles.sliderLabelText}>₹2,00,00,000</Text>
-                  </View>
-                </View>
-              </AccordionItem>
-
-              {/* Area */}
-              <AccordionItem title="Area" panelKey="panel4">
-                <View style={styles.sliderContainer}>
-                  <Text style={styles.sliderLabel}>
-                    {formatArea(area[0])} - {formatArea(area[1])}
-                  </Text>
-                  <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={4000}
-                    step={10}
-                    value={area[0]}
-                    onValueChange={(value) =>
-                      handleSliderChange('area', [value, area[1]])
-                    }
-                    minimumTrackTintColor="#007AFF"
-                    maximumTrackTintColor="#E1E1E1"
-                    thumbStyle={styles.sliderThumb}
-                  />
-                  <View style={styles.sliderLabels}>
-                    <Text style={styles.sliderLabelText}>0 acres</Text>
-                    <Text style={styles.sliderLabelText}>4,000 acres</Text>
-                  </View>
-                </View>
-              </AccordionItem>
-            </ScrollView>
-
-            {/* Footer */}
-            <View style={styles.modalFooter}>
+      {/* Filters Content */}
+      {showFilters && (
+        <View style={styles.filtersContent}>
+          {/* Enhanced Clear All Button - only show when there are active filters */}
+          {activeFiltersCount > 0 && (
+            <View style={styles.clearAllContainer}>
               <TouchableOpacity
-                style={styles.applyButton}
-                onPress={() => setModalVisible(false)}
+                style={styles.clearAllButton}
+                onPress={handleClearAll} // Use handleClearAll for confirmation dialog
+                // onPress={handleQuickClearAll} // Alternative: use this for immediate clearing
+                activeOpacity={0.7}
               >
-                <Text style={styles.applyButtonText}>Apply Filters</Text>
+                <Icon name="clear-all" size={20} color="#FF4444" />
+                <Text style={styles.clearAllText}>Clear All Filters</Text>
+                {/* <View style={styles.clearAllBadge}>
+                  <Text style={styles.clearAllBadgeText}>{activeFiltersCount}</Text>
+                </View> */}
               </TouchableOpacity>
             </View>
-          </View>
+          )}
+
+          <ScrollView 
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            nestedScrollEnabled={true}
+          >
+            {/* City Dropdown */}
+            {/* <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => toggleSection("panel1")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>City</Text>
+                <Icon
+                  name={expanded?.includes("panel1") ? "expand-less" : "expand-more"}
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+              
+              {expanded?.includes("panel1") && (
+                <View style={styles.sectionContent}>
+                  <CityDropdown
+                    selectedCity={selectedCity}
+                    onCityChange={handleCityChange}
+                  />
+                  Debug info - remove in production
+                  {selectedCity && (
+                    <Text style={styles.debugText}>Selected: {selectedCity}</Text>
+                  )}
+                </View>
+              )}
+            </View> */}
+
+            {/* No. of Bedrooms */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => toggleSection("panel2")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>No. of Bedrooms</Text>
+                <Icon
+                  name={expanded?.includes("panel2") ? "expand-less" : "expand-more"}
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+              
+              {expanded?.includes("panel2") && (
+                <View style={styles.sectionContent}>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.bedroomInput}
+                      value={bedroomInput}
+                      onChangeText={handleBedroomInputChange}
+                      placeholder="Enter number of bedrooms (e.g., 2, 3, 4)"
+                      placeholderTextColor="#999"
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      maxLength={2}
+                    />
+                    {bedroomInput !== "" && (
+                      <TouchableOpacity
+                        style={styles.clearButton}
+                        onPress={clearBedroomInput}
+                        activeOpacity={0.7}
+                      >
+                        <Icon name="clear" size={20} color="#666" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={styles.inputHint}>
+                    Leave empty to show all properties
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Budget Range - Increased from 2 Cr to 10 Cr */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => toggleSection("panel3")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Budget Range</Text>
+                <Icon
+                  name={expanded?.includes("panel3") ? "expand-less" : "expand-more"}
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+              
+              {expanded?.includes("panel3") && (
+                <View style={styles.sectionContent}>
+                  <Slider
+                    minimumValue={0}
+                    maximumValue={1000000000} // Increased to 100 Cr (practically infinity for budget)
+                    step={10000}
+                    value={budgetRange || [0, 100000000]}
+                    onValueChange={(value) => handleSliderChange("budgetRange", value)}
+                    containerStyle={styles.sliderContainer}
+                    trackStyle={styles.track}
+                    thumbStyle={styles.thumb}
+                    minimumTrackTintColor="#2C92FF"
+                    maximumTrackTintColor="#ddd"
+                  />
+                  <View style={styles.rangeValues}>
+                    <Text style={styles.rangeText}>
+                      {formatCurrency(budgetRange?.[0] || 0)}
+                    </Text>
+                    <Text style={styles.rangeText}>
+                      {formatCurrency(budgetRange?.[1] || 100000000)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Area - Increased from 4000 to 10000 sq ft */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => toggleSection("panel4")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Area</Text>
+                <Icon
+                  name={expanded?.includes("panel4") ? "expand-less" : "expand-more"}
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+              
+              {expanded?.includes("panel4") && (
+                <View style={styles.sectionContent}>
+                  <Slider
+                    minimumValue={0}
+                    maximumValue={500000} // Increased to 50,000 sq ft (practically infinity for area)
+                    step={50}
+                    value={area || [0, 10000]}
+                    onValueChange={(value) => handleSliderChange("area", value)}
+                    containerStyle={styles.sliderContainer}
+                    trackStyle={styles.track}
+                    thumbStyle={styles.thumb}
+                    minimumTrackTintColor="#2C92FF"
+                    maximumTrackTintColor="#ddd"
+                  />
+                  <View style={styles.rangeValues}>
+                    <Text style={styles.rangeText}>
+                      {area?.[0] || 0} sq ft
+                    </Text>
+                    <Text style={styles.rangeText}>
+                      {area?.[1] || 10000} sq ft
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </ScrollView>
         </View>
-      </Modal>
-    </>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  container: {
+    backgroundColor: "#fff",
     borderRadius: 8,
-    marginHorizontal: 16,
-    marginVertical: 8,
+    margin: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  filterButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  toggleButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    minHeight: 56,
+  },
+  toggleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  toggleButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#091E42",
     marginLeft: 8,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+  filtersBadge: {
+    backgroundColor: "#2C92FF",
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
   },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
-    minHeight: '70%',
+  filtersBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+  filtersContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  scrollContainer: {
+    maxHeight: 400,
+  },
+  section: {
+    marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
+    borderBottomColor: "#eee",
+    paddingBottom: 12,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#091E42',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  filterSection: {
-    marginBottom: 20,
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    minHeight: 44,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#091E42',
-    marginBottom: 12,
+    fontWeight: "600",
+    color: "#091E42",
   },
-  accordionItem: {
-    marginBottom: 16,
+  sectionContent: {
+    paddingTop: 8,
   },
-  accordionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
-  },
-  accordionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#091E42',
-  },
-  accordionContent: {
-    paddingTop: 16,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#42526E',
-    borderRadius: 20,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    backgroundColor: "#fff",
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    minWidth: 80,
-  },
-  chipSelected: {
-    backgroundColor: '#f0f9ff',
-    borderColor: '#a3daff',
-  },
-  chipIcon: {
-    marginRight: 4,
-  },
-  chipText: {
-    fontSize: 14,
-    color: '#42526E',
-  },
-  chipTextSelected: {
-    color: '#000',
-    fontWeight: '600',
-  },
-  sliderContainer: {
-    paddingHorizontal: 8,
-  },
-  sliderLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#091E42',
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  sliderThumb: {
-    backgroundColor: '#007AFF',
-    width: 20,
-    height: 20,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    height: 48,
     marginTop: 8,
   },
-  sliderLabelText: {
-    fontSize: 12,
-    color: '#42526E',
-  },
-  modalFooter: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E1E1E1',
-  },
-  applyButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    color: '#fff',
+  bedroomInput: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    color: "#091E42",
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  inputHint: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 8,
+    fontStyle: "italic",
+  },
+  sliderContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 8,
+  },
+  track: {
+    height: 4,
+    borderRadius: 2,
+  },
+  thumb: {
+    width: 20,
+    height: 20,
+    backgroundColor: "#2C92FF",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  rangeValues: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  rangeText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  // Debug style - remove in production
+  debugText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+    fontStyle: "italic",
+  },
+  // Enhanced Clear All Button Styles
+  clearAllContainer: {
+    marginTop: 12,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  clearAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F5",
+    borderWidth: 1,
+    borderColor: "#FFD6D6",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: "#FF4444",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  clearAllText: {
+    color: "#FF4444",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  clearAllBadge: {
+    backgroundColor: "#FF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  clearAllBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "bold",
   },
 });
 

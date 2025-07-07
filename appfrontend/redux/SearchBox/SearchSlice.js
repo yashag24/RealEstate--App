@@ -1,23 +1,26 @@
 // redux/SearchBox/SearchSlice.js
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { getFilteredPropertiesThunk, searchSuggestionsThunk } from './SearchThunk';
-import Toast from 'react-native-toast-message';
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  getFilteredPropertiesThunk,
+  searchSuggestionsThunk,
+} from "./SearchThunk";
+import Toast from "react-native-toast-message";
 
 const initialState = {
   expanded: [
-    'panel1',
-    'panel2',
-    'panel3',
-    'panel4',
-    'panel5',
-    'panel6',
-    'panel7',
-    'panel8',
-    'panel9',
+    "panel1",
+    "panel2",
+    "panel3",
+    "panel4",
+    "panel5",
+    "panel6",
+    "panel7",
+    "panel8",
+    "panel9",
   ],
-  city: '',
+  city: "",
   recentSearchCities: [],
-  searchOption: 'Buy',
+  searchOption: "Buy",
   budgetRange: [0, 2000000000],
   noOfBedrooms: [],
   propertyType: [],
@@ -37,27 +40,33 @@ const initialState = {
 };
 
 export const searchSuggestions = createAsyncThunk(
-  'search/searchSuggestions',
+  "search/searchSuggestions",
   async (city, thunkAPI) => {
-    return searchSuggestionsThunk('/Search', city, thunkAPI);
+    return searchSuggestionsThunk("/Search", city, thunkAPI);
   }
 );
 
 export const getFilteredProperties = createAsyncThunk(
-  'properties/getFilteredProperties',
+  "properties/getFilteredProperties",
   async (filters, thunkAPI) => {
-    return getFilteredPropertiesThunk('/PostForm/details/Filter', filters, thunkAPI);
+    return getFilteredPropertiesThunk(
+      "/PostForm/details/Filter",
+      filters,
+      thunkAPI
+    );
   }
 );
 
 const SearchSlice = createSlice({
-  name: 'search',
+  name: "search",
   initialState,
   reducers: {
     handleCity: (state, { payload }) => {
       state.city = payload;
-      if (payload && typeof payload === 'string') {
-        const updated = state.recentSearchCities.filter((city) => city !== payload);
+      if (payload && typeof payload === "string") {
+        const updated = state.recentSearchCities.filter(
+          (city) => city !== payload
+        );
         updated.unshift(payload);
         state.recentSearchCities = updated.slice(0, 4);
       }
@@ -79,11 +88,13 @@ const SearchSlice = createSlice({
       state.budgetRange = payload;
     },
     handleNoOfBedrooms: (state, { payload }) => {
-      const exists = state.noOfBedrooms.includes(payload);
-      state.noOfBedrooms = exists
-        ? state.noOfBedrooms.filter((item) => item !== payload)
-        : [...state.noOfBedrooms, payload];
+      if (payload === null) {
+        state.noOfBedrooms = [];
+      } else {
+        state.noOfBedrooms = [payload];
+      }
     },
+
     handlePropertyType: (state, { payload }) => {
       const exists = state.propertyType.includes(payload);
       state.propertyType = exists
@@ -140,7 +151,7 @@ const SearchSlice = createSlice({
     },
     clearSearchState: () => initialState,
     handleSearchCity: (state, { payload }) => {
-      if (typeof payload === 'string') {
+      if (typeof payload === "string") {
         state.city = { title: payload };
       } else if (payload?.inputValue) {
         state.city = { title: payload.inputValue };
@@ -169,9 +180,9 @@ const SearchSlice = createSlice({
       .addCase(searchSuggestions.rejected, (state, { payload }) => {
         state.isSuggestionsLoading = false;
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: payload?.message || 'Failed to fetch suggestions',
+          type: "error",
+          text1: "Error",
+          text2: payload?.message || "Failed to fetch suggestions",
         });
       })
       .addCase(getFilteredProperties.pending, (state) => {
@@ -183,11 +194,11 @@ const SearchSlice = createSlice({
       })
       .addCase(getFilteredProperties.rejected, (state, { payload }) => {
         state.isPropertyLoading = false;
-        console.log('Property fetch failed:', payload);
+        console.log("Property fetch failed:", payload);
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: payload?.message || 'Failed to fetch properties',
+          type: "error",
+          text1: "Error",
+          text2: payload?.message || "Failed to fetch properties",
         });
       });
   },
