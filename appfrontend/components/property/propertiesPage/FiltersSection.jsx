@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import {
   View,
@@ -84,11 +86,12 @@ const FiltersSection = () => {
           isSelected ? styles.chipSelected : styles.chipUnselected
         ]}
         onPress={() => dispatch(action(value))}
+        activeOpacity={0.8}
       >
         <MaterialIcons
-          name={isSelected ? "done" : "add"}
-          size={16}
-          color={isSelected ? "#0078db" : "#42526E"}
+          name={isSelected ? "check" : "add"}
+          size={18}
+          color={isSelected ? "#3b82f6" : "#64748b"}
         />
         <Text style={[
           styles.chipText,
@@ -110,31 +113,37 @@ const FiltersSection = () => {
         <Text style={styles.headerText}>Filters</Text>
         <MaterialIcons
           name={isPanelExpanded("panel1") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-          size={24}
-          color="#091E42"
+          size={28}
+          color="#1e293b"
         />
       </TouchableOpacity>
 
       {isPanelExpanded("panel1") && (
-        <View style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {/* Verified Properties */}
           <View style={styles.filterItem}>
             <View style={styles.switchContainer}>
               <Text style={styles.switchLabel}>Verified Properties</Text>
               <Switch
                 value={verifiedProperties}
                 onValueChange={() => dispatch(handleVerifiedProperties())}
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={verifiedProperties ? "#2895DF" : "#f4f3f4"}
+                trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                thumbColor={verifiedProperties ? "#3b82f6" : "#ffffff"}
+                ios_backgroundColor="#e2e8f0"
+                style={styles.switch}
               />
             </View>
           </View>
 
+          {/* City */}
           <View style={styles.filterItem}>
             <Text style={styles.filterTitle}>City</Text>
-            <CityDropdown
-              selectedCity={city}
-              onCityChange={handleCityChange}
-            />
+            <View style={styles.dropdownContainer}>
+              <CityDropdown
+                selectedCity={city}
+                onCityChange={handleCityChange}
+              />
+            </View>
           </View>
 
           {/* No. of Bedrooms */}
@@ -148,7 +157,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel2") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel2") && (
@@ -174,7 +183,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel3") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel3") && (
@@ -200,24 +209,33 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel4") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel4") && (
               <View style={styles.sliderContainer}>
-                <Text style={styles.sliderValue}>
-                  ₹{budgetRange[0].toLocaleString()} - ₹{budgetRange[1].toLocaleString()}
-                </Text>
-                <Slider
-                  minimumValue={0}
-                  maximumValue={20000000}
-                  step={1000}
-                  minimumTrackTintColor="#2895DF"
-                  maximumTrackTintColor="#d3d3d3"
-                  thumbTintColor="#2895DF"
-                  value={budgetRange[1]}
-                  onSlidingComplete={(value) => handleSliderChange("budgetRange", [budgetRange[0], value])}
-                />
+                <View style={styles.sliderValueContainer}>
+                  <Text style={styles.sliderValue}>
+                    ₹{budgetRange[0].toLocaleString()}
+                  </Text>
+                  <Text style={styles.sliderSeparator}>-</Text>
+                  <Text style={styles.sliderValue}>
+                    ₹{budgetRange[1].toLocaleString()}
+                  </Text>
+                </View>
+                <View style={styles.sliderWrapper}>
+                  <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={20000000}
+                    step={1000}
+                    minimumTrackTintColor="#3b82f6"
+                    maximumTrackTintColor="#e2e8f0"
+                    thumbTintColor="#3b82f6"
+                    value={budgetRange[1]}
+                    onSlidingComplete={(value) => handleSliderChange("budgetRange", [budgetRange[0], value])}
+                  />
+                </View>
               </View>
             )}
           </View>
@@ -233,24 +251,33 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel5") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel5") && (
               <View style={styles.sliderContainer}>
-                <Text style={styles.sliderValue}>
-                  {area[0].toLocaleString()} - {area[1].toLocaleString()} sq.ft.
-                </Text>
-                <Slider
-                  minimumValue={0}
-                  maximumValue={4000}
-                  step={10}
-                  minimumTrackTintColor="#2895DF"
-                  maximumTrackTintColor="#d3d3d3"
-                  thumbTintColor="#2895DF"
-                  value={area[1]}
-                  onSlidingComplete={(value) => handleSliderChange("area", [area[0], value])}
-                />
+                <View style={styles.sliderValueContainer}>
+                  <Text style={styles.sliderValue}>
+                    {area[0].toLocaleString()} sq.ft.
+                  </Text>
+                  <Text style={styles.sliderSeparator}>-</Text>
+                  <Text style={styles.sliderValue}>
+                    {area[1].toLocaleString()} sq.ft.
+                  </Text>
+                </View>
+                <View style={styles.sliderWrapper}>
+                  <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={4000}
+                    step={10}
+                    minimumTrackTintColor="#3b82f6"
+                    maximumTrackTintColor="#e2e8f0"
+                    thumbTintColor="#3b82f6"
+                    value={area[1]}
+                    onSlidingComplete={(value) => handleSliderChange("area", [area[0], value])}
+                  />
+                </View>
               </View>
             )}
           </View>
@@ -266,7 +293,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel6") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel6") && (
@@ -277,8 +304,10 @@ const FiltersSection = () => {
                     <Switch
                       value={amenities.includes(amenity)}
                       onValueChange={() => dispatch(handleAmenities(amenity))}
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={amenities.includes(amenity) ? "#2895DF" : "#f4f3f4"}
+                      trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                      thumbColor={amenities.includes(amenity) ? "#3b82f6" : "#ffffff"}
+                      ios_backgroundColor="#e2e8f0"
+                      style={styles.switch}
                     />
                   </View>
                 ))}
@@ -297,7 +326,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel7") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel7") && (
@@ -308,8 +337,10 @@ const FiltersSection = () => {
                     <Switch
                       value={availabilityStatus.includes(status)}
                       onValueChange={() => dispatch(handleAvailabilityStatus(status))}
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={availabilityStatus.includes(status) ? "#2895DF" : "#f4f3f4"}
+                      trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                      thumbColor={availabilityStatus.includes(status) ? "#3b82f6" : "#ffffff"}
+                      ios_backgroundColor="#e2e8f0"
+                      style={styles.switch}
                     />
                   </View>
                 ))}
@@ -328,7 +359,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel8") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel8") && (
@@ -339,8 +370,10 @@ const FiltersSection = () => {
                     <Switch
                       value={postedBy.includes(poster)}
                       onValueChange={() => dispatch(handlePostedBy(poster))}
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={postedBy.includes(poster) ? "#2895DF" : "#f4f3f4"}
+                      trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                      thumbColor={postedBy.includes(poster) ? "#3b82f6" : "#ffffff"}
+                      ios_backgroundColor="#e2e8f0"
+                      style={styles.switch}
                     />
                   </View>
                 ))}
@@ -359,7 +392,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel9") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel9") && (
@@ -370,8 +403,10 @@ const FiltersSection = () => {
                     <Switch
                       value={furnitureType.includes(furniture)}
                       onValueChange={() => dispatch(handleFurnitureType(furniture))}
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={furnitureType.includes(furniture) ? "#2895DF" : "#f4f3f4"}
+                      trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                      thumbColor={furnitureType.includes(furniture) ? "#3b82f6" : "#ffffff"}
+                      ios_backgroundColor="#e2e8f0"
+                      style={styles.switch}
                     />
                   </View>
                 ))}
@@ -390,7 +425,7 @@ const FiltersSection = () => {
               <MaterialIcons
                 name={isPanelExpanded("panel10") ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                 size={24}
-                color="#091E42"
+                color="#1e293b"
               />
             </TouchableOpacity>
             {isPanelExpanded("panel10") && (
@@ -401,8 +436,10 @@ const FiltersSection = () => {
                     <Switch
                       value={purchaseType.includes(type)}
                       onValueChange={() => dispatch(handlePurchaseType(type))}
-                      trackColor={{ false: "#767577", true: "#81b0ff" }}
-                      thumbColor={purchaseType.includes(type) ? "#2895DF" : "#f4f3f4"}
+                      trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                      thumbColor={purchaseType.includes(type) ? "#3b82f6" : "#ffffff"}
+                      ios_backgroundColor="#e2e8f0"
+                      style={styles.switch}
                     />
                   </View>
                 ))}
@@ -417,8 +454,10 @@ const FiltersSection = () => {
               <Switch
                 value={withPhotos}
                 onValueChange={() => dispatch(handleWithPhotos())}
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={withPhotos ? "#2895DF" : "#f4f3f4"}
+                trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                thumbColor={withPhotos ? "#3b82f6" : "#ffffff"}
+                ios_backgroundColor="#e2e8f0"
+                style={styles.switch}
               />
             </View>
             <View style={styles.switchContainer}>
@@ -426,8 +465,10 @@ const FiltersSection = () => {
               <Switch
                 value={reraApproved}
                 onValueChange={() => dispatch(handleReraApproved())}
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={reraApproved ? "#2895DF" : "#f4f3f4"}
+                trackColor={{ false: "#e2e8f0", true: "#bfdbfe" }}
+                thumbColor={reraApproved ? "#3b82f6" : "#ffffff"}
+                ios_backgroundColor="#e2e8f0"
+                style={styles.switch}
               />
             </View>
           </View>
@@ -439,105 +480,169 @@ const FiltersSection = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    margin: 16,
-    marginBottom: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginHorizontal: 4,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { 
+      width: 0, 
+      height: 4 
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#091E42',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1e293b',
     fontFamily: 'Montserrat-Bold',
+    letterSpacing: 0.5,
   },
   content: {
-    maxHeight:'100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   filterItem: {
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    paddingBottom: 16,
+    borderBottomColor: '#f1f5f9',
   },
   filterHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
+    paddingVertical: 4,
   },
   filterTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#091E42',
+    color: '#1e293b',
     fontFamily: 'Montserrat-SemiBold',
+    letterSpacing: 0.3,
+  },
+  dropdownContainer: {
+    marginTop: 12,
+    padding: 4,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
+    marginTop: 8,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    minHeight: 44,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   chipSelected: {
-    backgroundColor: '#f0f9ff',
-    borderColor: '#a3daff',
+    backgroundColor: '#eff6ff',
+    borderColor: '#3b82f6',
   },
   chipUnselected: {
-    backgroundColor: '#fff',
-    borderColor: '#42526E',
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1',
   },
   chipText: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontFamily: 'Montserrat-Regular',
+    marginLeft: 8,
+    fontSize: 16,
+    fontFamily: 'Montserrat-Medium',
+    letterSpacing: 0.2,
   },
   chipTextSelected: {
-    color: '#000',
+    color: '#1e40af',
     fontWeight: '600',
   },
   chipTextUnselected: {
-    color: '#42526E',
-    fontWeight: '400',
+    color: '#64748b',
+    fontWeight: '500',
   },
   sliderContainer: {
-    marginTop: 8,
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  sliderValueContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   sliderValue: {
-    fontSize:14,
-    color: '#42526E',
-    marginBottom: 8,
-    fontFamily: 'Montserrat-Regular',
+    fontSize: 16,
+    color: '#1e293b',
+    fontFamily: 'Montserrat-SemiBold',
+    fontWeight: '600',
+  },
+  sliderSeparator: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  sliderWrapper: {
+    paddingHorizontal: 4,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
   },
   amenitiesContainer: {
-    gap: 12,
+    gap: 16,
+    marginTop: 12,
   },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minHeight: 48,
   },
   switchLabel: {
-    fontSize: 14,
-    color: '#091E42',
-    fontFamily: 'Montserrat-Regular',
+    fontSize: 16,
+    color: '#1e293b',
+    fontFamily: 'Montserrat-Medium',
+    fontWeight: '500',
+    letterSpacing: 0.2,
+    flex: 1,
+  },
+  switch: {
+    transform: Platform.OS === 'ios' ? [{ scaleX: 1.1 }, { scaleY: 1.1 }] : [{ scaleX: 1.2 }, { scaleY: 1.2 }],
   },
 });
+
 export default FiltersSection;

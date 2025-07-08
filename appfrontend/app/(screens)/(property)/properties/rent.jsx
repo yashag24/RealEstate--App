@@ -13,11 +13,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 // import Navbar from '../components/Navbar';
 import Footer from '../../../../components/home/Footer'
-import { useNavigation } from '@react-navigation/native';
+
 import {FiltersSection,PropertiesListSection}  from '../../../../components/property/propertiesPage';
 
 const PropertiesRent = () => {
-  const navigation = useNavigation();
+  
   const [searchQuery, setSearchQuery] = useState({ type: "Rent" });
   const scrollY = useRef(new Animated.Value(0)).current;
   const [showScrollTop, setShowScrollTop] = useState(false);
