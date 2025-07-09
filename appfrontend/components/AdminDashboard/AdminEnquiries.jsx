@@ -7,54 +7,104 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 
+const { width } = Dimensions.get('window');
 
 const AdminEnquiries = ({ enquiries, onDeleteEnquiry }) => {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
   const renderEnquiryItem = ({ item }) => (
-    <View style={styles.row}>
-      <Text style={styles.cell}>{item.fullName}</Text>
-      <Text style={styles.cell}>{item.email}</Text>
-      <Text style={styles.cell}>{item.phoneNumber}</Text>
-      <Text style={styles.cell}>{item.messageEn}</Text>
+    <View style={styles.enquiryCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{item.fullName}</Text>
+        <View style={styles.statusBadge}>
+          <Text style={styles.statusText}>{item.isGuest ? 'Guest' : 'User'}</Text>
+        </View>
+      </View>
 
-      <TouchableOpacity
-        onPress={() => setSelectedProperty(item.propertyId)}>
-        <Text style={[styles.cell, styles.link]}>
-          {item.propertyId?.title || 'N/A'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.cardContent}>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Email:</Text>
+          <Text style={styles.value}>{item.email}</Text>
+        </View>
 
-      <TouchableOpacity onPress={() => setSelectedEnquiry(item)}>
-        <Text style={styles.cell}>{item.isGuest ? 'Guest' : 'User'}</Text>
-      </TouchableOpacity>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Phone:</Text>
+          <Text style={styles.value}>{item.phoneNumber}</Text>
+        </View>
 
-      <Text style={styles.cell}>
-        {item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString()
-          : 'N/A'}
-      </Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Message:</Text>
+          <Text style={styles.messageValue} numberOfLines={2}>
+            {item.messageEn}
+          </Text>
+        </View>
 
-      <TouchableOpacity onPress={() => onDeleteEnquiry?.(item._id)}>
-        <Text style={[styles.cell, styles.deleteBtn]}>Delete</Text>
-      </TouchableOpacity>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Property:</Text>
+          <TouchableOpacity
+            onPress={() => setSelectedProperty(item.propertyId)}
+            style={styles.propertyLink}>
+            <Text style={styles.linkText}>
+              {item.propertyId?.title || 'N/A'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Date:</Text>
+          <Text style={styles.value}>
+            {item.createdAt
+              ? new Date(item.createdAt).toLocaleDateString()
+              : 'N/A'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardActions}>
+        <TouchableOpacity 
+          onPress={() => setSelectedEnquiry(item)}
+          style={styles.viewBtn}>
+          <Text style={styles.viewBtnText}>View Details</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => onDeleteEnquiry?.(item._id)}
+          style={styles.deleteBtn}>
+          <Text style={styles.deleteBtnText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Enquiries</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.heading}>Enquiries Management</Text>
+        <View style={styles.headerStats}>
+          <Text style={styles.statsText}>
+            Total: {enquiries.length} enquiries
+          </Text>
+        </View>
+      </View>
 
       {enquiries.length === 0 ? (
-        <Text>No enquiries found.</Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No enquiries found</Text>
+          <Text style={styles.emptyStateSubtext}>
+            Customer enquiries will appear here
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={enquiries}
           renderItem={renderEnquiryItem}
           keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -62,23 +112,41 @@ const AdminEnquiries = ({ enquiries, onDeleteEnquiry }) => {
       <Modal visible={!!selectedProperty} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity
-              onPress={() => setSelectedProperty(null)}
-              style={styles.closeBtn}>
-              <Text style={styles.closeText}>X</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>{selectedProperty?.title}</Text>
-            {selectedProperty && (
-              <View>
-                <Text>City: {selectedProperty.city}</Text>
-                <Text>Address: {selectedProperty.address}</Text>
-                <Text>Owner: {selectedProperty.Propreiter_name}</Text>
-                <Text>Contact: {selectedProperty.Propreiter_contact}</Text>
-                <Text>Email: {selectedProperty.Propreiter_email}</Text>
-                <Text>Purpose: {selectedProperty.purpose}</Text>
-                <Text>Type: {selectedProperty.type}</Text>
-              </View>
-            )}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Property Details</Text>
+              <TouchableOpacity
+                onPress={() => setSelectedProperty(null)}
+                style={styles.closeBtn}>
+                <Text style={styles.closeText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              {selectedProperty && (
+                <View style={styles.propertyDetails}>
+                  <Text style={styles.propertyTitle}>{selectedProperty.title}</Text>
+                  
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Location</Text>
+                    <Text style={styles.detailValue}>{selectedProperty.city}</Text>
+                    <Text style={styles.detailSubValue}>{selectedProperty.address}</Text>
+                  </View>
+
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Owner Information</Text>
+                    <Text style={styles.detailValue}>{selectedProperty.Propreiter_name}</Text>
+                    <Text style={styles.detailSubValue}>{selectedProperty.Propreiter_contact}</Text>
+                    <Text style={styles.detailSubValue}>{selectedProperty.Propreiter_email}</Text>
+                  </View>
+
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Property Type</Text>
+                    <Text style={styles.detailValue}>{selectedProperty.purpose}</Text>
+                    <Text style={styles.detailSubValue}>{selectedProperty.type}</Text>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -87,159 +155,355 @@ const AdminEnquiries = ({ enquiries, onDeleteEnquiry }) => {
       <Modal visible={!!selectedEnquiry} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity
-              onPress={() => setSelectedEnquiry(null)}
-              style={styles.closeBtn}>
-              <Text style={styles.closeText}>X</Text>
-            </TouchableOpacity>
-            {selectedEnquiry?.userId && !selectedEnquiry.isGuest && (
-              <View>
-                <Text style={styles.modalTitle}>User Information</Text>
-                <Text>
-                  Name: {selectedEnquiry.userId.firstName}{' '}
-                  {selectedEnquiry.userId.lastName}
-                </Text>
-                <Text>Email: {selectedEnquiry.userId.email}</Text>
-                <Text>Phone: {selectedEnquiry.userId.phoneNumber}</Text>
-                <Text>City: {selectedEnquiry.userId.city}</Text>
-                <Text>Address: {selectedEnquiry.userId.address}</Text>
-                <Text>State: {selectedEnquiry.userId.state}</Text>
-              </View>
-            )}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>User Information</Text>
+              <TouchableOpacity
+                onPress={() => setSelectedEnquiry(null)}
+                style={styles.closeBtn}>
+                <Text style={styles.closeText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              {selectedEnquiry?.userId && !selectedEnquiry.isGuest && (
+                <View style={styles.userDetails}>
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Full Name</Text>
+                    <Text style={styles.detailValue}>
+                      {selectedEnquiry.userId.firstName} {selectedEnquiry.userId.lastName}
+                    </Text>
+                  </View>
+
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Contact Information</Text>
+                    <Text style={styles.detailValue}>{selectedEnquiry.userId.email}</Text>
+                    <Text style={styles.detailSubValue}>{selectedEnquiry.userId.phoneNumber}</Text>
+                  </View>
+
+                  <View style={styles.detailGroup}>
+                    <Text style={styles.detailLabel}>Address</Text>
+                    <Text style={styles.detailValue}>{selectedEnquiry.userId.city}</Text>
+                    <Text style={styles.detailSubValue}>{selectedEnquiry.userId.address}</Text>
+                    <Text style={styles.detailSubValue}>{selectedEnquiry.userId.state}</Text>
+                  </View>
+                </View>
+              )}
+
+              {selectedEnquiry?.isGuest && (
+                <View style={styles.guestMessage}>
+                  <Text style={styles.guestMessageText}>
+                    This enquiry was submitted by a guest user.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 
-
 const styles = StyleSheet.create({
-  enquiryContainer: {
-    padding: 20,
-  },
-
-  table: {
-    width: '100%',
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-  },
-
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-
-  tableCell: {
+  container: {
     flex: 1,
-    padding: 12,
-    textAlign: 'center',
-    borderRightWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#f8fafc',
+  },
+  
+  header: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
-  tableHeaderCell: {
-    backgroundColor: '#f5f5f5',
+  heading: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1a202c',
+    marginBottom: 4,
+  },
+
+  headerStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  statsText: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+
+  listContainer: {
+    padding: 16,
+  },
+
+  enquiryCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+
+  cardTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#1a202c',
+    flex: 1,
   },
 
-  guestUser: {
-    textDecorationLine: 'underline',
-    color: '#007bff',
+  statusBadge: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0288d1',
+  },
+
+  cardContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+    width: 80,
+    marginRight: 12,
+  },
+
+  value: {
+    fontSize: 14,
+    color: '#1a202c',
+    flex: 1,
+  },
+
+  messageValue: {
+    fontSize: 14,
+    color: '#1a202c',
+    flex: 1,
+    lineHeight: 20,
   },
 
   propertyLink: {
-    color: '#007bff',
-    textDecorationLine: 'underline',
-    padding: 0,
-    margin: 0,
+    flex: 1,
   },
 
-  deleteBtn: {
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
+  linkText: {
+    fontSize: 14,
+    color: '#3b82f6',
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+
+  viewBtn: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 8,
+  },
+
+  viewBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
   },
 
-  deleteBtnHover: {
-    backgroundColor: '#c0392b',
+  deleteBtn: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 8,
   },
 
-  popupOverlay: {
-    position: 'absolute',
+  deleteBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  emptyState: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    zIndex: 999,
+    paddingHorizontal: 32,
   },
 
-  popupContainer: {
-    width: '90%', // Use 90% for mobile responsiveness
-    height: '60%',
-    backgroundColor: '#fff',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 20,
-    overflow: 'scroll',
-    zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 5,
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
   },
 
-  closeButton: {
-    backgroundColor: '#666',
-    color: 'white',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 90,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
   },
 
-  closeButtonHover: {
-    backgroundColor: '#444',
-  },
-
-  detailTable: {
-    width: '100%',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#3b3b3b',
-  },
-
-  detailRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#3b3b3b',
-  },
-
-  detailCell: {
+  // Modal Styles
+  modalOverlay: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRightWidth: 1,
-    borderColor: '#3b3b3b',
-    textAlignVertical: 'top',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
 
-  detailCellLabel: {
-    fontWeight: 'bold',
-    width: '40%',
-    color: '#333',
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a202c',
+  },
+
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  closeText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
+  propertyDetails: {
+    marginBottom: 16,
+  },
+
+  propertyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a202c',
+    marginBottom: 20,
+  },
+
+  detailGroup: {
+    marginBottom: 20,
+  },
+
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  detailValue: {
+    fontSize: 16,
+    color: '#1a202c',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+
+  detailSubValue: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 2,
+  },
+
+  userDetails: {
+    marginBottom: 16,
+  },
+
+  guestMessage: {
+    backgroundColor: '#fef3c7',
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  },
+
+  guestMessageText: {
+    fontSize: 14,
+    color: '#92400e',
+    fontWeight: '500',
   },
 });
+
 export default AdminEnquiries;
