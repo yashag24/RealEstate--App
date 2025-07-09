@@ -21,7 +21,7 @@ const TopBar = ({ propertyTitle, handleGoBack }) => (
          Discover your slice of paradise
         </Text>
       </View>
-      <View style={{ width: 44 }} /> {/* For alignment */}
+      <View style={{ width: 44 }} /> 
     </View>
   </View>
 );

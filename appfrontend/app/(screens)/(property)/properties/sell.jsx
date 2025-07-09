@@ -1,151 +1,3 @@
-// import React, { useState, useRef } from 'react';
-// import {
-//   View,
-//   ScrollView,
-//   StyleSheet,
-//   TouchableOpacity,
-//   Text,
-//   Platform,
-//   SafeAreaView
-// } from 'react-native';
-
-// import { MaterialIcons } from '@expo/vector-icons';
-// import { router } from 'expo-router';
-// // import Navbar from '../components/Navbar';
-// import {FiltersSection,PropertiesListSection}  from '../../../../components/property/propertiesPage';
-// import Footer from '../../../../components/home/Footer'
-// const PropertiesSell = () => {
-//   const [searchQuery] = useState({ type: 'Sell' || '' });
-//   const [showScrollTop, setShowScrollTop] = useState(false);
-  
-//   const scrollViewRef = useRef(null);
-  
-//   const handleScroll = (event) => {
-//     const scrollY = event.nativeEvent.contentOffset.y;
-//     setShowScrollTop(scrollY > 300);
-//   };
-  
-//   const scrollToTop = () => {
-//     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-//   };
-
-//   return (
-//     <SafeAreaView style={styles.safeArea}>
-//       {/* <Navbar /> */}
-      
-//       <ScrollView
-//         ref={scrollViewRef}
-//         onScroll={handleScroll}
-//         scrollEventThrottle={16}
-//         contentContainerStyle={styles.scrollContainer}
-//         showsVerticalScrollIndicator={false}
-//       >
-//         <View style={styles.contentContainer}>
-//           {/* Breadcrumbs */}
-//           <View style={styles.breadcrumbsContainer}>
-//             <TouchableOpacity  onPress={() => router.push('/')}>
-//               <Text style={styles.breadcrumbText}>Home</Text>
-//             </TouchableOpacity>
-//             <Text style={styles.breadcrumbSeparator}>›</Text>
-//             <Text style={[styles.breadcrumbText, styles.activeBreadcrumb]}>Properties</Text>
-//           </View>
-          
-//           {/* Main Content */}
-//           <View style={styles.mainContent}>
-//             {/* Filters Section */}
-//             <View style={styles.filtersContainer}>
-//               <FiltersSection />
-//             </View>
-            
-//             {/* Properties List */}
-//             <View style={styles.propertiesContainer}>
-//               <PropertiesListSection searchQuery={searchQuery} />
-//             </View>
-//           </View>
-//         </View>
-        
-//         <Footer />
-//       </ScrollView>
-      
-//       {/* Scroll to top button - only visible when scrolled down */}
-//       {showScrollTop && (
-//         <TouchableOpacity 
-//           style={styles.scrollTopButton}
-//           onPress={scrollToTop}
-//           activeOpacity={0.8}
-//         >
-//           <MaterialIcons name="arrow-upward" size={20} color="#0078db" />
-//         </TouchableOpacity>
-//       )}
-//     </SafeAreaView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   safeArea: {
-//     flex: 1,
-//     backgroundColor: '#f4f5f7',
-//   },
-//   scrollContainer: {
-//     flexGrow: 1,
-//     paddingBottom: 20,
-//   },
-//   contentContainer: {
-//     flex: 1,
-//     paddingHorizontal: 16,
-//     paddingTop: Platform.OS === 'ios' ? 10 : 5,
-//   },
-//   breadcrumbsContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     marginTop: 10,
-//     marginBottom: 20,
-//   },
-//   breadcrumbText: {
-//     color: '#8993A4',
-//     fontSize: 12,
-//     fontFamily: 'OpenSans',
-//     marginHorizontal: 4,
-//   },
-//   activeBreadcrumb: {
-//     color: '#495057',
-//   },
-//   breadcrumbSeparator: {
-//     color: '#8993A4',
-//     fontSize: 16,
-//     marginHorizontal: 2,
-//   },
-//   mainContent: {
-//     flex: 1,
-//   },
-//   filtersContainer: {
-//     width: '100%',
-//     marginBottom: 20,
-//   },
-//   propertiesContainer: {
-//     flex: 1,
-//     width: '100%',
-//   },
-//   scrollTopButton: {
-//     position: 'absolute',
-//     right: 15,
-//     bottom: 15,
-//     backgroundColor: '#D6EFFF',
-//     borderRadius: 25,
-//     width: 40,
-//     height: 40,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     elevation: 3,
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.2,
-//     shadowRadius: 2,
-//   },
-// });
-
-// export default PropertiesSell;
-
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -154,18 +6,20 @@ import {
   TouchableOpacity,
   Text,
   Platform,
-  SafeAreaView
+  SafeAreaView,
+  StatusBar,
+  Modal,
+  Pressable,
 } from 'react-native';
 
-import { MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-// import Navbar from '../components/Navbar';
-import {FiltersSection,PropertiesListSection}  from '../../../../components/property/propertiesPage';
-import Footer from '../../../../components/home/Footer'
+import { FiltersSection, PropertiesListSection } from '../../../../components/property/propertiesPage';
 
 const PropertiesSell = () => {
-  const [searchQuery] = useState({ type: 'Sell' || '' });
+  const [searchQuery] = useState({ type: 'Sell' });
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
   const scrollViewRef = useRef(null);
   
@@ -178,38 +32,60 @@ const PropertiesSell = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
+  const handleFilterToggle = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleGoHome = () => {
+    router.push('/');
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* <Navbar /> */}
-      
+    <View style={styles.container}>
+      {/* Modern Header with Gradient */}
+      <View style={styles.headerSection}>
+        <View style={styles.headerGradient} />
+        <View style={styles.headerContent}>
+          <Pressable style={styles.backButton} onPress={handleGoHome}>
+            <FontAwesome5 name="home" size={18} color="#ffffff" />
+          </Pressable>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Properties for Sale</Text>
+            <Text style={styles.headerSubtitle}>Find your dream property</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <Pressable style={styles.headerActionButton} onPress={handleFilterToggle}>
+              <FontAwesome5 name="sliders-h" size={16} color="#ffffff" />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
       <ScrollView
         ref={scrollViewRef}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
       >
         <View style={styles.contentContainer}>
-          {/* Breadcrumbs */}
+          {/* Breadcrumbs
           <View style={styles.breadcrumbsContainer}>
             <TouchableOpacity 
-              onPress={() => router.push('/')}
+              onPress={handleGoHome}
               style={styles.breadcrumbButton}
               activeOpacity={0.7}
             >
+              <FontAwesome5 name="home" size={12} color="#64748b" />
               <Text style={styles.breadcrumbText}>Home</Text>
             </TouchableOpacity>
             <Text style={styles.breadcrumbSeparator}>›</Text>
-            <Text style={[styles.breadcrumbText, styles.activeBreadcrumb]}>Properties</Text>
-          </View>
+            <Text style={[styles.breadcrumbText, styles.activeBreadcrumb]}>Properties for Sale</Text>
+          </View> */}
           
           {/* Main Content */}
           <View style={styles.mainContent}>
-            {/* Filters Section */}
-            <View style={styles.filtersContainer}>
-              <FiltersSection />
-            </View>
-            
             {/* Properties List */}
             <View style={styles.propertiesContainer}>
               <PropertiesListSection searchQuery={searchQuery} />
@@ -217,27 +93,157 @@ const PropertiesSell = () => {
           </View>
         </View>
         
-        <Footer />
       </ScrollView>
       
-      {/* Scroll to top button - only visible when scrolled down */}
-      {showScrollTop && (
-        <TouchableOpacity 
+      {/* Scroll to top button */}
+ {showScrollTop && (
+        <TouchableOpacity
           style={styles.scrollTopButton}
           onPress={scrollToTop}
           activeOpacity={0.8}
         >
-          <MaterialIcons name="arrow-upward" size={22} color="#ffffff" />
+          <MaterialIcons name="arrow-upward" size={24} color="#0078db" />
         </TouchableOpacity>
       )}
-    </SafeAreaView>
+
+      {/* Mobile Filter Modal */}
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFilters(false)}
+        hardwareAccelerated={true}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={styles.modalBackdrop}
+            onPress={() => setShowFilters(false)}
+          />
+          <View style={styles.modalContainer}>
+            <SafeAreaView style={styles.modalSafeArea}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View style={styles.modalDragHandle} />
+                <View style={styles.modalHeaderContent}>
+                  <MaterialIcons name="filter-list" size={24} color="#2C92FF" />          
+                  <Text style={styles.modalTitle}>Filters </Text>
+                  
+                  <Pressable 
+                    style={styles.modalCloseButton}
+                    onPress={() => setShowFilters(false)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <FontAwesome5 name="times" size={20} color="#6b7280" />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Modal Content */}
+              <ScrollView 
+                style={styles.modalContent}
+                contentContainerStyle={styles.modalContentContainer}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <FiltersSection />
+                <View style={styles.modalContentSpacer} />
+              </ScrollView>
+            </SafeAreaView>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  
+  // Modern Header Styles
+  headerSection: {
+    position: 'relative',
+    paddingTop: Platform.OS === 'ios' ? 50 : (StatusBar.currentHeight || 0) + 10,
+    paddingBottom: 20,
+    backgroundColor: '#475569',
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#334155',
+    opacity: 0.9,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 1,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: 2,
+    fontWeight: '400',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+
+  // Scroll View
+  scrollView: {
+    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -245,9 +251,11 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 16 : 12,
+    paddingHorizontal: 5,
+    paddingTop: Platform.OS === 'ios' ? 6 : 5,
   },
+
+  // Breadcrumbs
   breadcrumbsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -256,16 +264,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   breadcrumbButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: 'transparent',
-    transition: 'background-color 0.2s ease',
+    gap: 4,
   },
   breadcrumbText: {
     color: '#64748b',
     fontSize: 14,
-    fontFamily: 'OpenSans',
     fontWeight: '500',
     lineHeight: 20,
   },
@@ -279,6 +288,8 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginHorizontal: 8,
   },
+
+  // Main Content
   mainContent: {
     flex: 1,
     gap: 24,
@@ -286,58 +297,137 @@ const styles = StyleSheet.create({
   filtersContainer: {
     width: '100%',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: 'rgba(0, 0, 0, 0.04)',
   },
   propertiesContainer: {
     flex: 1,
     width: '100%',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: 16,
+    paddingVertical: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: 'rgba(0, 0, 0, 0.04)',
     marginBottom: 24,
   },
+
+  // Scroll to Top Button
   scrollTopButton: {
     position: 'absolute',
+    bottom: 32,
     right: 20,
-    bottom: 20,
-    backgroundColor: '#3b82f6',
-    borderRadius: 28,
-    width: 56,
-    height: 56,
+    backgroundColor: '#D6EFFF',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#3b82f6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    transform: [{ scale: 1 }],
+    shadowColor: '#0078db',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
+    width: '100%',
+  },
+  modalContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    minHeight: '60%',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  modalSafeArea: {
+    flex: 1,
+  },
+  modalHeader: {
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.06)',
+    backgroundColor: '#ffffff',
+  },
+  modalDragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#d1d5db',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  modalContentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  modalContentSpacer: {
+    height: 20,
   },
 });
 

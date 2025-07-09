@@ -1,8 +1,8 @@
 // FiltersSection.js
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Dimensions } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { Slider } from "@miblanchard/react-native-slider";
+import Slider from '@react-native-community/slider'; // Changed from @miblanchard/react-native-slider
 import Icon from "react-native-vector-icons/MaterialIcons";
 import {
   handleChange,
@@ -13,7 +13,9 @@ import {
   clearSearchState
 } from "@/redux/SearchBox/SearchSlice";
 import CityDropdown from "@/redux/SearchBox/CityDropDown";
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 const FiltersSection = () => {
   const { noOfBedrooms, budgetRange, area, selectedCity, expanded } =
     useSelector((store) => store.search);
@@ -22,11 +24,11 @@ const FiltersSection = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [bedroomInput, setBedroomInput] = useState("");
 
-  const handleSliderChange = (name, newValue) => {
+  const handleSliderChange = (name, value) => {
     if (name === "budgetRange") {
-      dispatch(handleBudgetRange(newValue));
+      dispatch(handleBudgetRange([Math.floor(budgetRange[0]), Math.floor(value)]));
     } else if (name === "area") {
-      dispatch(handleArea(newValue));
+      dispatch(handleArea([Math.floor(area[0]), Math.floor(value)]));
     }
   };
 
@@ -43,6 +45,8 @@ const FiltersSection = () => {
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
+
+  const isPanelExpanded = (panel) => expanded?.includes(panel);
 
   // Handle bedroom input change
   const handleBedroomInputChange = (text) => {
@@ -196,13 +200,13 @@ const FiltersSection = () => {
               >
                 <Text style={styles.sectionTitle}>City</Text>
                 <Icon
-                  name={expanded?.includes("panel1") ? "expand-less" : "expand-more"}
+                  name={isPanelExpanded("panel1") ? "expand-less" : "expand-more"}
                   size={24}
                   color="#666"
                 />
               </TouchableOpacity>
               
-              {expanded?.includes("panel1") && (
+              {isPanelExpanded("panel1") && (
                 <View style={styles.sectionContent}>
                   <CityDropdown
                     selectedCity={selectedCity}
@@ -225,13 +229,13 @@ const FiltersSection = () => {
               >
                 <Text style={styles.sectionTitle}>No. of Bedrooms</Text>
                 <Icon
-                  name={expanded?.includes("panel2") ? "expand-less" : "expand-more"}
+                  name={isPanelExpanded("panel2") ? "expand-less" : "expand-more"}
                   size={24}
                   color="#666"
                 />
               </TouchableOpacity>
               
-              {expanded?.includes("panel2") && (
+              {isPanelExpanded("panel2") && (
                 <View style={styles.sectionContent}>
                   <View style={styles.inputContainer}>
                     <TextInput
@@ -261,7 +265,7 @@ const FiltersSection = () => {
               )}
             </View>
 
-            {/* Budget Range - Increased from 2 Cr to 10 Cr */}
+            {/* Budget Range - Enhanced with better styling */}
             <View style={styles.section}>
               <TouchableOpacity
                 style={styles.sectionHeader}
@@ -270,39 +274,43 @@ const FiltersSection = () => {
               >
                 <Text style={styles.sectionTitle}>Budget Range</Text>
                 <Icon
-                  name={expanded?.includes("panel3") ? "expand-less" : "expand-more"}
+                  name={isPanelExpanded("panel3") ? "expand-less" : "expand-more"}
                   size={24}
                   color="#666"
                 />
               </TouchableOpacity>
               
-              {expanded?.includes("panel3") && (
+              {isPanelExpanded("panel3") && (
                 <View style={styles.sectionContent}>
-                  <Slider
-                    minimumValue={0}
-                    maximumValue={1000000000} // Increased to 100 Cr (practically infinity for budget)
-                    step={10000}
-                    value={budgetRange || [0, 100000000]}
-                    onValueChange={(value) => handleSliderChange("budgetRange", value)}
-                    containerStyle={styles.sliderContainer}
-                    trackStyle={styles.track}
-                    thumbStyle={styles.thumb}
-                    minimumTrackTintColor="#2C92FF"
-                    maximumTrackTintColor="#ddd"
-                  />
-                  <View style={styles.rangeValues}>
-                    <Text style={styles.rangeText}>
-                      {formatCurrency(budgetRange?.[0] || 0)}
-                    </Text>
-                    <Text style={styles.rangeText}>
-                      {formatCurrency(budgetRange?.[1] || 100000000)}
-                    </Text>
+                  <View style={styles.sliderContainer}>
+                    <View style={styles.sliderValueContainer}>
+                      <Text style={styles.sliderValue}>
+                        {formatCurrency(budgetRange?.[0] || 0)}
+                      </Text>
+                      <Text style={styles.sliderSeparator}>-</Text>
+                      <Text style={styles.sliderValue}>
+                        {formatCurrency(budgetRange?.[1] || 100000000)}
+                      </Text>
+                    </View>
+                    <View style={styles.sliderWrapper}>
+                      <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={1000000000} // Increased to 100 Cr
+                        step={10000}
+                        minimumTrackTintColor="#3b82f6"
+                        maximumTrackTintColor="#e2e8f0"
+                        thumbTintColor="#3b82f6"
+                        value={budgetRange?.[1] || 100000000}
+                        onSlidingComplete={(value) => handleSliderChange("budgetRange", value)}
+                      />
+                    </View>
                   </View>
                 </View>
               )}
             </View>
 
-            {/* Area - Increased from 4000 to 10000 sq ft */}
+            {/* Area - Enhanced with better styling */}
             <View style={styles.section}>
               <TouchableOpacity
                 style={styles.sectionHeader}
@@ -311,33 +319,37 @@ const FiltersSection = () => {
               >
                 <Text style={styles.sectionTitle}>Area</Text>
                 <Icon
-                  name={expanded?.includes("panel4") ? "expand-less" : "expand-more"}
+                  name={isPanelExpanded("panel4") ? "expand-less" : "expand-more"}
                   size={24}
                   color="#666"
                 />
               </TouchableOpacity>
               
-              {expanded?.includes("panel4") && (
+              {isPanelExpanded("panel4") && (
                 <View style={styles.sectionContent}>
-                  <Slider
-                    minimumValue={0}
-                    maximumValue={500000} // Increased to 50,000 sq ft (practically infinity for area)
-                    step={50}
-                    value={area || [0, 10000]}
-                    onValueChange={(value) => handleSliderChange("area", value)}
-                    containerStyle={styles.sliderContainer}
-                    trackStyle={styles.track}
-                    thumbStyle={styles.thumb}
-                    minimumTrackTintColor="#2C92FF"
-                    maximumTrackTintColor="#ddd"
-                  />
-                  <View style={styles.rangeValues}>
-                    <Text style={styles.rangeText}>
-                      {area?.[0] || 0} sq ft
-                    </Text>
-                    <Text style={styles.rangeText}>
-                      {area?.[1] || 10000} sq ft
-                    </Text>
+                  <View style={styles.sliderContainer}>
+                    <View style={styles.sliderValueContainer}>
+                      <Text style={styles.sliderValue}>
+                        {(area?.[0] || 0).toLocaleString()} sq ft
+                      </Text>
+                      <Text style={styles.sliderSeparator}>-</Text>
+                      <Text style={styles.sliderValue}>
+                        {(area?.[1] || 10000).toLocaleString()} sq ft
+                      </Text>
+                    </View>
+                    <View style={styles.sliderWrapper}>
+                      <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={500000} // Increased to 50,000 sq ft
+                        step={50}
+                        minimumTrackTintColor="#3b82f6"
+                        maximumTrackTintColor="#e2e8f0"
+                        thumbTintColor="#3b82f6"
+                        value={area?.[1] || 10000}
+                        onSlidingComplete={(value) => handleSliderChange("area", value)}
+                      />
+                    </View>
                   </View>
                 </View>
               )}
@@ -350,17 +362,17 @@ const FiltersSection = () => {
 };
 
 const styles = StyleSheet.create({
- container: {
-  backgroundColor: "#fff",
-  borderRadius: 8,
-  width: screenWidth * 0.99,  // Add this line
-  alignSelf: "center",        // Center it horizontally
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 2,
-},
+  container: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    width: screenWidth * 0.99,  // Add this line
+    alignSelf: "center",        // Center it horizontally
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
 
   toggleButton: {
     flexDirection: "row",
@@ -453,27 +465,61 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: "italic",
   },
+  // Enhanced slider styles from code 2
   sliderContainer: {
-    marginVertical: 12,
-    paddingHorizontal: 8,
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  track: {
-    height: 4,
-    borderRadius: 2,
+  sliderValueContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
-  thumb: {
-    width: 20,
-    height: 20,
-    backgroundColor: "#2C92FF",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  sliderValue: {
+    fontSize: 16,
+    color: '#1e293b',
+    fontWeight: '600',
   },
+  sliderSeparator: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  sliderWrapper: {
+    paddingHorizontal: 4,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  // Legacy styles for fallback (removed to avoid conflicts)
+  // sliderContainer: {
+  //   marginVertical: 12,
+  //   paddingHorizontal: 8,
+  // },
+  // track: {
+  //   height: 4,
+  //   borderRadius: 2,
+  // },
+  // thumb: {
+  //   width: 20,
+  //   height: 20,
+  //   backgroundColor: "#2C92FF",
+  //   borderRadius: 10,
+  //   borderWidth: 2,
+  //   borderColor: "#fff",
+  //   shadowColor: "#000",
+  //   shadowOffset: { width: 0, height: 1 },
+  //   shadowOpacity: 0.2,
+  //   shadowRadius: 2,
+  //   elevation: 2,
+  // },
   rangeValues: {
     flexDirection: "row",
     justifyContent: "space-between",
