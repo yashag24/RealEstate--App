@@ -21,10 +21,21 @@ const AdminProfile = ({ adminProfile }) => {
   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const handleChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'phoneNumber' ? Number(value) : value,
-    }));
+    setFormData((prev) => {
+      const updatedData = {
+        ...prev,
+        [name]: name === 'phoneNumber' ? Number(value) : value,
+      };
+      
+      // Update fullName when firstName or lastName changes
+      if (name === 'firstName' || name === 'lastName') {
+        const firstName = name === 'firstName' ? value : prev.firstName || '';
+        const lastName = name === 'lastName' ? value : prev.lastName || '';
+        updatedData.fullName = `${firstName} ${lastName}`.trim();
+      }
+      
+      return updatedData;
+    });
   };
 
   const handleUpdate = async () => {
@@ -64,26 +75,42 @@ const AdminProfile = ({ adminProfile }) => {
     <ScrollView contentContainerStyle={styles.profileWrapper}>
       <View style={styles.profileCard}>
         <View style={styles.profileHeader}>
-          <FontAwesome name="user-circle" size={60} color="#444" />
+          <View style={styles.avatarContainer}>
+            <FontAwesome name="user-circle" size={80} color="#3498db" />
+          </View>
           <Text style={styles.profileTitle}>Admin Profile</Text>
+          <Text style={styles.profileSubtitle}>Manage your account information</Text>
         </View>
 
         <View style={styles.profileGrid}>
           <View style={styles.profileField}>
             <Text style={styles.label}>Admin ID</Text>
-            <Text style={styles.readonly}>{formData.adminId}</Text>
+            <View style={styles.readonlyContainer}>
+              <Text style={styles.readonly}>{formData.adminId}</Text>
+            </View>
           </View>
 
           <View style={styles.profileField}>
             <Text style={styles.label}>Full Name</Text>
             {isEditing ? (
-              <TextInput
-                style={styles.input}
-                value={formData.fullName}
-                onChangeText={(value) => handleChange('fullName', value)}
-              />
+              <View style={styles.nameInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.nameInput]}
+                  value={formData.firstName || ''}
+                  onChangeText={(value) => handleChange('firstName', value)}
+                  placeholder="First Name"
+                />
+                <TextInput
+                  style={[styles.input, styles.nameInput]}
+                  value={formData.lastName || ''}
+                  onChangeText={(value) => handleChange('lastName', value)}
+                  placeholder="Last Name"
+                />
+              </View>
             ) : (
-              <Text style={styles.readonly}>{formData.fullName}</Text>
+              <View style={styles.readonlyContainer}>
+                <Text style={styles.readonly}>{formData.fullName}</Text>
+              </View>
             )}
           </View>
 
@@ -95,23 +122,40 @@ const AdminProfile = ({ adminProfile }) => {
                 value={formData.email}
                 keyboardType="email-address"
                 onChangeText={(value) => handleChange('email', value)}
+                placeholder="Enter your email"
               />
             ) : (
-              <Text style={styles.readonly}>{formData.email}</Text>
+              <View style={styles.readonlyContainer}>
+                <Text style={styles.readonly}>{formData.email}</Text>
+              </View>
             )}
           </View>
 
           <View style={styles.profileField}>
-            <Text style={styles.label}>Phone</Text>
+            <Text style={styles.label}>Phone Number</Text>
             {isEditing ? (
-              <TextInput
-                style={styles.input}
-                value={String(formData.phoneNumber)}
-                keyboardType="phone-pad"
-                onChangeText={(value) => handleChange('phoneNumber', value)}
-              />
+              <View style={styles.phoneInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.countryCodeInput]}
+                  value={formData.countryCode || '+1'}
+                  onChangeText={(value) => handleChange('countryCode', value)}
+                  placeholder="+1"
+                  keyboardType="phone-pad"
+                />
+                <TextInput
+                  style={[styles.input, styles.phoneNumberInput]}
+                  value={formData.phoneNumber ? String(formData.phoneNumber) : ''}
+                  keyboardType="phone-pad"
+                  onChangeText={(value) => handleChange('phoneNumber', value)}
+                  placeholder="Enter phone number"
+                />
+              </View>
             ) : (
-              <Text style={styles.readonly}>{formData.phoneNumber}</Text>
+              <View style={styles.readonlyContainer}>
+                <Text style={styles.readonly}>
+                  {formData.countryCode || '+1'} {formData.phoneNumber}
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -122,23 +166,36 @@ const AdminProfile = ({ adminProfile }) => {
           {isEditing ? (
             <>
               <TouchableOpacity
-                style={styles.updateBtn}
+                style={[styles.actionButton, styles.updateBtn]}
                 onPress={handleUpdate}
                 disabled={isLoading}
+                activeOpacity={0.8}
               >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" style={styles.loadingIndicator} />
+                ) : (
+                  <FontAwesome name="save" size={16} color="#fff" style={styles.buttonIcon} />
+                )}
                 <Text style={styles.buttonText}>
                   {isLoading ? 'Saving...' : 'Save Changes'}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelBtn} onPress={handleDiscard}>
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.cancelBtn]} 
+                onPress={handleDiscard}
+                activeOpacity={0.8}
+              >
+                <FontAwesome name="times" size={16} color="#fff" style={styles.buttonIcon} />
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
             </>
           ) : (
             <TouchableOpacity
-              style={styles.editBtn}
+              style={[styles.actionButton, styles.editBtn]}
               onPress={() => setIsEditing(true)}
+              activeOpacity={0.8}
             >
+              <FontAwesome name="edit" size={16} color="#fff" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Edit Profile</Text>
             </TouchableOpacity>
           )}
@@ -154,40 +211,58 @@ const styles = StyleSheet.create({
   profileWrapper: {
     paddingVertical: 40,
     paddingHorizontal: 20,
-    backgroundColor: '#f7f9fc',
+    backgroundColor: '#f8fafc',
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
 
   profileCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 35,
-    maxWidth: 850,
+    borderRadius: 20,
+    padding: 40,
+    maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 30,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
 
   profileHeader: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
 
-  avatar: {
-    fontSize: 60,
-    color: '#2980b9',
-    marginBottom: 8,
+  avatarContainer: {
+    marginBottom: 16,
+    padding: 20,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 50,
+    shadowColor: '#3498db',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
   profileTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#2c3e50',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  profileSubtitle: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    fontWeight: '400',
   },
 
   profileGrid: {
@@ -200,81 +275,135 @@ const styles = StyleSheet.create({
   profileField: {
     flexDirection: 'column',
     flexBasis: screenWidth < 700 ? '100%' : '48%',
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   label: {
-    fontSize: 14,
-    color: '#444',
-    marginBottom: 6,
+    fontSize: 15,
+    color: '#374151',
+    marginBottom: 8,
     fontWeight: '600',
+    textAlign: 'left',
   },
 
   input: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    fontSize: 15,
-    backgroundColor: '#fdfdfd',
-    height: 40,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    fontSize: 16,
+    backgroundColor: '#ffffff',
+    color: '#1e293b',
+    fontWeight: '500',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
 
-  readonly: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    backgroundColor: '#f0f3f7',
-    borderRadius: 10,
-    fontSize: 15,
-    color: '#333',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    height: 40,
+  readonlyContainer: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
     justifyContent: 'center',
   },
 
+  readonly: {
+    fontSize: 16,
+    color: '#475569',
+    fontWeight: '500',
+  },
+
   divider: {
-    marginVertical: 25,
+    marginVertical: 30,
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#e2e8f0',
   },
 
   profileActions: {
     flexDirection: screenWidth < 700 ? 'column' : 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 15,
+    gap: 16,
   },
 
   actionButton: {
-    fontSize: 15,
-    paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 8,
-    fontWeight: '500',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 5,
-    marginBottom: screenWidth < 700 ? 10 : 0,
-    width: screenWidth < 700 ? '100%' : 'auto',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    minWidth: 140,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+    transform: [{ scale: 1 }],
   },
 
   editBtn: {
-    backgroundColor: '#2980b9',
+    backgroundColor: '#3498db',
+    borderWidth: 2,
+    borderColor: '#2980b9',
   },
 
   updateBtn: {
     backgroundColor: '#27ae60',
+    borderWidth: 2,
+    borderColor: '#229954',
   },
 
   cancelBtn: {
     backgroundColor: '#e74c3c',
+    borderWidth: 2,
+    borderColor: '#c0392b',
   },
 
-  actionButtonText: {
-    color: '#fff',
+  buttonIcon: {
+    marginRight: 8,
+  },
+
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  loadingIndicator: {
+    marginRight: 8,
+  },
+
+  // Name input container styles
+  nameInputContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  nameInput: {
+    flex: 1,
+  },
+
+  // Phone input container styles
+  phoneInputContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  countryCodeInput: {
+    flex: 0.3,
+    minWidth: 80,
+  },
+
+  phoneNumberInput: {
+    flex: 0.7,
   },
 });
 
