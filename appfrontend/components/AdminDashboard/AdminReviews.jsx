@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  Dimensions,
 } from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon1 from 'react-native-vector-icons/FontAwesome';
-import IoIcon from 'react-native-vector-icons/FontAwesome'; // You can replace this with a Text or another icon if needed
+import IoIcon from 'react-native-vector-icons/FontAwesome';
 
 const AdminReviews = ({ reviews }) => {
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -19,7 +20,9 @@ const AdminReviews = ({ reviews }) => {
     Array.from({ length: 5 }, (_, index) => (
       <Icon
         key={index}
-        color={index < rating ? "#facc15" : "#d1d5db"}
+        name={index < rating ? "star" : "star-o"}
+        size={16}
+        color={index < rating ? "#fbbf24" : "#d1d5db"}
         style={styles.star}
       />
     ));
@@ -32,23 +35,57 @@ const AdminReviews = ({ reviews }) => {
       }))
     ) || [];
 
+  const getRatingColor = (rating) => {
+    if (rating >= 4.5) return "#10b981";
+    if (rating >= 3.5) return "#f59e0b";
+    if (rating >= 2.5) return "#f97316";
+    return "#ef4444";
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Reviews</Text>
-      <View style={styles.reviewTable}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Customer Reviews</Text>
+        <Text style={styles.subheader}>
+          {flattenedReviews.length} total reviews
+        </Text>
+      </View>
+
+      <View style={styles.reviewsContainer}>
         {flattenedReviews.reverse().map((review) => (
-          <View key={review._id} style={styles.reviewRow}>
-            <View style={styles.reviewer}>
-              <Icon1 style={styles.icon} />
-              <Text>{review.name}</Text>
+          <View key={review._id} style={styles.reviewCard}>
+            <View style={styles.reviewHeader}>
+              <View style={styles.reviewer}>
+                <View style={styles.avatarContainer}>
+                  <Icon1 name="user" size={20} color="#6b7280" />
+                </View>
+                <View style={styles.reviewerInfo}>
+                  <Text style={styles.reviewerName}>{review.name}</Text>
+                  <View style={styles.ratingContainer}>
+                    <View style={styles.stars}>
+                      {renderStars(review.rating)}
+                    </View>
+                    <Text style={[styles.ratingText, { color: getRatingColor(review.rating) }]}>
+                      {review.rating}/5
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedProperty(review.property)}
+                style={styles.propertyButton}
+              >
+                <Icon name="home" size={14} color="#3b82f6" />
+                <Text style={styles.propertyLink}>View Property</Text>
+              </TouchableOpacity>
             </View>
+
             <Text style={styles.comment}>{review.comment}</Text>
-            <View style={styles.stars}>{renderStars(review.rating)}</View>
-            <TouchableOpacity
-              onPress={() => setSelectedProperty(review.property)}
-            >
-              <Text style={styles.propertyLink}>{review.property.title}</Text>
-            </TouchableOpacity>
+
+            <View style={styles.propertyPreview}>
+              <Icon name="building" size={12} color="#6b7280" />
+              <Text style={styles.propertyTitle}>{review.property.title}</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -65,51 +102,77 @@ const AdminReviews = ({ reviews }) => {
               onPress={() => setSelectedProperty(null)}
               style={styles.closeBtn}
             >
-              <IoIcon size={24} />
+              <IoIcon name="times" size={24} color="#6b7280" />
             </TouchableOpacity>
 
             <Text style={styles.modalTitle}>{selectedProperty?.title}</Text>
 
             <View style={styles.detailsGrid}>
-              <Text>
-                <Text style={styles.bold}>BHK:</Text> {selectedProperty?.Bhk}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Area:</Text> {selectedProperty?.area} sq.ft
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Address:</Text> {selectedProperty?.address}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Price:</Text> ₹{selectedProperty?.price}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Status:</Text> {selectedProperty?.status}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Owner:</Text>{" "}
-                {selectedProperty?.Propreiter_name}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Email:</Text>{" "}
-                {selectedProperty?.Propreiter_email}
-              </Text>
-              <Text>
-                <Text style={styles.bold}>Contact:</Text>{" "}
-                {selectedProperty?.Propreiter_contact}
-              </Text>
+              <View style={styles.detailRow}>
+                <Icon name="th-large" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>BHK:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.Bhk}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="expand" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Area:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.area} sq.ft</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="map-marker" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Address:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.address}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="dollar" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Price:</Text>
+                <Text style={styles.detailValue}>₹{selectedProperty?.price}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="info-circle" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Status:</Text>
+                <Text style={[styles.detailValue, styles.statusBadge]}>
+                  {selectedProperty?.status}
+                </Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="user" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Owner:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.Propreiter_name}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="envelope" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Email:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.Propreiter_email}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Icon name="phone" size={16} color="#6b7280" />
+                <Text style={styles.detailLabel}>Contact:</Text>
+                <Text style={styles.detailValue}>{selectedProperty?.Propreiter_contact}</Text>
+              </View>
             </View>
 
             {selectedProperty?.images?.length > 0 && (
-              <ScrollView horizontal style={styles.imageGrid}>
-                {selectedProperty.images.map((url, idx) => (
-                  <Image
-                    key={idx}
-                    source={{ uri: url }}
-                    style={styles.image}
-                  />
-                ))}
-              </ScrollView>
+              <View style={styles.imageSection}>
+                <Text style={styles.imagesSectionTitle}>Property Images</Text>
+                <ScrollView horizontal style={styles.imageGrid}>
+                  {selectedProperty.images.map((url, idx) => (
+                    <Image
+                      key={idx}
+                      source={{ uri: url }}
+                      style={styles.image}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </ScrollView>
+              </View>
             )}
           </View>
         </View>
@@ -118,134 +181,270 @@ const AdminReviews = ({ reviews }) => {
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  tableWrapper: {
-    padding: 32,
-    backgroundColor: '#f9fafb',
+  container: {
+    padding: 24,
+    backgroundColor: '#f8fafc',
     minHeight: '100%',
-    boxSizing: 'border-box', // This is default in RN, can omit
   },
-  table: {
-    width: '100%',
+
+  headerContainer: {
+    marginBottom: 32,
+    alignItems: 'center',
   },
-  tableHead: {
-    backgroundColor: 'transparent',
+
+  header: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  tableHeadCell: {
-    textAlign: 'left',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    color: '#4b5563',
-    fontSize: 14,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    borderBottomWidth: 2,
-    borderBottomColor: '#e5e7eb',
+
+  subheader: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
   },
-  tableRow: {
+
+  reviewsContainer: {
+    gap: 20,
+  },
+
+  reviewCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3, // Android shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  tableCell: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: '#374151',
+
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
+
   reviewer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8, // Use margin on children if gap unsupported
-    fontWeight: '500',
-    color: '#1f2937',
+    flex: 1,
   },
-  avatar: {
-    fontSize: 24,
-    color: '#6b7280',
-  },
-  propertyLink: {
-    color: '#2563eb',
-    textDecorationLine: 'underline',
-    fontWeight: '500',
-  },
-  star: {
-    fontSize: 16,
-    marginRight: 2,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0, bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+
+  avatarContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
   },
+
+  reviewerInfo: {
+    flex: 1,
+  },
+
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  stars: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  star: {
+    marginRight: 2,
+  },
+
+  ratingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+
+  propertyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    gap: 6,
+  },
+
+  propertyLink: {
+    color: '#3b82f6',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  comment: {
+    fontSize: 15,
+    color: '#475569',
+    lineHeight: 22,
+    marginBottom: 16,
+    fontStyle: 'italic',
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e2e8f0',
+  },
+
+  propertyPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    gap: 8,
+  },
+
+  propertyTitle: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+    flex: 1,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
   modal: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 32,
-    width: '90%',
-    maxWidth: 650,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 700,
     maxHeight: '90%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.25,
     shadowRadius: 40,
-    elevation: 6,
+    elevation: 10,
   },
+
   modalTitle: {
-    fontSize: 28,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '700',
     marginBottom: 24,
-    color: '#111827',
+    color: '#1e293b',
     textAlign: 'center',
+    paddingRight: 40,
   },
+
   closeBtn: {
     position: 'absolute',
-    top: 14,
-    right: 14,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    fontSize: 24,
-    color: '#6b7280',
+    top: 20,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
-  closeBtnHover: {
-    color: 'red', // Not applicable unless using gesture detection
-  },
+
   detailsGrid: {
+    gap: 16,
+    marginBottom: 24,
+  },
+
+  detailRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12, // Replace with marginRight/bottom on children
-    justifyContent: 'space-between',
-  },
-  detailText: {
-    width: '48%',
-    fontSize: 15,
-    color: '#374151',
-    marginBottom: 10,
-  },
-  imageGrid: {
-    marginTop: 24,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10, // Use margin
-  },
-  image: {
-    width: 100,
-    height: 75,
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8fafc',
     borderRadius: 8,
-    objectFit: 'cover', // React Native alternative is `resizeMode`
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginRight: 10,
-    marginBottom: 10,
+    borderColor: '#e2e8f0',
+    gap: 12,
+  },
+
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    minWidth: 70,
+  },
+
+  detailValue: {
+    fontSize: 14,
+    color: '#1e293b',
+    fontWeight: '500',
+    flex: 1,
+  },
+
+  statusBadge: {
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+
+  imageSection: {
+    marginTop: 8,
+  },
+
+  imagesSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 16,
+  },
+
+  imageGrid: {
+    flexDirection: 'row',
+  },
+
+  image: {
+    width: 120,
+    height: 90,
+    borderRadius: 12,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
 });
 
