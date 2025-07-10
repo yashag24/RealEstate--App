@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
 import Toast from 'react-native-toast-message';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// import { SafeAreaView } from 'react-native-safe-area-context';
 import { toastConfig } from '../../toastConfig.js'; // Adjust the path as necessary
 import { View, StyleSheet } from 'react-native';
 
