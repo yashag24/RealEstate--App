@@ -6,13 +6,18 @@ import {
   StyleSheet, 
   Platform,
   Alert,
-  Dimensions
+  Dimensions,
+  Pressable,
+  StatusBar,
+  SafeAreaView,
+  Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice';
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
  
 import Navbar from '@/components/home/Navbar';
 import AdminSideBar from '@/components/AdminDashboard/AdminSideBar';
@@ -43,12 +48,131 @@ const AdminDashboard = () => {
   const [contractors, setContractors] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [headerAnimation] = useState(new Animated.Value(0));
   
   const dispatch = useDispatch();
   const router = useRouter();
   const { userData, authUser, userType } = useSelector((state) => state.auth);
  
   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Header animation
+  useEffect(() => {
+    Animated.timing(headerAnimation, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Get section display info with enhanced details
+  const getSectionInfo = () => {
+    const sectionMap = {
+      'adminProfile': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Manage your profile settings',
+        icon: 'user-circle',
+        color: '#10b981',
+        stats: null
+      },
+      'adminDashUserDetails': { 
+        title: 'Admin Dashboard',
+        subtitle: 'View and manage user information',
+        icon: 'users',
+        color: '#3b82f6',
+        stats: null
+      },
+      'appointments': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Manage customer appointments',
+        icon: 'calendar-check',
+        color: '#8b5cf6',
+        stats: appointments.length
+      },
+      'propertyVerification': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Review and verify properties',
+        icon: 'building',
+        color: '#f59e0b',
+        stats: properties.length
+      },
+      'reviews': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Customer feedback and ratings',
+        icon: 'star',
+        color: '#ef4444',
+        stats: reviews.length
+      },
+      'enquiries': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Customer inquiries and support',
+        icon: 'question-circle',
+        color: '#06b6d4',
+        stats: enquiries.length
+      },
+      'adminsList': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Manage administrator accounts',
+        icon: 'user-shield',
+        color: '#dc2626',
+        stats: admins.length
+      },
+      'staffManagement': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Manage staff members and roles',
+        icon: 'users-cog',
+        color: '#059669',
+        stats: null
+      },
+      'staffPerformance': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Track performance metrics',
+        icon: 'chart-line',
+        color: '#7c3aed',
+        stats: null
+      },
+      'contractorVerification': { 
+        title: 'Admin Dashboard',
+        subtitle: 'Verify and manage contractors',
+        icon: 'hard-hat',
+        color: '#ea580c',
+        stats: contractors.length
+      }
+    };
+    return sectionMap[activeSection] || { 
+      title: 'Admin Dashboard', 
+      subtitle: 'Welcome back',
+      icon: 'tachometer-alt',
+      color: '#6366f1',
+      stats: null
+    };
+  };
+
+  // Get greeting based on time
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  // Format time
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
 
   // Initialize authentication on component mount
   useEffect(() => {
@@ -281,10 +405,123 @@ const AdminDashboard = () => {
       Toast.show({ type: 'error', text1: 'Failed to reject contractor' });
     }
   };
+
+  const sectionInfo = getSectionInfo();
  
   return (
     <View style={styles.wrapper}>
-      <Navbar />
+      {/* Enhanced Header */}
+      <Animated.View 
+        style={[
+          styles.headerSection,
+          {
+            opacity: headerAnimation,
+            transform: [
+              {
+                translateY: headerAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.headerGradient} />
+        
+        {/* Header Content */}
+        <View style={styles.headerContent}>
+          {/* Left Section - Menu & User Info */}
+          <View style={styles.headerLeft}>
+            <Pressable 
+              style={styles.menuButton} 
+              onPress={() => setSidebarVisible(!sidebarVisible)}
+            >
+              <FontAwesome5 name="bars" size={18} color="#ffffff" />
+            </Pressable>
+            
+            {/* User Welcome (Hidden on small screens) */}
+            {width > 480 && (
+              <View style={styles.userWelcome}>
+                <Text style={styles.greetingText}>
+                  {getGreeting()}, {userData?.name || 'Admin'}!
+                </Text>
+                <Text style={styles.dateTimeText}>
+                  {currentTime.toLocaleDateString()} • {formatTime(currentTime)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Center Section - Page Info */}
+          <View style={styles.headerCenter}>
+            <View style={styles.sectionIconContainer}>
+              <FontAwesome5 
+                name={sectionInfo.icon} 
+                size={20} 
+                color={sectionInfo.color} 
+              />
+            </View>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>{sectionInfo.title}</Text>
+              <Text style={styles.headerSubtitle}>{sectionInfo.subtitle}</Text>
+              {/* {sectionInfo.stats !== null && (
+                <View style={styles.statsContainer}>
+                  <View style={styles.statsBadge}>
+                    <Text style={styles.statsText}>{sectionInfo.stats}</Text>
+                  </View>
+                </View>
+              )} */}
+            </View>
+          </View>
+
+          {/* Right Section - Actions */}
+          <View style={styles.headerRight}>
+            {/* Notification Bell */}
+            {/* <Pressable style={styles.headerActionButton}>
+              <FontAwesome5 name="bell" size={16} color="#ffffff" />
+              {(appointments.length + properties.length + enquiries.length) > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>
+                    {appointments.length + properties.length + enquiries.length}
+                  </Text>
+                </View>
+              )}
+            </Pressable> */}
+{/* 
+            <Pressable style={styles.headerActionButton} onPress={() => setShowModal(true)}>
+              <FontAwesome5 name="plus" size={16} color="#ffffff" />
+            </Pressable> */}
+            
+            <Pressable style={styles.headerActionButton} onPress={handleLogout}>
+              <FontAwesome5 name="sign-out-alt" size={16} color="#ffffff" />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Quick Stats Bar (Mobile Only) */}
+        {width <= 480 && (
+          <View style={styles.quickStatsBar}>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatNumber}>{appointments.length}</Text>
+              <Text style={styles.quickStatLabel}>Appointments</Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatNumber}>{properties.length}</Text>
+              <Text style={styles.quickStatLabel}>Properties</Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatNumber}>{enquiries.length}</Text>
+              <Text style={styles.quickStatLabel}>Enquiries</Text>
+            </View>
+            <View style={styles.quickStat}>
+              <Text style={styles.quickStatNumber}>{contractors.length}</Text>
+              <Text style={styles.quickStatLabel}>Contractors</Text>
+            </View>
+          </View>
+        )}
+      </Animated.View>
+
       <View style={styles.dashboardContainer}>
         <AdminSideBar
           activeSection={activeSection}
@@ -353,11 +590,195 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f7fa'
   },
+  
+  // Enhanced Header Styles
+  headerSection: {
+    position: 'relative',
+    paddingTop: Platform.OS === 'ios' ? 35 : (StatusBar.currentHeight || 0) + 5,
+    paddingBottom: 15,
+    backgroundColor: '#475569',
+    overflow: 'hidden',
+    zIndex: 1000,
+    minHeight: width <= 480 ? 140 : 100,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#334155',
+    opacity: 0.9,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 1,
+    minHeight: 50,
+  },
+  
+  // Header Left Section
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: width <= 480 ? 0 : 1,
+  },
+  menuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginRight: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  userWelcome: {
+    marginLeft: 8,
+  },
+  greetingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    letterSpacing: 0.3,
+  },
+  dateTimeText: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '400',
+    marginTop: 1,
+  },
+
+  // Header Center Section
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: width <= 480 ? 1 : 0,
+    justifyContent: width <= 480 ? 'center' : 'center',
+  },
+  sectionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  headerTitleContainer: {
+    alignItems: width <= 480 ? 'center' : 'flex-start',
+  },
+  headerTitle: {
+    fontSize: width <= 480 ? 16 : 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    fontSize: width <= 480 ? 11 : 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+    fontWeight: '400',
+  },
+  statsContainer: {
+    marginTop: 4,
+  },
+  statsBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  statsText: {
+    fontSize: 10,
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+
+  // Header Right Section
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: width <= 480 ? 0 : 1,
+    justifyContent: 'flex-end',
+  },
+  headerActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#334155',
+  },
+  notificationText: {
+    fontSize: 10,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+
+  // Quick Stats Bar (Mobile)
+  quickStatsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 5,
+  },
+  quickStat: {
+    alignItems: 'center',
+  },
+  quickStatNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  quickStatLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+
+  // Rest of the component styles remain the same
   dashboardContainer: {
     flex: 1,
     flexDirection: isTablet ? 'row' : 'column',
     backgroundColor: '#f5f7fa',
-    paddingTop: Platform.OS === 'web' ? 72 : 0,
   },
   content: { 
     flex: 1,
@@ -365,7 +786,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: isTablet ? 16 : 8,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Account for home indicator on iOS
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    paddingTop: 10,
     minHeight: '100%'
   }
 });

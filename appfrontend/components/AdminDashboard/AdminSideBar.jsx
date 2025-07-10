@@ -120,12 +120,12 @@ const AdminSideBar = ({
   return (
     <>
       {/* Mobile Menu Button */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.menuButton}
         onPress={() => setSidebarVisible(true)}
       >
         <Ionicons name="menu" size={24} color="#4b5563" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
  
       {/* Mobile Sidebar Modal */}
       <Modal
