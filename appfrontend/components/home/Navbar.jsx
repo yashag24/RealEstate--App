@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
+import { useRouter } from 'expo-router';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,6 +22,7 @@ const Navbar = ({ onLoginClick, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-280));
+  const router = useRouter();
 
   const handleSearch = () => {
     if (onSearch) {
@@ -59,7 +62,7 @@ const Navbar = ({ onLoginClick, onSearch }) => {
       {/* Sidebar Header */}
       <View style={styles.sidebarHeader}>
         <Image
-          source={require('../../assets/images/logo.png')}
+          source={require("../../assets/images/logo.png")}
           style={styles.sidebarLogo}
         />
         <TouchableOpacity onPress={closeSidebar} style={styles.closeButton}>
@@ -70,7 +73,12 @@ const Navbar = ({ onLoginClick, onSearch }) => {
       {/* Search Section in Sidebar */}
       <View style={styles.sidebarSearchContainer}>
         <View style={styles.sidebarSearch}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.sidebarSearchInput}
             placeholder="Search..."
@@ -78,7 +86,10 @@ const Navbar = ({ onLoginClick, onSearch }) => {
             onChangeText={setSearchQuery}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity onPress={handleSearch} style={styles.sidebarSearchButton}>
+          <TouchableOpacity
+            onPress={handleSearch}
+            style={styles.sidebarSearchButton}
+          >
             <Ionicons name="arrow-forward" size={20} color="#007bff" />
           </TouchableOpacity>
         </View>
@@ -90,27 +101,46 @@ const Navbar = ({ onLoginClick, onSearch }) => {
           <Ionicons name="home-outline" size={24} color="#333" />
           <Text style={styles.menuText}>Home</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="leaf-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Plants</Text>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            setTimeout(() => {
+              console.log("Navigating to Plant");
+              // router.push("/(screens)/(property)/properties/rent");
+            }, 0);
+            closeSidebar();
+          }}
+        >
+          <Ionicons name="add-circle-outline" size={24} color="#333" />
+          <Text style={styles.menuText}>Post Property</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="heart-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Favorites</Text>
+          <Ionicons name="search-outline" size={24} color="#333" />
+          <Text style={styles.menuText}>Property Title Search</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.menuItem}>
           <Ionicons name="person-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Profile</Text>
+          <Text style={styles.menuText}>Pre-Purchase Property Verification</Text>
         </TouchableOpacity>
-        
+
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="person-outline" size={24} color="#333" />
+          <Text style={styles.menuText}>Post-Purchase Property Services</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="person-outline" size={24} color="#333" />
+          <Text style={styles.menuText}>Contractors</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem}>
           <Ionicons name="settings-outline" size={24} color="#333" />
           <Text style={styles.menuText}>Settings</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.menuItem}>
           <Ionicons name="help-circle-outline" size={24} color="#333" />
           <Text style={styles.menuText}>Help</Text>
@@ -139,7 +169,7 @@ const Navbar = ({ onLoginClick, onSearch }) => {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/images/logo.png')}
+              source={require("../../assets/images/logo.png")}
               style={styles.logo}
             />
           </View>
@@ -159,21 +189,23 @@ const Navbar = ({ onLoginClick, onSearch }) => {
         onRequestClose={closeSidebar}
       >
         <View style={styles.overlay}>
+          <TouchableOpacity
+            style={styles.overlayTouch}
+            onPress={closeSidebar}
+            activeOpacity={1}
+          />
+
           <Animated.View
             style={[
               styles.sidebar,
               {
                 transform: [{ translateX: slideAnim }],
+                zIndex: 10, // ensure sidebar is above the touch blocker
               },
             ]}
           >
             <SidebarContent />
           </Animated.View>
-          <TouchableOpacity 
-            style={styles.overlayTouch} 
-            onPress={closeSidebar}
-            activeOpacity={1}
-          />
         </View>
       </Modal>
     </>
