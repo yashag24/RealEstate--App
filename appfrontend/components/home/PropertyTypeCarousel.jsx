@@ -34,7 +34,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Independent House",
       description: "1,400+ Properties",
-      imageSrc: require("../../assets/images/villa.png"),
+      imageSrc: require("../../assets/images/villa_image.png"),
     },
     {
       title: "Independent Builder Floor",
@@ -59,7 +59,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Luxury Villas",
       description: "70+ Properties",
-      imageSrc: require("../../assets/images/villa.png"),
+      imageSrc: require("../../assets/images/villa_image.png"),
     },
   ];
 
