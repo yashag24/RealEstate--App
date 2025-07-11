@@ -3,9 +3,6 @@
     "version": ">= 16.13.2",
     "appVersionSource": "remote"
   },
-   "env": {
-        "EXPO_KOTLIN_VERSION": "1.9.10"
-      },
   "build": {
     "development": {
       "developmentClient": true,
@@ -19,6 +16,9 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:clean :app:assembleRelease"
+      },
+      "env": {
+        "EXPO_KOTLIN_VERSION": "1.9.10"
       }
     }
   },
