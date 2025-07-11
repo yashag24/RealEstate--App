@@ -49,12 +49,12 @@ const PropertyTypeCarousel = () => {
     {
       title: "Apartments",
       description: "300+ Properties",
-      imageSrc: require("../../assets/images/Delhi.png"),
+      imageSrc: require("../../assets/images/delhi.png"),
     },
     {
       title: "Studio Apartments",
       description: "150+ Properties",
-      imageSrc: require("../../assets/images/Delhi.png"),
+      imageSrc: require("../../assets/images/delhi.png"),
     },
     {
       title: "Luxury Villas",
