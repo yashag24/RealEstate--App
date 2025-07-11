@@ -34,7 +34,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Independent House",
       description: "1,400+ Properties",
-      imageSrc: require("../../assets/images/villa_image.png"),
+      imageSrc: require("../../assets/images/background.jpeg"),
     },
     {
       title: "Independent Builder Floor",
@@ -44,7 +44,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Plots",
       description: "800+ Properties",
-      imageSrc: require("../../assets/images/istockphoto.png"),
+      imageSrc: require("../../assets/images/background.jpeg"),
     },
     {
       title: "Apartments",
@@ -59,7 +59,7 @@ const PropertyTypeCarousel = () => {
     {
       title: "Luxury Villas",
       description: "70+ Properties",
-      imageSrc: require("../../assets/images/villa_image.png"),
+      imageSrc: require("../../assets/images/background.jpeg"),
     },
   ];
 
