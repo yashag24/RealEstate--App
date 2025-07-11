@@ -1,9 +1,6 @@
 {
   "cli": {
-    "version": ">= 6.3.0",
-    "build": {
-      "image": "latest"
-    }
+    "version": ">= 6.3.0"
   },
   "build": {
     "development": {
