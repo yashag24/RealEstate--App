@@ -1,6 +1,9 @@
 {
   "cli": {
-    "version": ">= 6.3.0"
+    "version": ">= 6.3.0",
+    "build": {
+      "image": "latest"
+    }
   },
   "build": {
     "development": {
@@ -17,8 +20,7 @@
       },
       "env": {
         "EXPO_KOTLIN_VERSION": "2.1.0"
-      },
-      "image": "latest"
+      }
     }
   },
   "submit": {
