@@ -34,7 +34,7 @@ const CustomerReviewCard = ({
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <Image
-            source={ imageSource ?? require('../../assets/images/react-logo.png') }
+            source={ imageSource ?? require('../../assets/images/background.jpeg') }
             style={styles.avatar}
             resizeMode="cover"
           />
