@@ -13,9 +13,11 @@ import {
     Dimensions,
     SafeAreaView
 } from 'react-native';
+import { router } from 'expo-router';
 import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
+
 
 
 const { width, height } = Dimensions.get('window');
@@ -32,6 +34,10 @@ const PrePurchaseServices = () => {
         MessageOrPropertyDetails: "",
     });
     const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+     const handleGoHome = () => {
+        router.push('/');
+      };
 
 
 
@@ -127,26 +133,45 @@ const PrePurchaseServices = () => {
         "Full transparency, confidentiality, and reliability"
     ];
 
+    
     return (
         <SafeAreaView style={styles.container}>
-            {/* <Navbar navigation={navigation} /> */}
+           
+            
+            {/* Header with Back Button */}
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    style={styles.backButton}
+                    onPress={handleGoHome}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="arrow-back" size={24} color="#ffffff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Pre-Purchase Services</Text>
+                <View style={styles.headerRight} />
+            </View>
 
             {submittedEnquiryId && (
                 <View style={styles.successBox}>
-                    <Text style={styles.successText}>
-                        ✅ <Text style={styles.successBold}>Your Request ID:</Text> {submittedEnquiryId}
-                    </Text>
-                    <Text style={styles.successNote}>Please save this for future reference.</Text>
+                    <View style={styles.successContent}>
+                        <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                        <View style={styles.successTextContainer}>
+                            <Text style={styles.successText}>
+                                <Text style={styles.successBold}>Request ID:</Text> {submittedEnquiryId}
+                            </Text>
+                            <Text style={styles.successNote}>Please save this for future reference.</Text>
+                        </View>
+                    </View>
                     <TouchableOpacity
                         style={styles.successCloseBtn}
                         onPress={() => setSubmittedEnquiryId(null)}
                         activeOpacity={0.7}
                     >
-
-                        <Ionicons name="close" size={16} color="#dc2626" />
+                        <Ionicons name="close" size={18} color="#6b7280" />
                     </TouchableOpacity>
                 </View>
             )}
+
             {/* Scrollable Content */}
             <ScrollView
                 style={styles.scrollView}
@@ -155,42 +180,47 @@ const PrePurchaseServices = () => {
             >
                 {/* Hero Section */}
                 <LinearGradient
-                    colors={['#2563eb', '#1d4ed8']}
+                    colors={['#1e40af', '#3b82f6', '#60a5fa']}
                     style={styles.heroSection}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                 >
                     <View style={styles.heroOverlay}>
                         <View style={styles.heroContent}>
+                            <View style={styles.heroIconContainer}>
+                                <FontAwesome name="shield" size={40} color="#ffffff" />
+                            </View>
                             <Text style={styles.heroTitle}>Pre-Purchase Property Verification</Text>
                             <Text style={styles.heroText}>
                                 Comprehensive legal and technical checks to safeguard your property investment before you buy.
                             </Text>
-                            <TouchableOpacity
-                                style={styles.heroButton}
-                                onPress={() => setIsModalOpen(true)}
-                                activeOpacity={0.8}
-                            >
-                                <Text style={styles.heroButtonText}>Enquire Now</Text>
-                            </TouchableOpacity>
+                           
                         </View>
                     </View>
                 </LinearGradient>
 
-
                 {/* Services Section */}
                 <View style={styles.servicesSection}>
-                    <Text style={styles.sectionTitle}>Our Core Services</Text>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Our Core Services</Text>
+                        <Text style={styles.sectionSubtitle}>Comprehensive property verification solutions</Text>
+                    </View>
 
                     <View style={styles.servicesList}>
                         {services.map((service, index) => (
                             <View key={index} style={styles.serviceCard}>
-                                <View style={styles.serviceIconContainer}>
-                                    <FontAwesome name={service.icon} size={32} color="#2563eb" />
+                                <View style={styles.serviceHeader}>
+                                    <View style={styles.serviceIconContainer}>
+                                        <FontAwesome name={service.icon} size={28} color="#2563eb" />
+                                    </View>
+                                    <Text style={styles.serviceTitle}>{service.title}</Text>
                                 </View>
-                                <Text style={styles.serviceTitle}>{service.title}</Text>
                                 <View style={styles.serviceItems}>
                                     {service.items.map((item, itemIndex) => (
                                         <View key={itemIndex} style={styles.serviceItem}>
-                                            <FontAwesome name="check" size={16} color="#22c55e" />
+                                            <View style={styles.checkIconContainer}>
+                                                <Ionicons name="checkmark" size={16} color="#10b981" />
+                                            </View>
                                             <Text style={styles.serviceItemText}>{item}</Text>
                                         </View>
                                     ))}
@@ -200,22 +230,46 @@ const PrePurchaseServices = () => {
                     </View>
                 </View>
 
-
                 {/* Why Choose Us Section */}
                 <View style={styles.highlightsSection}>
-                    <Text style={styles.sectionTitle}>Why Choose Us?</Text>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Why Choose Us?</Text>
+                        <Text style={styles.sectionSubtitle}>Your trusted partner in property investment</Text>
+                    </View>
                     <View style={styles.highlightsList}>
                         {highlights.map((highlight, index) => (
                             <View key={index} style={styles.highlightItem}>
-                                <FontAwesome name="check-circle" size={20} color="#22c55e" />
+                                <View style={styles.highlightIconContainer}>
+                                    <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                                </View>
                                 <Text style={styles.highlightText}>{highlight}</Text>
                             </View>
                         ))}
                     </View>
                 </View>
+
+                {/* CTA Section */}
+                <View style={styles.ctaSection}>
+                    <LinearGradient
+                        colors={['#f8fafc', '#f1f5f9']}
+                        style={styles.ctaCard}
+                    >
+                        <Text style={styles.ctaTitle}>Ready to Secure Your Investment?</Text>
+                        <Text style={styles.ctaText}>
+                            Get professional property verification services from our expert team.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.ctaButton}
+                            onPress={() => setIsModalOpen(true)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.ctaButtonText}>Request Service</Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                </View>
             </ScrollView>
 
-            {/* Modal */}
+            {/* Enhanced Modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -226,20 +280,21 @@ const PrePurchaseServices = () => {
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={styles.modalContainer}
                 >
-
-
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
+                            <LinearGradient
+                                colors={['#2563eb', '#3b82f6']}
+                                style={styles.modalHeader}
+                            >
                                 <Text style={styles.modalTitle}>Request a Service</Text>
                                 <TouchableOpacity
                                     style={styles.modalCloseBtn}
                                     onPress={() => setIsModalOpen(false)}
                                     activeOpacity={0.7}
                                 >
-                                    <Ionicons name="close" size={20} color="#6b7280" />
+                                    <Ionicons name="close" size={20} color="#ffffff" />
                                 </TouchableOpacity>
-                            </View>
+                            </LinearGradient>
 
                             <ScrollView
                                 style={styles.modalForm}
@@ -326,13 +381,13 @@ const PrePurchaseServices = () => {
                                     <Text style={styles.submitButtonText}>
                                         {loading ? "Submitting..." : "Submit Request"}
                                     </Text>
+                                    {!loading && <Ionicons name="send" size={16} color="#ffffff" style={styles.submitButtonIcon} />}
                                 </TouchableOpacity>
                             </ScrollView>
                         </View>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
-
         </SafeAreaView>
     );
 };
@@ -342,37 +397,77 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#ffffff',
     },
-
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#8a8676ff',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    backButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#ffffff',
+        flex: 1,
+        textAlign: 'center',
+        marginHorizontal: 16,
+    },
+    headerRight: {
+        width: 40,
+    },
     successBox: {
         backgroundColor: '#f0fdf4',
-        borderColor: '#22c55e',
+        borderColor: '#10b981',
         borderWidth: 1,
         borderRadius: 12,
         padding: 16,
         margin: 16,
-        position: 'relative',
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    successContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+    successTextContainer: {
+        flex: 1,
+        marginLeft: 12,
     },
     successText: {
-        color: '#15803d',
+        color: '#065f46',
         fontSize: 16,
-        marginBottom: 8,
+        marginBottom: 4,
     },
     successBold: {
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
     successNote: {
-        color: '#15803d',
+        color: '#047857',
         fontSize: 14,
         opacity: 0.8,
     },
     successCloseBtn: {
         position: 'absolute',
-        top: 8,
+        top: 12,
         right: 12,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
         borderRadius: 12,
-        width: 24,
-        height: 24,
+        width: 28,
+        height: 28,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -383,12 +478,12 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     heroSection: {
-        height: 320,
+        height: 360,
         justifyContent: 'center',
         alignItems: 'center',
     },
     heroOverlay: {
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
         flex: 1,
         width: '100%',
         justifyContent: 'center',
@@ -399,9 +494,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         maxWidth: 350,
     },
+    heroIconContainer: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        padding: 20,
+        borderRadius: 50,
+        marginBottom: 20,
+    },
     heroTitle: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: '#ffffff',
         textAlign: 'center',
         marginBottom: 16,
@@ -411,15 +512,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#ffffff',
         textAlign: 'center',
-        marginBottom: 24,
+        marginBottom: 32,
         lineHeight: 24,
-        opacity: 0.9,
+        opacity: 0.95,
     },
     heroButton: {
-        backgroundColor: '#3b82f6',
-        paddingVertical: 12,
+        backgroundColor: '#ffffff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
         paddingHorizontal: 32,
-        borderRadius: 24,
+        borderRadius: 25,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -427,20 +530,33 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     heroButtonText: {
-        color: '#ffffff',
+        color: '#1e40af',
         fontSize: 16,
         fontWeight: '600',
+        marginRight: 8,
+    },
+    heroButtonIcon: {
+        marginLeft: 4,
     },
     servicesSection: {
-        padding: 20,
-        backgroundColor: '#f9fafb',
+        padding: 24,
+        backgroundColor: '#f8fafc',
+    },
+    sectionHeader: {
+        alignItems: 'center',
+        marginBottom: 32,
     },
     sectionTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 26,
+        fontWeight: '700',
         textAlign: 'center',
-        marginBottom: 24,
+        marginBottom: 8,
         color: '#1f2937',
+    },
+    sectionSubtitle: {
+        fontSize: 16,
+        color: '#6b7280',
+        textAlign: 'center',
     },
     servicesList: {
         gap: 20,
@@ -451,40 +567,50 @@ const styles = StyleSheet.create({
         padding: 24,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 6,
         borderLeftWidth: 4,
         borderLeftColor: '#3b82f6',
     },
-    serviceIconContainer: {
+    serviceHeader: {
         alignItems: 'center',
+        marginBottom: 20,
+    },
+    serviceIconContainer: {
+        backgroundColor: '#eff6ff',
+        padding: 16,
+        borderRadius: 50,
         marginBottom: 12,
     },
     serviceTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '700',
         textAlign: 'center',
-        marginBottom: 16,
         color: '#1f2937',
     },
     serviceItems: {
-        gap: 12,
+        gap: 14,
     },
     serviceItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        paddingLeft: 4,
+    },
+    checkIconContainer: {
+        backgroundColor: '#f0fdf4',
+        padding: 4,
+        borderRadius: 12,
+        marginRight: 12,
+        marginTop: 2,
     },
     serviceItemText: {
-        fontSize: 14,
-        marginLeft: 12,
+        fontSize: 15,
         color: '#4b5563',
         flex: 1,
-        lineHeight: 20,
+        lineHeight: 22,
     },
     highlightsSection: {
-        padding: 20,
+        padding: 24,
         backgroundColor: '#ffffff',
     },
     highlightsList: {
@@ -493,16 +619,69 @@ const styles = StyleSheet.create({
     highlightItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#f9fafb',
-        padding: 16,
+        backgroundColor: '#f8fafc',
+        padding: 20,
         borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    highlightIconContainer: {
+        marginRight: 16,
+        marginTop: 2,
     },
     highlightText: {
         fontSize: 16,
-        marginLeft: 16,
-        color: '#4b5563',
+        color: '#374151',
         flex: 1,
         lineHeight: 24,
+        fontWeight: '500',
+    },
+    ctaSection: {
+        padding: 24,
+        backgroundColor: '#f8fafc',
+    },
+    ctaCard: {
+        padding: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    ctaTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#1f2937',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    ctaText: {
+        fontSize: 16,
+        color: '#6b7280',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 24,
+    },
+    ctaButton: {
+        backgroundColor: '#2563eb',
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 25,
+        shadowColor: '#2563eb',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    ctaButtonText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
     },
     modalContainer: {
         flex: 1,
@@ -517,30 +696,31 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: '#ffffff',
-        borderRadius: 16,
+        borderRadius: 20,
         width: '100%',
         maxWidth: 400,
-        maxHeight: '80%',
+        maxHeight: '85%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.3,
         shadowRadius: 20,
         elevation: 10,
+        overflow: 'hidden',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 24,
-        paddingBottom: 16,
+        paddingBottom: 20,
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1f2937',
+        fontWeight: '700',
+        color: '#ffffff',
     },
     modalCloseBtn: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         borderRadius: 16,
         width: 32,
         height: 32,
@@ -552,7 +732,7 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
     },
     formGroup: {
-        marginBottom: 18,
+        marginBottom: 20,
     },
     formLabel: {
         fontSize: 14,
@@ -564,14 +744,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#d1d5db',
         borderRadius: 12,
-        padding: 12,
+        padding: 14,
         fontSize: 16,
         backgroundColor: '#ffffff',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     textArea: {
         height: 100,
@@ -579,11 +759,13 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         backgroundColor: '#2563eb',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         paddingVertical: 16,
         borderRadius: 12,
-        alignItems: 'center',
         marginTop: 8,
-        shadowColor: '#000',
+        shadowColor: '#2563eb',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -597,6 +779,10 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '600',
+        marginRight: 8,
+    },
+    submitButtonIcon: {
+        marginLeft: 4,
     },
 });
 
