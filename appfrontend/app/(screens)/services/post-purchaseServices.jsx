@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
-import Footer from '../home/Footer'
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,7 +25,7 @@ const PostPurchaseServices = () => {
       >
         {/* Hero Section */}
         <ImageBackground 
-          source={require('../../assets/web9-1@2x.png')} 
+          source={require('@/assets/images/web9_1_2x.png')} 
           style={styles.heroSection}
           imageStyle={styles.heroImage}
           resizeMode="cover"
@@ -96,7 +96,7 @@ const PostPurchaseServices = () => {
 
         
       </View>
-      <Footer/>
+
     </View>
   );
 };

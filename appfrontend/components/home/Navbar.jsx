@@ -1,213 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  TextInput,
-  Animated,
-  Dimensions,
-  Modal,
   StatusBar,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
-import { useRouter } from 'expo-router';
-
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import Sidebar from './Sidebar';
 
 const Navbar = ({ onLoginClick, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [slideAnim] = useState(new Animated.Value(-280));
-  const router = useRouter();
 
-  const handleSearch = () => {
-    if (onSearch) {
+  const handleSearch = useCallback(() => {
+    if (onSearch && searchQuery.trim()) {
       onSearch(searchQuery);
     }
-  };
+  }, [onSearch, searchQuery]);
 
-  const toggleSidebar = () => {
-    if (sidebarVisible) {
-      closeSidebar();
-    } else {
-      openSidebar();
+  const toggleSidebar = useCallback(() => {
+    setSidebarVisible(prev => !prev);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarVisible(false);
+  }, []);
+
+  const handleLoginClick = useCallback(() => {
+    if (onLoginClick) {
+      onLoginClick();
     }
-  };
+  }, [onLoginClick]);
 
-  const openSidebar = () => {
-    setSidebarVisible(true);
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  };
+  // Memoize search query setter to prevent unnecessary re-renders
+  const handleSearchQueryChange = useCallback((text) => {
+    setSearchQuery(text);
+  }, []);
 
-  const closeSidebar = () => {
-    Animated.timing(slideAnim, {
-      toValue: -280,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setSidebarVisible(false);
-    });
-  };
-
-  const SidebarContent = () => (
-    <View style={styles.sidebarContent}>
-      {/* Sidebar Header */}
-      <View style={styles.sidebarHeader}>
-        <Image
-          source={require("../../assets/images/logo.png")}
-          style={styles.sidebarLogo}
-        />
-        <TouchableOpacity onPress={closeSidebar} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Search Section in Sidebar */}
-      <View style={styles.sidebarSearchContainer}>
-        <View style={styles.sidebarSearch}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.sidebarSearchInput}
-            placeholder="Search..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity
-            onPress={handleSearch}
-            style={styles.sidebarSearchButton}
-          >
-            <Ionicons name="arrow-forward" size={20} color="#007bff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Navigation Menu */}
-      <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="home-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => {
-            setTimeout(() => {
-              console.log("Navigating to Plant");
-              // router.push("/(screens)/(property)/properties/rent");
-            }, 0);
-            closeSidebar();
-          }}
-        >
-          <Ionicons name="add-circle-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Post Property</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="search-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Property Title Search</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="person-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Pre-Purchase Property Verification</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="person-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Post-Purchase Property Services</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="person-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Contractors</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="settings-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Settings</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="help-circle-outline" size={24} color="#333" />
-          <Text style={styles.menuText}>Help</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Login Button in Sidebar - Removed since it's in main navbar */}
-      <View style={styles.sidebarFooter}>
-        <Text style={styles.footerText}>BasilAbode v1.0</Text>
-      </View>
-    </View>
-  );
+  // Memoize styles to prevent recreation on every render
+  const memoizedStyles = useMemo(() => styles, []);
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.navbar}>
+      <SafeAreaView style={memoizedStyles.safeArea}>
+        <View style={memoizedStyles.navbar}>
           {/* Hamburger Menu */}
-          <TouchableOpacity onPress={toggleSidebar} style={styles.hamburger}>
-            <View style={styles.hamburgerLine} />
-            <View style={styles.hamburgerLine} />
-            <View style={styles.hamburgerLine} />
+          <TouchableOpacity onPress={toggleSidebar} style={memoizedStyles.hamburger}>
+            <View style={memoizedStyles.hamburgerLine} />
+            <View style={memoizedStyles.hamburgerLine} />
+            <View style={memoizedStyles.hamburgerLine} />
           </TouchableOpacity>
 
           {/* Logo */}
-          <View style={styles.logoContainer}>
+          <View style={memoizedStyles.logoContainer}>
             <Image
               source={require("../../assets/images/logo.png")}
-              style={styles.logo}
+              style={memoizedStyles.logo}
             />
           </View>
 
-          {/* Login Button - Keep in main navbar */}
-          <TouchableOpacity onPress={onLoginClick} style={styles.loginButton}>
-            <Text style={styles.loginText}>Login</Text>
+          {/* Login Button */}
+          <TouchableOpacity onPress={handleLoginClick} style={memoizedStyles.loginButton}>
+            <Text style={memoizedStyles.loginText}>Login</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      {/* Sidebar Modal */}
-      <Modal
+      {/* Sidebar Component */}
+      <Sidebar
         visible={sidebarVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={closeSidebar}
-      >
-        <View style={styles.overlay}>
-          <TouchableOpacity
-            style={styles.overlayTouch}
-            onPress={closeSidebar}
-            activeOpacity={1}
-          />
-
-          <Animated.View
-            style={[
-              styles.sidebar,
-              {
-                transform: [{ translateX: slideAnim }],
-                zIndex: 10, // ensure sidebar is above the touch blocker
-              },
-            ]}
-          >
-            <SidebarContent />
-          </Animated.View>
-        </View>
-      </Modal>
+        onClose={closeSidebar}
+        searchQuery={searchQuery}
+        setSearchQuery={handleSearchQueryChange}
+        onSearch={handleSearch}
+      />
     </>
   );
 };
@@ -269,103 +138,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    flexDirection: 'row',
-  },
-  overlayTouch: {
-    flex: 1,
-  },
-  sidebar: {
-    width: 280,
-    backgroundColor: '#fff',
-    height: '100%',
-    elevation: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    position: 'absolute',
-    left: 0,
-    top: 0,
-  },
-  sidebarContent: {
-    flex: 1,
-    paddingTop: StatusBar.currentHeight || 0,
-  },
-  sidebarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#f8f9fa',
-  },
-  sidebarLogo: {
-    width: 100,
-    height: 32,
-    resizeMode: 'contain',
-    tintColor: '#007bff',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  sidebarSearchContainer: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  sidebarSearch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  sidebarSearchInput: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#333',
-  },
-  sidebarSearchButton: {
-    padding: 8,
-  },
-  menuContainer: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  menuText: {
-    marginLeft: 16,
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  sidebarFooter: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#999',
-    fontSize: 12,
-    fontStyle: 'italic',
   },
 });
 

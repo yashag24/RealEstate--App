@@ -17,8 +17,6 @@ import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
 
-import Footer from '../home/Footer';
-
 
 const { width, height } = Dimensions.get('window');
 
@@ -335,7 +333,6 @@ const PrePurchaseServices = () => {
                 </KeyboardAvoidingView>
             </Modal>
 
-            <Footer />
         </SafeAreaView>
     );
 };
