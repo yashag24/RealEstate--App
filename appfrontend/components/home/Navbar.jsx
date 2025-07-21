@@ -10,7 +10,7 @@ import {
 import { Image } from 'react-native';
 import Sidebar from './Sidebar';
 
-const Navbar = ({ onLoginClick, onSearch }) => {
+const Navbar = ({ onLogoutClick, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
@@ -28,11 +28,11 @@ const Navbar = ({ onLoginClick, onSearch }) => {
     setSidebarVisible(false);
   }, []);
 
-  const handleLoginClick = useCallback(() => {
-    if (onLoginClick) {
-      onLoginClick();
+  const handleLogoutClick = useCallback(() => {
+    if (onLogoutClick) {
+      onLogoutClick();
     }
-  }, [onLoginClick]);
+  }, [onLogoutClick]);
 
   // Memoize search query setter to prevent unnecessary re-renders
   const handleSearchQueryChange = useCallback((text) => {
@@ -62,10 +62,18 @@ const Navbar = ({ onLoginClick, onSearch }) => {
             />
           </View>
 
-          {/* Login Button */}
-          <TouchableOpacity onPress={handleLoginClick} style={memoizedStyles.loginButton}>
-            <Text style={memoizedStyles.loginText}>Login</Text>
+          {/* Logout Button */}
+          <TouchableOpacity onPress={handleLogoutClick} style={memoizedStyles.loginButton}>
+            <Text style={memoizedStyles.loginText}>Logout</Text>
           </TouchableOpacity>
+         
+        {/* <TouchableOpacity style={memoizedStyles.profileIconContainer}>
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={memoizedStyles.profileIcon}
+          />
+          <Text>logout</Text>
+        </TouchableOpacity> */}
         </View>
       </SafeAreaView>
 
