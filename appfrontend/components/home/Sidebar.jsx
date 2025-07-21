@@ -95,6 +95,9 @@ const Sidebar = ({ visible, onClose, searchQuery, setSearchQuery, onSearch }) =>
     { route: '/(screens)/services/post-purchaseServices', icon: 'checkmark-done-outline', text: 'Post-Purchase Property Services' },
     { route: '/(screens)/(services)/contractors', icon: 'hammer-outline', text: 'Contractors' },
 
+
+
+    
     { route: '/(screens)/appointments', icon: 'calendar-outline', text: 'Appointments' },
     { route: '/(screens)/(property)/my-properties', icon: 'business-outline', text: 'My Properties' },
     { route: '/(screens)/(property)/past-searches', icon: 'time-outline', text: 'Past Searches' },
