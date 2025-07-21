@@ -88,12 +88,22 @@ const Sidebar = ({ visible, onClose, searchQuery, setSearchQuery, onSearch }) =>
 
   // Memoize menu items to prevent recreation
   const menuItems = useMemo(() => [
-    { route: '/(screens)/home', icon: 'home-outline', text: 'Home' },
-    { route: '/(screens)/(property)/properties/post', icon: 'add-circle-outline', text: 'Post Property' },
-    { route: '/(screens)/(property)/properties/search', icon: 'search-outline', text: 'Property Title Search' },
+    { route: '/(screens)/user', icon: 'home-outline', text: 'Home' },
+    { route: '/(screens)/(property)/properties/rent', icon: 'add-circle-outline', text: 'Post Property' },
+    { route: '/(screens)/services/title-search', icon: 'search-outline', text: 'Property Title Search' },
     { route: '/(screens)/services/pre-purchaseServices', icon: 'shield-checkmark-outline', text: 'Pre-Purchase Property Assistance' },
     { route: '/(screens)/services/post-purchaseServices', icon: 'checkmark-done-outline', text: 'Post-Purchase Property Services' },
     { route: '/(screens)/(services)/contractors', icon: 'hammer-outline', text: 'Contractors' },
+
+    { route: '/(screens)/appointments', icon: 'calendar-outline', text: 'Appointments' },
+    { route: '/(screens)/(property)/my-properties', icon: 'business-outline', text: 'My Properties' },
+    { route: '/(screens)/(property)/past-searches', icon: 'time-outline', text: 'Past Searches' },
+    { route: '/(screens)/(property)/previously-viewed', icon: 'eye-outline', text: 'Previously Viewed' },
+    { route: '/(screens)/(property)/saved', icon: 'bookmark-outline', text: 'Saved' },
+    { route: '/(screens)/(property)/contacted', icon: 'chatbubble-ellipses-outline', text: 'Contacted' },
+    { route: '/(screens)/notifications', icon: 'notifications-outline', text: 'Notification' },
+    { route: '/(screens)/logout', icon: 'log-out-outline', text: 'Logout' },
+
     // { route: '/(screens)/(services)/pre-purchaseServices', icon: 'checkmark-done-outline', text: 'Pre-Purchase Property Services' },
     // { route: '/(screens)/(profile)/profile', icon: 'person-outline', text: 'Profile' },
     // { route: '/(screens)/(help)/help', icon: 'help-circle-outline', text: 'Help' }, 
