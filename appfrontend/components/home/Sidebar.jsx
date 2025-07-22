@@ -175,7 +175,7 @@ const Sidebar = ({
     () => [
       { route: "/(screens)/user", icon: "home-outline", text: "Home" },
       {
-        route: "/(screens)/(property)/properties/rent",
+        route: "/(screens)/(property)/properties/post",
         icon: "add-circle-outline",
         text: "Post Property",
       },
