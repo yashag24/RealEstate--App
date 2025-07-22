@@ -2,20 +2,17 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
-  Modal,
   StyleSheet,
+  Modal,
+  TextInput,
   Alert,
   ScrollView,
-  Dimensions,
+  ActivityIndicator,
 } from "react-native";
-import axios from "axios";
+import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from "react-native-toast-message";
-
-const { width } = Dimensions.get('window');
 
 const StaffManagement = () => {
   const [staffList, setStaffList] = useState([]);
@@ -27,72 +24,31 @@ const StaffManagement = () => {
     password: "",
     role: "",
   });
-  
-  // Fixed: Added fallback for BASE_URL
-  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const nameInputRef = useRef(null);
 
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      // Check if BASE_URL is properly configured
-      if (!BASE_URL || BASE_URL === 'undefined') {
-        throw new Error('API base URL not configured. Please check your environment variables.');
-      }
-
       const token = await AsyncStorage.getItem("authToken");
-      
-      // Check if token exists
-      if (!token) {
-        throw new Error('Authentication token not found. Please login again.');
-      }
-
-      console.log('Fetching staff from:', `${BASE_URL}/api/staff/all`);
-      
-      const res = await axios.get(`${BASE_URL}/api/staff/all`, {
+      const response = await fetch(`${API_BASE_URL}/api/staff/all`, {
+        method: "GET",
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        timeout: 10000, // 10 second timeout
       });
 
-      // Check if response has data
-      if (res.data) {
-        setStaffList(Array.isArray(res.data) ? res.data.reverse() : []);
-      } else {
-        setStaffList([]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
+      const data = await response.json();
+      setStaffList(data);
     } catch (err) {
-      console.error('Error fetching staff:', err);
-      
-      let errorMessage = "Failed to fetch staff list.";
-      
-      if (err.message.includes('Network Error')) {
-        errorMessage = "Network error. Please check your internet connection.";
-      } else if (err.response?.status === 401) {
-        errorMessage = "Authentication failed. Please login again.";
-        // Optionally redirect to login
-      } else if (err.response?.status === 403) {
-        errorMessage = "You don't have permission to view staff list.";
-      } else if (err.response?.status === 404) {
-        errorMessage = "Staff endpoint not found. Please check API configuration.";
-      } else if (err.response?.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
-      } else if (err.code === 'ECONNABORTED') {
-        errorMessage = "Request timeout. Please try again.";
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      Toast.show({ 
-        type: "error", 
-        text1: errorMessage,
-        text2: err.response?.data?.message || ''
-      });
-      
-      setStaffList([]);
+      console.error("Error fetching staff:", err);
+      Alert.alert("Error", "Failed to fetch staff list.");
     } finally {
       setLoading(false);
     }
@@ -102,233 +58,260 @@ const StaffManagement = () => {
     fetchStaff();
   }, []);
 
-  const handleChange = (key, value) => {
-    setForm({ ...form, [key]: value });
+  const handleChange = (name, value) => {
+    setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = async () => {
+  const validateForm = () => {
     const { fullName, email, password, role } = form;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!fullName || !email || !password || !role) {
-      Toast.show({ type: "info", text1: "Please fill out all fields." });
-      return;
+      Alert.alert("Validation Error", "Please fill out all fields.");
+      return false;
     }
 
     if (!emailRegex.test(email)) {
-      Toast.show({ type: "info", text1: "Please enter a valid email address." });
-      return;
+      Alert.alert("Validation Error", "Please enter a valid email address.");
+      return false;
     }
 
-    const token = await AsyncStorage.getItem("authToken");
-    
-    if (!token) {
-      Toast.show({ type: "error", text1: "Authentication token not found. Please login again." });
-      return;
-    }
+    return true;
+  };
 
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/api/staff/signup`, form, {
-        headers: { 
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/api/staff/signup`, {
+        method: "POST",
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        timeout: 10000,
+        body: JSON.stringify(form),
       });
-      Toast.show({ type: "success", text1: "Staff created successfully!" });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create staff");
+      }
+
+      Alert.alert("Success", "Staff created successfully!");
       setShowModal(false);
       fetchStaff();
       setForm({ fullName: "", email: "", password: "", role: "" });
     } catch (err) {
-      console.error('Error creating staff:', err);
-      Toast.show({
-        type: "error",
-        text1: err.response?.data?.message || "Failed to create staff.",
-      });
+      console.error("Failed to create staff:", err);
+      Alert.alert("Error", err.message || "Failed to create staff. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    Alert.alert("Confirm", "Are you sure you want to delete this staff?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          const token = await AsyncStorage.getItem("authToken");
-          
-          if (!token) {
-            Toast.show({ type: "error", text1: "Authentication token not found. Please login again." });
-            return;
-          }
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this staff member?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const token = await AsyncStorage.getItem("authToken");
+              const response = await fetch(`${API_BASE_URL}/api/staff/${id}`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              });
 
-          try {
-            await axios.delete(`${BASE_URL}/api/staff/${id}`, {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              timeout: 10000,
-            });
-            Toast.show({ type: "success", text1: "Staff deleted successfully." });
-            fetchStaff();
-          } catch (err) {
-            console.error('Error deleting staff:', err);
-            Toast.show({ 
-              type: "error", 
-              text1: err.response?.data?.message || "Failed to delete staff." 
-            });
-          }
+              if (!response.ok) {
+                throw new Error("Failed to delete staff");
+              }
+
+              Alert.alert("Success", "Staff deleted successfully.");
+              fetchStaff();
+            } catch (err) {
+              console.error("Error deleting staff:", err);
+              Alert.alert("Error", "Failed to delete staff.");
+            } finally {
+              setLoading(false);
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
-  const renderStaffHeader = () => (
-    <View style={styles.headerRow}>
-      <Text style={styles.headerCell}>Staff ID</Text>
-      <Text style={styles.headerCell}>Name</Text>
-      <Text style={styles.headerCell}>Email</Text>
-      <Text style={styles.headerCell}>Role</Text>
-      <Text style={styles.headerCell}>Created</Text>
-      <Text style={styles.headerCell}>Action</Text>
+  const openModal = () => {
+    setForm({ fullName: "", email: "", password: "", role: "" });
+    setShowModal(true);
+    setTimeout(() => nameInputRef.current?.focus(), 100);
+  };
+
+  const renderStaffItem = ({ item: staff }) => (
+    <View style={styles.tableRow}>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableCellText}>{staff.staffId}</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableCellText}>{staff.fullName}</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableCellText}>{staff.email}</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableCellText}>{staff.role}</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableCellText}>
+          {new Date(staff.createdAt).toLocaleDateString()}
+        </Text>
+      </View>
+      <View style={styles.tableCell}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(staff._id)}
+          disabled={loading}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderTableHeader = () => (
+    <View style={styles.tableHeader}>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Staff ID</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Name</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Email</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Role</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Created</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.tableHeaderText}>Actions</Text>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Toast position="top" />
-      
-      {/* Header Section */}
-      <View style={styles.headerSection}>
-        <Text style={styles.header}>Staff Management</Text>
-        <Text style={styles.subtitle}>Manage your team members</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Staff Management</Text>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={openModal}
+          disabled={loading}
+        >
+          <Text style={styles.addButtonText}>+ Add Staff</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Add Staff Button */}
-      <TouchableOpacity 
-        style={styles.addButton} 
-        onPress={() => setShowModal(true)}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.addButtonText}>+ Add New Staff</Text>
-      </TouchableOpacity>
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007bff" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      )}
 
-      {/* Staff List */}
-      <View style={styles.listContainer}>
-        {renderStaffHeader()}
+      <View style={styles.table}>
+        {renderTableHeader()}
         <FlatList
-          data={staffList}
-          keyExtractor={(item) => item._id || item.id || Math.random().toString()}
+          data={staffList.slice().reverse()}
+          renderItem={renderStaffItem}
+          keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
-          refreshing={loading}
-          onRefresh={fetchStaff}
-          renderItem={({ item, index }) => (
-            <View style={[
-              styles.staffRow,
-              index % 2 === 0 ? styles.evenRow : styles.oddRow
-            ]}>
-              <View style={styles.staffInfo}>
-                <Text style={styles.staffId}>{item.staffId || 'N/A'}</Text>
-                <Text style={styles.staffName}>{item.fullName || 'N/A'}</Text>
-                <Text style={styles.staffEmail}>{item.email || 'N/A'}</Text>
-                <Text style={styles.staffRole}>{item.role || 'N/A'}</Text>
-                <Text style={styles.staffDate}>
-                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
-                </Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.deleteButton} 
-                onPress={() => handleDelete(item._id || item.id)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                {loading ? "Loading staff..." : "No staff members found"}
-              </Text>
-              <Text style={styles.emptySubtext}>
-                {loading ? "Please wait..." : "Add your first staff member to get started"}
-              </Text>
-            </View>
+            !loading && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No staff members found</Text>
+              </View>
+            )
           }
         />
       </View>
 
-      {/* Modal */}
-      <Modal visible={showModal} transparent animationType="slide">
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Add New Staff Member</Text>
-                <Text style={styles.modalSubtitle}>Fill in the details below</Text>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Full Name</Text>
-                <TextInput
-                  ref={nameInputRef}
-                  style={styles.input}
-                  placeholder="Enter full name"
-                  value={form.fullName}
-                  onChangeText={(text) => handleChange("fullName", text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email Address</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter email address"
-                  value={form.email}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onChangeText={(text) => handleChange("email", text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter password"
-                  secureTextEntry
-                  value={form.password}
-                  onChangeText={(text) => handleChange("password", text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Role</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., support, admin, manager"
-                  value={form.role}
-                  onChangeText={(text) => handleChange("role", text)}
-                  placeholderTextColor="#999"
-                />
+              <Text style={styles.modalTitle}>Add New Staff</Text>
+              
+              <TextInput
+                ref={nameInputRef}
+                style={styles.input}
+                placeholder="Full Name"
+                value={form.fullName}
+                onChangeText={(value) => handleChange("fullName", value)}
+                autoCapitalize="words"
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={form.email}
+                onChangeText={(value) => handleChange("email", value)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={form.password}
+                onChangeText={(value) => handleChange("password", value)}
+                secureTextEntry
+              />
+              
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={form.role}
+                  onValueChange={(value) => handleChange("role", value)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Select Role" value="" />
+                  <Picker.Item label="Appointment Manager" value="appointment_manager" />
+                  <Picker.Item label="Verifier" value="verifier" />
+                  <Picker.Item label="Support" value="support" />
+                </Picker>
               </View>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity 
-                  style={styles.createButton} 
+                <TouchableOpacity
+                  style={styles.createButton}
                   onPress={handleSubmit}
-                  activeOpacity={0.8}
+                  disabled={loading}
                 >
-                  <Text style={styles.buttonText}>Create Staff</Text>
+                  <Text style={styles.createButtonText}>
+                    {loading ? "Creating..." : "Create"}
+                  </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setShowModal(false)}
-                  activeOpacity={0.8}
+                  disabled={loading}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -345,153 +328,103 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
-  },
-  headerSection: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 16,
   },
   header: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#212529",
-    marginBottom: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#6c757d",
-    fontWeight: "400",
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2c3e50",
   },
   addButton: {
     backgroundColor: "#007bff",
-    marginHorizontal: 20,
-    marginVertical: 16,
-    paddingVertical: 14,
     paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
     shadowColor: "#007bff",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 5,
   },
   addButtonText: {
-    color: "#fff",
+    color: "white",
     fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
   },
-  listContainer: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: "#fff",
-    marginHorizontal: 20,
-    marginBottom: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6c757d",
+  },
+  table: {
+    backgroundColor: "white",
     borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: "hidden",
   },
-  headerRow: {
+  tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f8f9fa",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: "#dee2e6",
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  headerCell: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#495057",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  staffRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    backgroundColor: "#343a40",
     paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f3f4",
+    paddingHorizontal: 8,
   },
-  evenRow: {
-    backgroundColor: "#fff",
+  tableHeaderText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
   },
-  oddRow: {
-    backgroundColor: "#fafbfc",
-  },
-  staffInfo: {
-    flex: 1,
+  tableRow: {
     flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
   },
-  staffId: {
+  tableCell: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  tableCellText: {
     fontSize: 14,
     color: "#495057",
-    fontWeight: "500",
-  },
-  staffName: {
-    flex: 1,
-    fontSize: 14,
-    color: "#212529",
-    fontWeight: "600",
-  },
-  staffEmail: {
-    flex: 1,
-    fontSize: 13,
-    color: "#6c757d",
-  },
-  staffRole: {
-    flex: 1,
-    fontSize: 13,
-    color: "#007bff",
-    fontWeight: "500",
-    textTransform: "capitalize",
-  },
-  staffDate: {
-    flex: 1,
-    fontSize: 12,
-    color: "#868e96",
+    textAlign: "center",
   },
   deleteButton: {
     backgroundColor: "#dc3545",
-    paddingVertical: 8,
     paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 6,
-    minWidth: 60,
   },
   deleteButtonText: {
-    color: "#fff",
+    color: "white",
     fontSize: 12,
     fontWeight: "600",
-    textAlign: "center",
   },
-  emptyContainer: {
-    paddingVertical: 60,
-    paddingHorizontal: 20,
+  emptyState: {
+    padding: 40,
     alignItems: "center",
   },
-  emptyText: {
-    fontSize: 18,
+  emptyStateText: {
+    fontSize: 16,
     color: "#6c757d",
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: "#adb5bd",
     textAlign: "center",
   },
   modalOverlay: {
@@ -499,92 +432,70 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
   },
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    width: "100%",
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 24,
+    width: "90%",
     maxWidth: 400,
     maxHeight: "80%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  modalHeader: {
-    paddingTop: 24,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f3f4",
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: "700",
-    color: "#212529",
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: "#6c757d",
-  },
-  inputContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#495057",
-    marginBottom: 8,
+    fontWeight: "bold",
+    color: "#2c3e50",
+    marginBottom: 24,
+    textAlign: "center",
   },
   input: {
-    borderWidth: 2,
-    borderColor: "#e9ecef",
+    borderWidth: 1,
+    borderColor: "#ddd",
     borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 12,
     fontSize: 16,
-    color: "#212529",
+    marginBottom: 16,
     backgroundColor: "#f8f9fa",
-    minHeight: 48,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    marginBottom: 16,
+    backgroundColor: "#f8f9fa",
+  },
+  picker: {
+    height: 50,
   },
   modalActions: {
     flexDirection: "row",
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    paddingTop: 8,
-    gap: 12,
+    justifyContent: "space-between",
+    marginTop: 24,
   },
   createButton: {
-    flex: 1,
     backgroundColor: "#28a745",
-    paddingVertical: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 8,
-    shadowColor: "#28a745",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cancelButton: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingVertical: 14,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#dc3545",
+    marginRight: 8,
   },
-  buttonText: {
-    color: "#fff",
+  createButtonText: {
+    color: "white",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
   },
+  cancelButton: {
+    backgroundColor: "#6c757d",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 8,
+  },
   cancelButtonText: {
-    color: "#dc3545",
+    color: "white",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",

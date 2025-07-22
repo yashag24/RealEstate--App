@@ -1,57 +1,257 @@
-import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  ScrollView, 
+  Text, 
+  StyleSheet, 
+  Platform,
   Alert,
+  Dimensions,
+  Pressable,
+  StatusBar,
+  SafeAreaView,
+  Animated,
+  ActivityIndicator
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice'; // Adjust the import path
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import { useDispatch, useSelector } from 'react-redux';
+import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice';
+import { FontAwesome5 } from '@expo/vector-icons';
+import jwtDecode from 'jwt-decode';
+
+import StaffSideBar from '@/components/StaffDashboard/SidebarStaff';
+import StaffProfile from '@/components/StaffDashboard/StaffProfile';
+import StaffManagedUsers from '@/components/StaffDashboard/StaffManagedUsers';
+import StaffManagedAppointments from '@/components/StaffDashboard/StaffManagedAppointments';
+import StaffVerifyProperties from '@/components/StaffDashboard/StaffVerifyProperties';
+import StaffTitleSearch from '@/components/StaffDashboard/StaffTitleSearch';
+import StaffPrePurchaseProVer from '@/components/StaffDashboard/StaffPrePurchaseProVer';
+import StaffSalesTargetManagement from '@/components/StaffDashboard/StaffSalesTargetManagement';
+
+const { width } = Dimensions.get('window');
+const isTablet = width >= 768;
 
 const StaffDashboard = () => {
+  const [activeSection, setActiveSection] = useState('profile');
+  const [staffData, setStaffData] = useState(null);
+  const [userData, setUserData] = useState([]);
+  const [properties, setProperties] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [titleSearchRequest, setTitleSearchRequest] = useState([]);
+  const [prePurchaseRequest, setPrePurchaseRequest] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [salesTargets, setSalesTargets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [headerAnimation] = useState(new Animated.Value(0));
+
   const dispatch = useDispatch();
   const router = useRouter();
-  const { userData, authUser, userType } = useSelector((state) => state.auth);
+  const { authUser, userType } = useSelector((state) => state.auth);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-  // Initialize authentication on component mount
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Header animation
+  useEffect(() => {
+    Animated.timing(headerAnimation, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Get section display info with enhanced details
+  const getSectionInfo = () => {
+    const sectionMap = {
+      'profile': { 
+        title: 'Staff Profile',
+        subtitle: 'Manage your profile settings',
+        icon: 'user-circle',
+        color: '#10b981',
+        stats: null
+      },
+      'usersDetails': { 
+        title: 'Users Details',
+        subtitle: 'View and manage user information',
+        icon: 'users',
+        color: '#3b82f6',
+        stats: userData.length,
+      },
+      'appointments': { 
+        title: 'Appointments',
+        subtitle: 'Manage customer appointments',
+        icon: 'calendar-check',
+        color: '#8b5cf6',
+        stats: appointments.length
+      },
+      'properties': { 
+        title: 'Property Verification',
+        subtitle: 'Review and verify properties',
+        icon: 'home',
+        color: '#f59e0b',
+        stats: properties.length
+      },
+      'title-search': { 
+        title: 'Title Search',
+        subtitle: 'Manage title search requests',
+        icon: 'search',
+        color: '#ef4444',
+        stats: titleSearchRequest.length,
+      },
+      'pre-purchase-property-verification': { 
+        title: 'Pre-Purchase',
+        subtitle: 'Handle property verification requests',
+        icon: 'file-signature',
+        stats: prePurchaseRequest.length,
+        color: '#06b6d4',
+      },
+      'sales-target-management': { 
+        title: 'Sales Targets',
+        subtitle: 'Track and manage sales performance',
+        icon: 'chart-line',
+        stats: salesTargets.length,
+        color: '#dc2626',
+      },
+    };
+    return sectionMap[activeSection] || { 
+      title: 'Staff Dashboard', 
+      subtitle: 'Welcome back',
+      icon: 'tachometer-alt',
+      color: '#6366f1',
+      stats: null
+    };
+  };
+
+  // Get greeting based on time
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  // Format time
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+  
   useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
-
+  
   // Redirect to login if not authenticated
-  // useEffect(() => {
-  //   if (userType !== 'staff' || !authUser) {
-  //     router.push('/(screens)');
-  //   }
-  // }, [authUser, router]);
+  useEffect(() => {
+    if (userType !== 'staff' || !authUser) {
+      router.replace('/(screens)');
+    }
+  }, [authUser, router, userType]);
 
-  const stats = [
-    { label: 'Recent Orders', value: '3', icon: 'bag', color: '#3F51B5' },
-    { label: 'Favorites', value: '24', icon: 'heart', color: '#E91E63' },
-    { label: 'Reward Points', value: '1,250', icon: 'star', color: '#FFC107' },
-    { label: 'Saved Items', value: '12', icon: 'bookmark', color: '#9C27B0' },
-  ];
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (authUser && userType === 'staff') {
+        try {
+          const token = await AsyncStorage.getItem('authToken');
+          if (!token) return router.replace('/(screens)/staff');
 
-  const quickActions = [
-    { title: 'Browse Products', icon: 'search', color: '#4CAF50' },
-    { title: 'Shopping Cart', icon: 'cart', color: '#FF5722' },
-    { title: 'Order History', icon: 'time', color: '#2196F3' },
-    { title: 'Support', icon: 'help-circle', color: '#FF9800' },
-  ];
+          const decoded = jwtDecode(token);
+          setStaffData(decoded);
+
+          await Promise.all([
+            fetchUserDetails(token),
+            fetchSalesData(token),
+            fetchData(token),
+          ]);
+
+          const savedSection = await AsyncStorage.getItem('activeSection') || 'profile';
+          setActiveSection(savedSection);
+        } catch (err) {
+          console.error('Init error:', err);
+          setError(err.message);
+          Toast.show({
+            type: 'error',
+            text1: 'Failed to load dashboard',
+            text2: err.message,
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchAllData();
+  }, [authUser, userType, router]);
+
+  const fetchUserDetails = async (token) => {
+    const res = await fetch(`${BASE_URL}/api/staff/users-details`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.success) setUserData(data.usersData);
+    else throw new Error(data.error || 'User fetch failed');
+  };
+
+  const fetchSalesData = async (token) => {
+    const [empRes, salesRes] = await Promise.all([
+      fetch(`${BASE_URL}/api/staff/employees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`${BASE_URL}/api/staff/sales-targets`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ]);
+
+    const empData = await empRes.json();
+    const salesData = await salesRes.json();
+    if (empData.success) setEmployees(empData.employees);
+    if (salesData.success) setSalesTargets(salesData.salesTargets);
+  };
+
+  const fetchData = async (token) => {
+    const [appointmentsRes, propertiesRes, titleSearchRes, prePurchaseRes] = await Promise.all([
+      fetch(`${BASE_URL}/api/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${BASE_URL}/api/property/verification`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${BASE_URL}/api/title-search/list`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${BASE_URL}/api/Pre-Purchase-Property-Verification/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ]);
+
+    const appointmentsData = await appointmentsRes.json();
+    const propertiesData = await propertiesRes.json();
+    const titleSearchData = await titleSearchRes.json();
+    const prePurchaseData = await prePurchaseRes.json();
+
+    if (appointmentsData.success) setAppointments(appointmentsData.appointments);
+    if (propertiesData.success) setProperties(propertiesData.property_verify);
+    if (titleSearchData.success) setTitleSearchRequest(titleSearchData.allRequests);
+    if (prePurchaseData.success) setPrePurchaseRequest(prePurchaseData.allRequests);
+  };
 
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const confirmLogout = window.confirm('Are you sure you want to logout?');
+      if (confirmLogout) {
+        dispatch(performLogout());
+        router.replace('/(screens)');
+      }
+      return;
+    }
 
-    console.log("Logging out...");
-    dispatch(performLogout());
-    router.replace('/(screens)');
-
-    
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -74,204 +274,296 @@ const StaffDashboard = () => {
     );
   };
 
+  const handleSectionChange = async (section) => {
+    setActiveSection(section);
+    await AsyncStorage.setItem('activeSection', section);
+    if (!isTablet) setSidebarVisible(false);
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      );
+    }
+
+    const sectionInfo = getSectionInfo();
+
+    switch (activeSection) {
+      case 'profile':
+        return <StaffProfile staff={staffData} />;
+      case 'usersDetails':
+        return <StaffManagedUsers userDetails={userData} />;
+      case 'appointments':
+        return <StaffManagedAppointments appointments={appointments} />;
+      case 'properties':
+        return <StaffVerifyProperties properties={properties} />;
+      case 'title-search':
+        return <StaffTitleSearch titleSearchRequest={titleSearchRequest} />;
+      case 'pre-purchase-property-verification':
+        return <StaffPrePurchaseProVer prePurchaseRequest={prePurchaseRequest} />;
+      case 'sales-target-management':
+        return <StaffSalesTargetManagement employees={employees} salesTargets={salesTargets} />;
+      default:
+        return <Text>Select an option</Text>;
+    }
+  };
+
+  const sectionInfo = getSectionInfo();
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <ScrollView style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.welcomeText}>Welcome back, STAFF DASHBOARD</Text>
-            <Text style={styles.userName}>
-              {authUser && userData ? userData.name : 'Guest'}!
-            </Text>
-          </View>
-          {authUser && (
-            <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={24} color="#ff4444" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          {stats.map((stat, index) => (
-            <View key={index} style={[styles.statCard, { borderLeftColor: stat.color }]}>
-              <View style={styles.statHeader}>
-                <Ionicons name={stat.icon} size={24} color={stat.color} />
-                <Text style={styles.statValue}>{stat.value}</Text>
-              </View>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionGrid}>
-            {quickActions.map((action, index) => (
-              <TouchableOpacity key={index} style={styles.actionCard}>
-                <Ionicons name={action.icon} size={32} color={action.color} />
-                <Text style={styles.actionText}>{action.title}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.activityList}>
-            <View style={styles.activityItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Order #1234 delivered</Text>
-                <Text style={styles.activityTime}>2 hours ago</Text>
-              </View>
-            </View>
-            <View style={styles.activityItem}>
-              <Ionicons name="heart" size={20} color="#E91E63" />
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Added 3 items to favorites</Text>
-                <Text style={styles.activityTime}>1 day ago</Text>
-              </View>
-            </View>
-            <View style={styles.activityItem}>
-              <Ionicons name="star" size={20} color="#FFC107" />
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Earned 50 reward points</Text>
-                <Text style={styles.activityTime}>3 days ago</Text>
-              </View>
+    <View style={styles.wrapper}>
+      {/* Enhanced Header */}
+      <Animated.View 
+        style={[
+          styles.headerSection,
+          {
+            opacity: headerAnimation,
+            transform: [
+              {
+                translateY: headerAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.headerGradient} />
+        
+        {/* Header Content */}
+        <View style={styles.headerContent}>
+          {/* Left Section - Menu & User Info */}
+          <View style={styles.headerLeft}>
+            {!isTablet && (
+              <Pressable 
+                style={styles.menuButton} 
+                onPress={() => setSidebarVisible(!sidebarVisible)}
+              >
+                <FontAwesome5 name="bars" size={18} color="#ffffff" />
+              </Pressable>
+            )}
+            
+            <View style={styles.userWelcome}>
+              <Text style={styles.greetingText}>
+                {getGreeting()}, {staffData?.name || 'Staff'}!
+              </Text>
+              <Text style={styles.dateTimeText}>
+                {currentTime.toLocaleDateString()} • {formatTime(currentTime)}
+              </Text>
             </View>
           </View>
+
+          {/* Right Section - Actions */}
+          <View style={styles.headerRight}>
+            <Pressable 
+              style={styles.headerActionButton} 
+              onPress={handleLogout}
+            >
+              <FontAwesome5 name="sign-out-alt" size={16} color="#ffffff" />
+            </Pressable>
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Section Info */}
+        <View style={styles.sectionInfoContainer}>
+          <View style={styles.sectionIconContainer}>
+            <FontAwesome5 
+              name={sectionInfo.icon} 
+              size={20} 
+              color={sectionInfo.color} 
+            />
+          </View>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>{sectionInfo.title}</Text>
+            <Text style={styles.headerSubtitle}>{sectionInfo.subtitle}</Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* Dashboard Content */}
+      <View style={styles.dashboardContainer}>
+        <StaffSideBar
+          activeSection={activeSection}
+          handleSectionChange={handleSectionChange}
+          handleLogout={handleLogout}
+          sidebarVisible={sidebarVisible}
+          setSidebarVisible={setSidebarVisible}
+          isTablet={isTablet}
+        />
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderContent()}
+        </ScrollView>
+      </View>
+      
+      <Toast />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f7fa'
+  },
+  
+  // Header Styles
+  headerSection: {
+    position: 'relative',
+    paddingTop: Platform.OS === 'ios' ? 35 : (StatusBar.currentHeight || 0) + 5,
+    paddingBottom: 15,
+    backgroundColor: '#475569',
+    overflow: 'hidden',
+    zIndex: 1000,
+    minHeight: width <= 480 ? 140 : 100,
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#334155',
+    opacity: 0.9,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 1,
+    minHeight: 50,
+  },
+  
+  // Header Left Section
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginRight: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  userWelcome: {
+    marginLeft: 8,
+  },
+  greetingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    letterSpacing: 0.3,
+  },
+  dateTimeText: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '400',
+    marginTop: 1,
+  },
+
+  // Header Right Section
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'flex-end',
+  },
+  headerActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+
+  // Section Info
+  sectionInfoContainer: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  sectionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  headerTitleContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+    fontWeight: '400',
+  },
+
+  // Dashboard Layout
+  dashboardContainer: {
+    flex: 1,
+    flexDirection: isTablet ? 'row' : 'column',
   },
   content: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#f5f7fa',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
+  contentContainer: {
+    padding: isTablet ? 16 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
-  welcomeText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  logoutIcon: {
-    padding: 8,
-  },
-  statsContainer: {
-    marginBottom: 24,
-  },
-  statCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  actionCard: {
-    backgroundColor: '#fff',
-    width: '48%',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  actionText: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
-  },
-  activityList: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  activityContent: {
-    marginLeft: 12,
+
+  // Loading State
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 10,
+    color: '#64748b',
   },
 });
 

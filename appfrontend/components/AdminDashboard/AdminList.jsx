@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,422 +6,393 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 
-const AdminList = ({ 
-  admins, 
-  onAddAdminClick, 
-  loading, 
-  error, 
-  handleRemoveAdmin 
-}) => {
-  const reversedAdmins = [...admins].reverse(); // To avoid mutating original array
+const AdminList = ({ onAddAdminClick }) => {
+  const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const renderAdminItem = ({ item, index }) => (
-    <View style={[styles.adminCard, index % 2 === 0 ? styles.evenCard : styles.oddCard]}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.adminId}>{item.adminId}</Text>
-        <View style={styles.statusIndicator}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusText}>Active</Text>
-        </View>
-      </View>
+  // Replace this URL with your actual API endpoint
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-      <View style={styles.cardContent}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{item.buyersId?.length ?? 0}</Text>
-            <Text style={styles.statLabel}>Buyers</Text>
-          </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{item.sellersId?.length ?? 0}</Text>
-            <Text style={styles.statLabel}>Sellers</Text>
-          </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {(item.buyersId?.length ?? 0) + (item.sellersId?.length ?? 0)}
-            </Text>
-            <Text style={styles.statLabel}>Total</Text>
-          </View>
-        </View>
-      </View>
+  // Fetch admins from the API
+  const fetchAdmins = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/admins`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authorization header if needed
+          // 'Authorization': `Bearer ${token}`,
+        },
+      });
 
-      <View style={styles.cardActions}>
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={() => handleRemoveAdmin(item._id)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.deleteBtnText}>Remove Admin</Text>
-        </TouchableOpacity>
-      </View>
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Assuming the API returns an array of admins or { admins: [...] }
+      const adminList = Array.isArray(data) ? data : data.admins || [];
+      setAdmins(adminList);
+      
+    } catch (err) {
+      console.error('Error fetching admins:', err);
+      setError(`Failed to load admins: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Remove admin function
+  const handleRemoveAdmin = async (adminId) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this admin?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              
+              const response = await fetch(`${API_BASE_URL}/admins/${adminId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Add authorization header if needed
+                  // 'Authorization': `Bearer ${token}`,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              // Remove the admin from local state
+              setAdmins(prevAdmins => 
+                prevAdmins.filter(admin => admin._id !== adminId)
+              );
+              
+              Alert.alert("Success", "Admin deleted successfully");
+              
+            } catch (err) {
+              console.error('Error deleting admin:', err);
+              Alert.alert("Error", `Failed to delete admin: ${err.message}`);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Fetch admins when component mounts
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  // Refresh function
+  const handleRefresh = () => {
+    fetchAdmins();
+  };
+
+  const renderAdminItem = ({ item: admin, index }) => (
+    <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
+      <Text style={styles.tableCell}>{admin.adminId || 'N/A'}</Text>
+      <Text style={[styles.tableCell, styles.tableCellNumber]}>
+        {admin.buyersId?.length ?? 0}
+      </Text>
+      <Text style={[styles.tableCell, styles.tableCellNumber]}>
+        {admin.sellersId?.length ?? 0}
+      </Text>
+      <TouchableOpacity
+        style={styles.deleteBtn}
+        onPress={() => handleRemoveAdmin(admin._id)}
+        activeOpacity={0.7}
+        disabled={loading}
+      >
+        <Text style={styles.deleteBtnText}>Delete</Text>
+      </TouchableOpacity>
     </View>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Loading admins...</Text>
-        </View>
-      </View>
-    );
-  }
+  const renderHeader = () => (
+    <View style={styles.tableHeader}>
+      <Text style={styles.tableHeaderCell}>Admin ID</Text>
+      <Text style={styles.tableHeaderCell}>Buyers</Text>
+      <Text style={styles.tableHeaderCell}>Sellers</Text>
+      <Text style={styles.tableHeaderCell}>Delete Account</Text>
+    </View>
+  );
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateText}>No admins found</Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+        <Text style={styles.refreshButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.adminList}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Admins</Text>
+        <View style={styles.headerButtons}>
           <TouchableOpacity 
-            style={styles.retryBtn}
-            onPress={() => window.location.reload()}
+            style={styles.refreshButton} 
+            onPress={handleRefresh}
+            disabled={loading}
           >
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.refreshButtonText}>Refresh</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={onAddAdminClick}
+            disabled={loading}
+          >
+            <Text style={styles.addButtonText}>Add Admin</Text>
           </TouchableOpacity>
         </View>
       </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.title}>Admin Management</Text>
-          <View style={styles.headerStats}>
-            <Text style={styles.statsText}>
-              Total Admins: {admins.length}
-            </Text>
-          </View>
+      
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={styles.loadingText}>Loading admins...</Text>
         </View>
-        
-        <TouchableOpacity 
-          onPress={onAddAdminClick} 
-          style={styles.addButton}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.addButtonText}>+ Add Admin</Text>
-        </TouchableOpacity>
-      </View>
-
-      {admins.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>👥</Text>
-          <Text style={styles.emptyStateText}>No admins found</Text>
-          <Text style={styles.emptyStateSubtext}>
-            Add your first admin to get started
-          </Text>
-          <TouchableOpacity 
-            onPress={onAddAdminClick} 
-            style={styles.emptyStateButton}
-          >
-            <Text style={styles.emptyStateButtonText}>Add First Admin</Text>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.error}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
-          data={reversedAdmins}
-          keyExtractor={(item) => item._id}
-          renderItem={renderAdminItem}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={styles.table}>
+          {renderHeader()}
+          <FlatList
+            data={admins} // Removed .reverse() - better to handle sorting on backend
+            renderItem={renderAdminItem}
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={renderEmptyState}
+            refreshing={loading}
+            onRefresh={handleRefresh}
+          />
+        </View>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  adminList: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    minHeight: '100%',
   },
-
   header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 4,
   },
-
-  headerContent: {
-    flex: 1,
-  },
-
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a202c',
-    marginBottom: 4,
-  },
-
-  headerStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  statsText: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-
-  addButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  addButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  listContainer: {
-    padding: 16,
-  },
-
-  adminCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-
-  evenCard: {
-    backgroundColor: '#ffffff',
-  },
-
-  oddCard: {
-    backgroundColor: '#fafbfc',
-  },
-
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-
-  adminId: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a202c',
-    flex: 1,
-  },
-
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#d1fae5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-
-  statusDot: {
-    width: 6,
-    height: 6,
-    backgroundColor: '#10b981',
-    borderRadius: 3,
-    marginRight: 6,
-  },
-
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#047857',
-  },
-
-  cardContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-  },
-
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a202c',
-    marginBottom: 4,
-  },
-
-  statLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-    textTransform: 'uppercase',
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2c3e50',
     letterSpacing: 0.5,
   },
-
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: '#e2e8f0',
-    marginHorizontal: 16,
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 12,
   },
-
-  cardActions: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-
-  deleteBtn: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+  addButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: '#007bff',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 5,
   },
-
-  deleteBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
+  addButtonText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
-
-  // Loading State
+  refreshButton: {
+    backgroundColor: '#28a745',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: '#28a745',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  refreshButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    margin: 8,
+    padding: 40,
   },
-
   loadingText: {
-    fontSize: 16,
-    color: '#64748b',
     marginTop: 16,
+    fontSize: 18,
+    color: '#6c757d',
     fontWeight: '500',
   },
-
-  // Error State
   errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
     alignItems: 'center',
-    paddingHorizontal: 32,
   },
-
-  errorIcon: {
-    fontSize: 48,
+  error: {
+    color: '#dc3545',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 16,
+    textAlign: 'center',
+    backgroundColor: '#f8d7da',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f5c6cb',
   },
-
-  errorText: {
+  retryButton: {
+    backgroundColor: '#dc3545',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  retryButtonText: {
+    color: 'white',
     fontSize: 16,
-    color: '#ef4444',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-
-  retryBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-
-  retryBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
     fontWeight: '600',
   },
-
-  // Empty State
   emptyState: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 40,
     alignItems: 'center',
-    paddingHorizontal: 32,
+    backgroundColor: '#ffffff',
   },
-
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-
   emptyStateText: {
-    fontSize: 20,
+    fontSize: 18,
+    color: '#6c757d',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  table: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#343a40',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  tableHeaderCell: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  tableRowEven: {
+    backgroundColor: '#f8f9fa',
+  },
+  tableCell: {
+    flex: 1,
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#495057',
+    fontWeight: '500',
+  },
+  tableCellNumber: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#64748b',
-    marginBottom: 8,
-    textAlign: 'center',
+    color: '#007bff',
   },
-
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
+  deleteBtn: {
+    flex: 1,
+    backgroundColor: '#dc3545',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginHorizontal: 8,
+    shadowColor: '#dc3545',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
-
-  emptyStateButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-
-  emptyStateButtonText: {
+  deleteBtnText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 
