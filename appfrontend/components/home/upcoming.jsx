@@ -16,7 +16,11 @@ const cards = [
     price: '1 Cr',
   },
   {
+<<<<<<< HEAD
     image: require('../../assets/images/ccu.png'),
+=======
+    image: require('../../assets/images/Delhi.png'),
+>>>>>>> 787b1ba888ca6c250a5c2a8d94a212adf634c259
     title: 'Garg builder floor',
     location: 'sector 8 Dwarka Delhi',
     price: '1.9 Cr',
