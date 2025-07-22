@@ -5,7 +5,7 @@ import { View, ActivityIndicator } from 'react-native';
 
 export default function UserLayout() {
   const { userType, authUser } = useSelector((state) => state.auth);
- const router = useRouter();
+  const router = useRouter();
   const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
