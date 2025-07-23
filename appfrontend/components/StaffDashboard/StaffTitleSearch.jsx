@@ -1,131 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   Modal,
-  TouchableOpacity,
-  FlatList,
   StyleSheet,
-  Linking,
   ScrollView,
-  Platform,
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+  TouchableOpacity,
+} from "react-native";
+import axios from "axios";
 
-const StaffTitleSearch = ({ titleSearchRequest }) => {
-  const [modalType, setModalType] = useState(null);
-  const [filterType, setFilterType] = useState('All');
-  const [searchId, setSearchId] = useState('');
-  const [selectedContact, setSelectedContact] = useState(null);
+const StaffTitleSearch = () => {
+  const [data, setData] = useState([]);
+  const [filterText, setFilterText] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-  const filteredRequests = titleSearchRequest
-    .filter((r) => (filterType === 'All' ? true : r.propertyType === filterType))
-    .filter((r) => (searchId.trim() === '' ? true : r._id.includes(searchId.trim())));
+  // Replace with your actual API
+  useEffect(() => {
+    axios
+      .get(`${BASE_URL}/api/some-data`)
+      .then((res) => setData(res.data))
+      .catch((err) => console.error(err));
+  }, []);
 
-  const openModal = (type, request) => {
-    setSelectedContact(request);
-    setModalType(type);
+  const filteredData = data.filter((item) =>
+    item.name.toLowerCase().includes(filterText.toLowerCase())
+  );
+
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setModalVisible(true);
   };
 
   const closeModal = () => {
-    setSelectedContact(null);
-    setModalType(null);
+    setSelectedItem(null);
+    setModalVisible(false);
   };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.row}>
-      <Text style={styles.cell}>{item._id}</Text>
-      <Text style={styles.cell}>{item.propertyType}</Text>
-      <Text style={styles.cell}>{item.PropertyCity}</Text>
-      <Text style={styles.cell}>{item.PropertyState}</Text>
-      <Text style={styles.cell}>{item.propertyAddress}</Text>
-      <Text style={styles.cell}>{item.PropertyRegistrationNumber || '-'}</Text>
-      <Text style={styles.cell}>
-        {new Date(item.createdAt).toLocaleDateString()} {'\n'}
-        {new Date(item.createdAt).toLocaleTimeString()}
-      </Text>
-      <TouchableOpacity onPress={() => openModal('contact', item)}>
-        <Text style={styles.viewBtn}>View Contact</Text>
-      </TouchableOpacity>
-      {item.propertyDocuments?.length > 0 ? (
-        <TouchableOpacity onPress={() => openModal('documents', item)}>
-          <Text style={styles.viewBtn}>View Documents</Text>
-        </TouchableOpacity>
-      ) : (
-        <Text style={styles.cell}>-</Text>
-      )}
-    </View>
-  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Title Search Requests</Text>
+      <Text style={styles.heading}>📊 Staff Table</Text>
 
       <View style={styles.controls}>
-        <Picker
-          selectedValue={filterType}
-          style={styles.dropdown}
-          onValueChange={(itemValue) => setFilterType(itemValue)}
-        >
-          <Picker.Item label="All Types" value="All" />
-          <Picker.Item label="Residential" value="Residential" />
-          <Picker.Item label="Commercial" value="Commercial" />
-          <Picker.Item label="Land" value="Land" />
-        </Picker>
-
+        {/* Replace dropdown with Picker or custom dropdown if needed */}
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by Request ID"
-          value={searchId}
-          onChangeText={setSearchId}
+          placeholder="Search by name..."
+          value={filterText}
+          onChangeText={setFilterText}
         />
       </View>
 
-      <FlatList
-        data={filteredRequests}
-        renderItem={renderItem}
-        keyExtractor={(item) => item._id}
-        ListEmptyComponent={<Text style={styles.noData}>No matching requests.</Text>}
-      />
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.cell, styles.headerCell]}>Name</Text>
+          <Text style={[styles.cell, styles.headerCell]}>Email</Text>
+          <Text style={[styles.cell, styles.headerCell]}>Action</Text>
+        </View>
 
-      {/* Contact Modal */}
-      <Modal visible={modalType === 'contact'} transparent animationType="slide">
+        {filteredData.map((item) => (
+          <View key={item._id} style={styles.tableRow}>
+            <Text style={styles.cell}>{item.name}</Text>
+            <Text style={styles.cell}>{item.email}</Text>
+            <TouchableOpacity
+              onPress={() => openModal(item)}
+              style={styles.viewBtn}
+            >
+              <Text style={styles.viewBtnText}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+
+      {/* Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeBtn} onPress={closeModal}>
-              <Text style={{ fontSize: 22 }}>×</Text>
+            <TouchableOpacity onPress={closeModal} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>×</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Contact Details</Text>
-            <Text><Text style={styles.bold}>Full Name:</Text> {selectedContact?.ContactFullName}</Text>
-            <Text><Text style={styles.bold}>Email:</Text> {selectedContact?.ContactEmail}</Text>
-            <Text><Text style={styles.bold}>Phone:</Text> {selectedContact?.ContactPhone}</Text>
-            {selectedContact?.ContactNotes && (
-              <Text><Text style={styles.bold}>Notes:</Text> {selectedContact.ContactNotes}</Text>
+            <Text style={styles.modalTitle}>Details</Text>
+            {selectedItem && (
+              <>
+                <Text style={styles.modalText}>Name: {selectedItem.name}</Text>
+                <Text style={styles.modalText}>Email: {selectedItem.email}</Text>
+              </>
             )}
           </View>
         </View>
       </Modal>
 
-      {/* Documents Modal */}
-      <Modal visible={modalType === 'documents'} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeBtn} onPress={closeModal}>
-              <Text style={{ fontSize: 22 }}>×</Text>
+      {/* Documents section */}
+      <View style={styles.documentFlex}>
+        {filteredData.map((doc) => (
+          <View key={doc._id} style={styles.documentItem}>
+            <Text>{doc.name}</Text>
+            <TouchableOpacity style={styles.viewLink}>
+              <Text style={styles.linkText}>View</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>📂 Uploaded Documents</Text>
-            {selectedContact?.propertyDocuments.map((doc, index) => (
-              <TouchableOpacity
-                key={doc.public_id}
-                onPress={() => Linking.openURL(doc.url)}
-              >
-                <Text style={styles.viewLink}>Document {index + 1} 🔍</Text>
-              </TouchableOpacity>
-            ))}
+            <TouchableOpacity style={styles.downloadLink}>
+              <Text style={styles.linkText}>Download</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+        ))}
+      </View>
     </ScrollView>
   );
 };
@@ -133,153 +118,123 @@ const StaffTitleSearch = ({ titleSearchRequest }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    marginTop: 90,
-    backgroundColor: '#f4f4f4',
+    paddingTop: 90,
   },
   heading: {
     fontSize: 24,
     marginBottom: 20,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
   },
   controls: {
-    flexDirection: 'row',
-    gap: 10,
     marginBottom: 20,
-    width: '100%',
-    flexWrap: 'wrap',
-  },
-  dropdown: {
-    padding: 8,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    flex: 1,
-    minWidth: 120,
+    flexDirection: "row",
+    gap: 10,
+    width: "100%",
   },
   searchInput: {
-    padding: 8,
+    flex: 1,
+    padding: 10,
     fontSize: 14,
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 6,
-    backgroundColor: '#fff',
-    flex: 2,
-    minWidth: 150,
   },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
-    paddingVertical: 12,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    backgroundColor: '#fff',
-    paddingHorizontal: 6,
+  table: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
   },
   cell: {
     flex: 1,
-    paddingHorizontal: 4,
-    fontSize: 13,
-    color: '#333',
+    padding: 12,
+  },
+  headerCell: {
+    fontWeight: "bold",
   },
   viewBtn: {
-    backgroundColor: '#0056b3',
-    color: '#fff',
+    backgroundColor: "#0056b3",
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 4,
-    textAlign: 'center',
-    fontSize: 13,
-    overflow: 'hidden',
+    marginRight: 10,
   },
-  viewBtnHover: {
-    backgroundColor: '#004093',
+  viewBtnText: {
+    color: "white",
   },
-
-  // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 30,
-    width: 340,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    backgroundColor: "white",
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+    position: "relative",
     elevation: 10,
-    position: 'relative',
   },
   modalTitle: {
-    fontSize: 20,
-    textAlign: 'center',
+    fontSize: 22,
+    textAlign: "center",
     marginBottom: 20,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
   },
   modalText: {
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 10,
-    color: '#444',
   },
   closeBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
-    right: 12,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    fontSize: 24,
-    color: '#333',
+    right: 15,
   },
   closeBtnText: {
-    fontSize: 24,
-    color: '#333',
-    fontWeight: 'bold',
+    fontSize: 26,
+    color: "#333",
+    fontWeight: "bold",
   },
-
-  // Document Section
   documentFlex: {
-    width: '100%',
-    flexDirection: 'column',
-    alignItems: 'center',
+    marginTop: 20,
+    alignItems: "center",
   },
   documentItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginVertical: 6,
-    backgroundColor: '#fafafa',
-    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: "#ddd",
     borderWidth: 1,
-    borderColor: '#ddd',
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginBottom: 10,
+    backgroundColor: "#fafafa",
     gap: 10,
   },
   viewLink: {
-    backgroundColor: '#007bff',
-    color: '#fff',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: "#007bff",
     borderRadius: 6,
-    fontSize: 14,
-    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   downloadLink: {
-    backgroundColor: '#28a745',
-    color: '#fff',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: "#28a745",
     borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  linkText: {
+    color: "white",
     fontSize: 14,
-    overflow: 'hidden',
   },
 });
 
