@@ -1,27 +1,28 @@
-import { Slot, useRouter, useNavigationContainerRef } from 'expo-router';
+import { Slot, useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function StaffLayout() {
-   const { userType, authUser } = useSelector((state) => state.auth);
- const router = useRouter();
+  const { userType, authUser } = useSelector((state) => state.auth);
+  const router = useRouter();
   const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    if (!userType) return; // wait until auth is available
+    if (!userType) return;
 
     if (userType !== 'staff' || !authUser) {
-      // ✅ Wrap in requestAnimationFrame to let layout mount first
       requestAnimationFrame(() => {
-        router.replace('/');
+        setTimeout(() => {
+          router.replace('/');
+        }, 0);
       });
     } else {
       setHasChecked(true);
     }
-  }, [userType]);
+  }, [userType, authUser]);
 
- if (!hasChecked && userType === 'user') {
+  if (!hasChecked) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />

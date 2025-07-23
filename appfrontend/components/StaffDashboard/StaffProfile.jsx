@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,37 +6,45 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import axios from 'axios';
+} from "react-native";
+import axios from "axios";
+import { toast } from "react-native-toast-message";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // for mobile, you should use react-native-vector-icons
 
 const StaffProfile = ({ staff, updateToken }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedStaff, setEditedStaff] = useState(staff);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-  const token = 'yourTokenHere'; // Replace with SecureStore/AsyncStorage for real apps
+  const token = localStorage.getItem("authToken");
 
   useEffect(() => {
-    if (staff) {
-      setEditedStaff(staff);
-    }
+    if (staff) setEditedStaff(staff);
   }, [staff]);
 
-  if (!staff) return <Text style={styles.loading}>Loading profile...</Text>;
+  if (!staff) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
+  const handleChange = (name, value) => {
+    setEditedStaff({ ...editedStaff, [name]: value });
+  };
 
   const handleSave = async () => {
     try {
       const response = await axios.put(
-        `${BASE_URL}/api/staff/update-detail/${staff._id}`,
+        `http://localhost:8000/api/staff/update-detail/${staff._id}`,
         {
-          fullName: editedStaff?.fullName,
-          email: editedStaff?.email,
+          fullName: editedStaff.fullName,
+          email: editedStaff.email,
         },
         {
           headers: {
@@ -45,21 +53,22 @@ const StaffProfile = ({ staff, updateToken }) => {
         }
       );
       setIsEditing(false);
+      toast.show({ type: "success", text1: "Profile updated successfully!" });
+      localStorage.setItem("authToken", response.data.token);
       updateToken();
-      alert('Profile updated successfully!');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile.');
+      console.error("Error updating profile:", error);
+      toast.show({ type: "error", text1: "Failed to update profile." });
     }
   };
 
   const handleChangePassword = async () => {
     if (!oldPassword || !newPassword) {
-      return alert('Please fill both password fields.');
+      return toast.show({ type: "info", text1: "Please fill both password fields." });
     }
     try {
       await axios.put(
-        `${BASE_URL}/api/staff/${staff._id}/change-password`,
+        `http://localhost:8000/api/staff/${staff._id}/change-password`,
         { oldPassword, newPassword },
         {
           headers: {
@@ -67,79 +76,76 @@ const StaffProfile = ({ staff, updateToken }) => {
           },
         }
       );
-      alert('Password changed successfully.');
-      setOldPassword('');
-      setNewPassword('');
+      toast.show({ type: "success", text1: "Password changed successfully." });
+      setOldPassword("");
+      setNewPassword("");
       setShowPasswordChange(false);
     } catch (err) {
       console.error(err);
-      alert('Failed to change password.');
+      toast.show({ type: "error", text1: "Failed to change password." });
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.profileContainerStaff}>
-      <View style={styles.profileCardStaff}>
-        <Text style={styles.titleStaff}>👤 Staff Profile</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>👤 Staff Profile</Text>
 
-        <View style={styles.fieldGroupStaff}>
+        <View style={styles.fieldGroup}>
           <Text style={styles.label}>Staff ID</Text>
           <Text>{staff.staffId}</Text>
         </View>
 
-        <View style={styles.fieldGroupStaff}>
+        <View style={styles.fieldGroup}>
           <Text style={styles.label}>Full Name</Text>
           {isEditing ? (
             <TextInput
               style={styles.input}
               value={editedStaff?.fullName}
-              onChangeText={(text) =>
-                setEditedStaff({ ...editedStaff, fullName: text })
-              }
+              onChangeText={(text) => handleChange("fullName", text)}
             />
           ) : (
             <Text>{staff.fullName}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroupStaff}>
+        <View style={styles.fieldGroup}>
           <Text style={styles.label}>Email</Text>
           {isEditing ? (
             <TextInput
               style={styles.input}
               value={editedStaff?.email}
-              onChangeText={(text) =>
-                setEditedStaff({ ...editedStaff, email: text })
-              }
+              onChangeText={(text) => handleChange("email", text)}
             />
           ) : (
             <Text>{staff.email}</Text>
           )}
         </View>
 
-        <View style={styles.fieldGroupStaff}>
+        <View style={styles.fieldGroup}>
           <Text style={styles.label}>Role</Text>
           <Text>{staff.role}</Text>
         </View>
 
-        <View style={styles.actionRowStaff}>
+        <View style={styles.buttonRow}>
           {isEditing ? (
             <>
-              <TouchableOpacity onPress={handleSave}>
-                <Text style={styles.saveBtnStaff}>Save</Text>
+              <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
+                <Text style={styles.btnText}>Save</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   setEditedStaff(staff);
                   setIsEditing(false);
                 }}
+                style={styles.cancelBtn}
               >
-                <Text style={styles.cancelBtnStaff}>Cancel</Text>
+                <Text style={styles.btnText}>Cancel</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <TouchableOpacity onPress={() => setIsEditing(true)}>
-              <Text style={styles.editBtnStaff}>Edit Profile</Text>
+            <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editBtn}>
+              <Text style={styles.btnText}>Edit Profile</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -148,52 +154,43 @@ const StaffProfile = ({ staff, updateToken }) => {
 
         {!showPasswordChange ? (
           <TouchableOpacity onPress={() => setShowPasswordChange(true)}>
-            <Text style={styles.changePasswordLinkStaff}>🔐 Change Password</Text>
+            <Text style={styles.link}>🔐 Change Password</Text>
           </TouchableOpacity>
         ) : (
           <View>
-            <View style={styles.fieldGroupStaff}>
+            <View style={styles.fieldGroup}>
               <Text style={styles.label}>Old Password</Text>
-              <View style={styles.passwordInputWrapperStaff}>
-                <TextInput
-                  style={styles.input}
-                  secureTextEntry={!showOld}
-                  value={oldPassword}
-                  onChangeText={setOldPassword}
-                />
-                <TouchableOpacity onPress={() => setShowOld(!showOld)}>
-                  <Icon name={showOld ? 'eye-slash' : 'eye'} size={20} />
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                value={oldPassword}
+                secureTextEntry={!showOld}
+                onChangeText={setOldPassword}
+              />
             </View>
 
-            <View style={styles.fieldGroupStaff}>
+            <View style={styles.fieldGroup}>
               <Text style={styles.label}>New Password</Text>
-              <View style={styles.passwordInputWrapperStaff}>
-                <TextInput
-                  style={styles.input}
-                  secureTextEntry={!showNew}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                />
-                <TouchableOpacity onPress={() => setShowNew(!showNew)}>
-                  <Icon name={showNew ? 'eye-slash' : 'eye'} size={20} />
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                value={newPassword}
+                secureTextEntry={!showNew}
+                onChangeText={setNewPassword}
+              />
             </View>
 
-            <View style={styles.actionRowStaff}>
-              <TouchableOpacity onPress={handleChangePassword}>
-                <Text style={styles.saveBtnStaff}>Change Password</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity onPress={handleChangePassword} style={styles.saveBtn}>
+                <Text style={styles.btnText}>Change Password</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   setShowPasswordChange(false);
-                  setOldPassword('');
-                  setNewPassword('');
+                  setOldPassword("");
+                  setNewPassword("");
                 }}
+                style={styles.cancelBtn}
               >
-                <Text style={styles.cancelBtnStaff}>Cancel</Text>
+                <Text style={styles.btnText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -204,138 +201,80 @@ const StaffProfile = ({ staff, updateToken }) => {
 };
 
 const styles = StyleSheet.create({
-  profileContainerStaff: {
-    marginTop: 90,
-    marginHorizontal: 'auto', // not directly supported — use alignSelf or centering parent
+  container: {
+    padding: 16,
+    backgroundColor: "#fff",
+    flexGrow: 1,
+    alignItems: "center",
+  },
+  card: {
+    backgroundColor: "#f5f5f5",
     padding: 20,
-    backgroundColor: '#fefefe',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    width: "100%",
+    borderRadius: 10,
+    elevation: 3,
   },
-
-  profileCardStaff: {
-    flexDirection: 'column',
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    alignSelf: "center",
   },
-
-  titleStaff: {
-    fontSize: 28, // 1.8rem ~ 28.8px
-    marginBottom: 24,
-    textAlign: 'center',
-    color: '#333',
-    fontWeight: 'bold',
+  fieldGroup: {
+    marginBottom: 12,
   },
-
-  fieldGroupStaff: {
-    marginBottom: 16,
-  },
-
   label: {
-    fontWeight: '600',
+    fontWeight: "bold",
     marginBottom: 4,
-    color: '#555',
   },
-
-  textValue: {
-    fontSize: 16,
-    color: '#222',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-
   input: {
-    fontSize: 16,
-    color: '#222',
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    padding: 8,
+    borderRadius: 5,
   },
-
-  actionRowStaff: {
-    flexDirection: 'row',
-    gap: 10, // may not be supported; use marginRight or spacing between buttons
-    justifyContent: 'center',
-    marginTop: 12,
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 16,
   },
-
-  editBtnStaff: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#0077ff',
-    borderRadius: 6,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
+  saveBtn: {
+    backgroundColor: "#28a745",
+    padding: 10,
+    borderRadius: 5,
   },
-
-  saveBtnStaff: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#28a745',
-    borderRadius: 6,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
+  cancelBtn: {
+    backgroundColor: "#dc3545",
+    padding: 10,
+    borderRadius: 5,
   },
-
-  cancelBtnStaff: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#e74c3c',
-    borderRadius: 6,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
+  editBtn: {
+    backgroundColor: "#007bff",
+    padding: 10,
+    borderRadius: 5,
   },
-
+  btnText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   divider: {
-    marginVertical: 24,
     height: 1,
-    backgroundColor: '#ddd',
+    backgroundColor: "#ccc",
+    marginVertical: 16,
   },
-
-  changePasswordLinkStaff: {
-    color: '#0077ff',
-    textDecorationLine: 'underline',
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: 10,
+  link: {
+    color: "#007bff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
-
-  passwordSectionStaff: {
-    marginTop: 16,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-
-  passwordInputWrapperStaff: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10, // not supported, use marginRight
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-  },
-
-  iconWrapper: {
-    paddingLeft: 8,
-    fontSize: 18,
-    color: '#333',
-  },
-
-  loading: {
-    textAlign: 'center',
-    paddingVertical: 32,
-    fontSize: 18,
+  loadingText: {
+    fontSize: 16,
   },
 });
-
 
 export default StaffProfile;
