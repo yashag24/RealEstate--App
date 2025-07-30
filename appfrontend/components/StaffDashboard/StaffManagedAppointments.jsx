@@ -1,5 +1,17 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, Modal, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Modal,
+  FlatList
+} from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const StaffManagedAppointments = ({
   appointments,
@@ -8,9 +20,8 @@ const StaffManagedAppointments = ({
   error,
   handleCancelAppointment,
   handleAcceptAppointment,
-  handleConfirmedAppointment,
-  handleUpdateLog,
 }) => {
+  const navigation = useNavigation();
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,255 +56,492 @@ const StaffManagedAppointments = ({
     return matchesStatus && matchesSearch;
   });
 
-  const renderAppointment = ({ item: a }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{`${a.firstName || ""} ${a.lastName || ""}`.trim() || "N/A"}</Text>
-      <Text>Email: {a.email || "N/A"}</Text>
-      <Text>Phone: {a.phoneNumber || "N/A"}</Text>
-      <Text>Status: {a.status}</Text>
-      <Text>
-        Managed By: {a.staffId ? (
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedStaff(a.staffId);
-              setIsStaffModalOpen(true);
-            }}>
-            <Text style={styles.link}>{a.staffId.staffId}</Text>
-          </TouchableOpacity>
-        ) : (
-          "—"
-        )}
-      </Text>
-      <Text>Created: {new Date(a.createdAt).toLocaleString()}</Text>
-      <Text>Updated: {new Date(a.updatedAt).toLocaleString()}</Text>
-      <Text>
-        Type: {a.isGuest ? (
-          "Guest"
-        ) : (
-          <TouchableOpacity onPress={() => handleUserClick(a.userId)}>
-            <Text style={styles.link}>User</Text>
-          </TouchableOpacity>
-        )}
-      </Text>
-      {a.status.toLowerCase() === "pending" ? (
-        <View style={styles.actionsRow}>
-          <Button title="Accept" onPress={() => handleAcceptAppointment(a._id)} color="#28a745" />
-          <Button title="Reject" onPress={() => handleCancelAppointment(a._id)} color="#dc3545" />
+  const renderAppointmentItem = ({ item }) => (
+    <View style={styles.row}>
+      <View style={styles.cell}>
+        <Text numberOfLines={1}>
+          {`${item.firstName || ""} ${item.lastName || ""}`.trim() || "N/A"}
+        </Text>
+      </View>
+      <View style={styles.cell}>
+        <Text numberOfLines={1}>{item.email || "N/A"}</Text>
+      </View>
+      <View style={styles.cell}>
+        <Text>{item.phoneNumber || "N/A"}</Text>
+      </View>
+      <View style={styles.cell}>
+        <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+          <Text style={styles.statusText}>{item.status}</Text>
         </View>
-      ) : a.status.toLowerCase() !== "cancelled" ? (
-        <Button
-          title="Logs"
-          onPress={() => {
-            // navigate(`/staff/${staffId}/appointments/${a._id}/logs`);
-            // Placeholder for navigation
-            alert(`Navigate to logs for ${a._id}`);
-          }}
-          color="#007bff"
-        />
-      ) : (
-        <Text>-</Text>
-      )}
+      </View>
+      <View style={styles.cell}>
+        {item.staffId ? (
+          <Pressable
+            onPress={() => {
+              setSelectedStaff(item.staffId);
+              setIsStaffModalOpen(true);
+            }}
+            style={styles.detailButton}
+          >
+            <Text style={styles.detailButtonText}>{item.staffId.staffId}</Text>
+          </Pressable>
+        ) : (
+          <Text>—</Text>
+        )}
+      </View>
+      <View style={styles.cell}>
+        <Text numberOfLines={1}>
+          {new Date(item.createdAt).toLocaleDateString()}
+        </Text>
+      </View>
+      <View style={styles.cell}>
+        <Text numberOfLines={1}>
+          {new Date(item.updatedAt).toLocaleDateString()}
+        </Text>
+      </View>
+      <View style={styles.cell}>
+        {item.isGuest ? (
+          <Text>Guest</Text>
+        ) : (
+          <Pressable
+            onPress={() => handleUserClick(item.userId)}
+            style={styles.detailButton}
+          >
+            <Text style={styles.detailButtonText}>User</Text>
+          </Pressable>
+        )}
+      </View>
+      <View style={styles.cell}>
+        {item.status.toLowerCase() === "pending" ? (
+          <View style={styles.actionButtons}>
+            <Pressable
+              onPress={() => handleAcceptAppointment(item._id)}
+              style={[styles.button, styles.acceptButton]}
+            >
+              <Text style={styles.buttonText}>Accept</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleCancelAppointment(item._id)}
+              style={[styles.button, styles.cancelButton]}
+            >
+              <Text style={styles.buttonText}>Reject</Text>
+            </Pressable>
+          </View>
+        ) : item.status.toLowerCase() !== "cancelled" ? (
+          <Pressable
+            style={[styles.button, styles.logButton]}
+            onPress={() =>
+              navigation.navigate('AppointmentLogs', { 
+                appointmentId: item._id,
+                staffId: staffId
+              })
+            }
+          >
+            <Text style={styles.buttonText}>Logs</Text>
+          </Pressable>
+        ) : (
+          <Text>-</Text>
+        )}
+      </View>
     </View>
   );
 
+  const getStatusStyle = (status) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return { backgroundColor: '#f59e0b' };
+      case 'accepted':
+        return { backgroundColor: '#3b82f6' };
+      case 'scheduled':
+        return { backgroundColor: '#8b5cf6' };
+      case 'in progress':
+        return { backgroundColor: '#06b6d4' };
+      case 'completed':
+        return { backgroundColor: '#10b981' };
+      case 'cancelled':
+        return { backgroundColor: '#ef4444' };
+      default:
+        return { backgroundColor: '#64748b' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.loadingText}>Loading appointments...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : (
-        <>
-          <View style={styles.filterRow}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Appointments</Text>
+        <View style={styles.controls}>
+          <View style={styles.searchContainer}>
+            <FontAwesome5 name="search" size={16} color="#64748b" />
             <TextInput
-              placeholder="Search here..."
+              style={styles.searchInput}
+              placeholder="Search appointments..."
+              placeholderTextColor="#94a3b8"
               value={searchTerm}
               onChangeText={setSearchTerm}
-              style={styles.searchInput}
-            />
-            <TextInput
-              placeholder="Status"
-              value={selectedStatus}
-              onChangeText={setSelectedStatus}
-              style={styles.statusFilter}
             />
           </View>
+          <View style={styles.filterContainer}>
+            <FontAwesome5 name="filter" size={16} color="#64748b" />
+            <Pressable
+              style={styles.filterButton}
+              onPress={() => {
+                // In a real app, you'd use a proper picker component here
+                const statuses = ['All', 'Pending', 'Accepted', 'Scheduled', 'In Progress', 'Completed', 'Cancelled'];
+                const currentIndex = statuses.indexOf(selectedStatus);
+                const nextIndex = (currentIndex + 1) % statuses.length;
+                setSelectedStatus(statuses[nextIndex]);
+              }}
+            >
+              <Text style={styles.filterText}>{selectedStatus}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
 
-          {filteredAppointments.length > 0 ? (
+      {filteredAppointments.length > 0 ? (
+        <ScrollView horizontal={true}>
+          <View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerCell}>Full Name</Text>
+              <Text style={styles.headerCell}>Email</Text>
+              <Text style={styles.headerCell}>Phone</Text>
+              <Text style={styles.headerCell}>Status</Text>
+              <Text style={styles.headerCell}>Managed By</Text>
+              <Text style={styles.headerCell}>Created</Text>
+              <Text style={styles.headerCell}>Updated</Text>
+              <Text style={styles.headerCell}>Type</Text>
+              <Text style={styles.headerCell}>Action</Text>
+            </View>
             <FlatList
-              data={filteredAppointments.reverse()}
+              data={filteredAppointments}
+              renderItem={renderAppointmentItem}
               keyExtractor={(item) => item._id}
-              renderItem={renderAppointment}
             />
-          ) : (
-            <Text>No appointments available.</Text>
-          )}
-
-          {/* User Modal */}
-          <Modal visible={isModalOpen} transparent={true} animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Button title="Close" onPress={closeModal} />
-                {selectedUser && (
-                  <>
-                    <Text>User Details</Text>
-                    <Text>Name: {selectedUser.firstName} {selectedUser.lastName}</Text>
-                    <Text>Email: {selectedUser.email}</Text>
-                    <Text>Phone: {selectedUser.phoneNumber}</Text>
-                    <Text>Landline: {selectedUser.landlineNumber}</Text>
-                    <Text>City: {selectedUser.city}</Text>
-                    <Text>Address: {selectedUser.address}</Text>
-                  </>
-                )}
-              </View>
-            </View>
-          </Modal>
-
-          {/* Staff Modal */}
-          <Modal visible={isStaffModalOpen} transparent={true} animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Button title="Close" onPress={() => { setIsStaffModalOpen(false); setSelectedStaff(null); }} />
-                {selectedStaff && (
-                  <>
-                    <Text>Staff Details</Text>
-                    <Text>Staff ID: {selectedStaff.staffId}</Text>
-                    <Text>Full Name: {selectedStaff.fullName}</Text>
-                    <Text>Email: {selectedStaff.email}</Text>
-                    <Text>Phone: {selectedStaff.phoneNumber}</Text>
-                    <Text>Role: {selectedStaff.role}</Text>
-                  </>
-                )}
-              </View>
-            </View>
-          </Modal>
-        </>
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyContainer}>
+          <FontAwesome5 name="calendar-times" size={40} color="#94a3b8" />
+          <Text style={styles.emptyText}>No appointments available</Text>
+          <Text style={styles.emptySubtext}>Try changing your filters</Text>
+        </View>
       )}
+
+      {/* User Details Modal */}
+      <Modal
+        visible={isModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Pressable style={styles.closeButton} onPress={closeModal}>
+              <FontAwesome5 name="times" size={20} color="#64748b" />
+            </Pressable>
+            <Text style={styles.modalTitle}>User Details</Text>
+            {selectedUser && (
+              <>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Name:</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Email:</Text>
+                  <Text style={styles.detailValue}>{selectedUser.email}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Phone:</Text>
+                  <Text style={styles.detailValue}>{selectedUser.phoneNumber}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Landline:</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedUser.landlineNumber || 'N/A'}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>City:</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedUser.city || 'N/A'}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Address:</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedUser.address || 'N/A'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Staff Details Modal */}
+      <Modal
+        visible={isStaffModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsStaffModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Pressable 
+              style={styles.closeButton} 
+              onPress={() => setIsStaffModalOpen(false)}
+            >
+              <FontAwesome5 name="times" size={20} color="#64748b" />
+            </Pressable>
+            <Text style={styles.modalTitle}>Staff Details</Text>
+            {selectedStaff && (
+              <>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Staff ID:</Text>
+                  <Text style={styles.detailValue}>{selectedStaff.staffId}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Full Name:</Text>
+                  <Text style={styles.detailValue}>{selectedStaff.fullName}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Email:</Text>
+                  <Text style={styles.detailValue}>{selectedStaff.email}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Phone:</Text>
+                  <Text style={styles.detailValue}>{selectedStaff.phoneNumber}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Role:</Text>
+                  <Text style={styles.detailValue}>{selectedStaff.role}</Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  containerStaffApp: {
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginTop: 90,
+  container: {
     flex: 1,
+    padding: 16,
+    backgroundColor: '#f8fafc',
   },
-  statusFilter: {
-    paddingVertical: 6,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#64748b',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 16,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 16,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
     paddingHorizontal: 12,
-    fontSize: 14,
+    marginRight: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
+    borderColor: '#e2e8f0',
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    color: '#1e293b',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  filterText: {
+    color: '#3b82f6',
+    fontWeight: '500',
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#334155',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
   },
-  loading: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#555',
-  },
-  error: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 10,
-    color: 'red',
-    fontWeight: '500',
-  },
-  noAppointments: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#555',
-  },
-  headApp: {
-    marginVertical: 10,
-    paddingHorizontal: 5,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  status: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    color: 'black',
-    fontSize: 13,
-    fontWeight: '500',
+  headerCell: {
+    width: 120,
+    color: '#ffffff',
+    fontWeight: '600',
     textAlign: 'center',
   },
-  CancelBtn: {
-    borderWidth: 1,
-    borderColor: 'black',
-    color: '#e74c3c',
-    padding: 3,
-    textAlign: 'center',
+  row: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
-  AcceptBtn: {
-    borderWidth: 1,
-    borderColor: 'black',
-    color: '#bb8e06',
-    padding: 3,
-    textAlign: 'center',
-  },
-  LogBTNs: {
-    borderWidth: 1,
-    borderColor: 'black',
-    color: 'black',
-    padding: 3,
-    textAlign: 'center',
-  },
-  statusBTNs: {
-    flexDirection: 'column',
-    gap: 8,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  cell: {
+    width: 120,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
+    paddingHorizontal: 4,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  detailButton: {
+    backgroundColor: '#e2e8f0',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  detailButtonText: {
+    color: '#3b82f6',
+    fontSize: 12,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  button: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  acceptButton: {
+    backgroundColor: '#10b981',
+  },
+  cancelButton: {
+    backgroundColor: '#ef4444',
+  },
+  logButton: {
+    backgroundColor: '#3b82f6',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
     padding: 20,
-    borderRadius: 12,
-    width: 400,
-    maxWidth: '90%',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
+    width: '90%',
+    maxHeight: '80%',
   },
-  closeModalBtn: {
-    position: 'absolute',
-    top: 8,
-    right: 12,
-    paddingVertical: 2,
-    paddingHorizontal: 10,
-    fontSize: 22,
-    borderRadius: 28,
+  closeButton: {
+    alignSelf: 'flex-end',
+    padding: 8,
   },
-  userDetailsBtn: {
-    borderRadius: 6,
-    textDecorationLine: 'underline',
-    color: 'darkblue',
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 16,
     textAlign: 'center',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  detailLabel: {
+    fontWeight: '600',
+    color: '#1e293b',
+    width: 100,
+  },
+  detailValue: {
+    flex: 1,
+    color: '#64748b',
   },
 });
 
 export default StaffManagedAppointments;
-
