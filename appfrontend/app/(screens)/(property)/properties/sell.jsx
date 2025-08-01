@@ -37,7 +37,7 @@ const PropertiesSell = () => {
   };
 
   const handleGoHome = () => {
-    router.push('/');
+    router.back();
   };
 
   return (
@@ -47,7 +47,7 @@ const PropertiesSell = () => {
         <View style={styles.headerGradient} />
         <View style={styles.headerContent}>
           <Pressable style={styles.backButton} onPress={handleGoHome}>
-            <FontAwesome5 name="home" size={18} color="#ffffff" />
+            <FontAwesome5 name="arrow-left" size={18} color="#ffffff" />
           </Pressable>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>Properties for Sale</Text>
