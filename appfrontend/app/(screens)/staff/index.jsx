@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   ScrollView, 
@@ -9,17 +9,17 @@ import {
   Dimensions,
   Pressable,
   StatusBar,
-  SafeAreaView,
-  Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice';
 import { FontAwesome5 } from '@expo/vector-icons';
 import jwtDecode from 'jwt-decode';
+import { useNavigation } from '@react-navigation/native';
 
 import StaffSideBar from '@/components/StaffDashboard/SidebarStaff';
 import StaffProfile from '@/components/StaffDashboard/StaffProfile';
@@ -34,25 +34,41 @@ const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 
 const StaffDashboard = () => {
-  const [activeSection, setActiveSection] = useState('profile');
+  const [selectedOption, setSelectedOption] = useState("profile");
   const [staffData, setStaffData] = useState(null);
   const [userData, setUserData] = useState([]);
+  const navigation = useNavigation();
   const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [titleSearchRequest, setTitleSearchRequest] = useState([]);
   const [prePurchaseRequest, setPrePurchaseRequest] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [salesTargets, setSalesTargets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState("profile");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [headerAnimation] = useState(new Animated.Value(0));
+  const headerAnimation = useRef(new Animated.Value(0)).current;
 
   const dispatch = useDispatch();
   const router = useRouter();
-  const { authUser, userType } = useSelector((state) => state.auth);
-  const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  const menuOptions = [
+    { key: "profile", label: "Staff Profile" },
+    { key: "usersDetails", label: "Users Details" },
+    { key: "appointments", label: "Manage Appointments" },
+    { key: "properties", label: "Verify Properties" },
+    { key: "title-search", label: "Title Search Request" },
+    {
+      key: "pre-purchase-property-verification",
+      label: "Pre Purchase Property Request",
+    },
+    { key: "sales-target-management", label: "Sales and Target Management" },
+    { key: "logout", label: "Logout" },
+  ];
+
+  const API_BASE_URL = 'https://realestate-app-ewxc.onrender.com';
 
   // Update time every minute
   useEffect(() => {
@@ -154,92 +170,274 @@ const StaffDashboard = () => {
     dispatch(initializeAuth());
   }, [dispatch]);
   
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (userType !== 'staff' || !authUser) {
-      router.replace('/(screens)');
+  const fetchStaffData = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("Token not found.");
+        navigation.navigate("/(screens)");
+        return;
+      }
+
+      try {
+        const decoded = jwtDecode(token);
+        setStaffData(decoded);
+      } catch (err) {
+        console.error("Invalid token.");
+        AsyncStorage.removeItem("authToken");
+        navigation.navigate("StaffLogin");
+      }
+    } catch (error) {
+      console.error('AsyncStorage error:', error);
     }
-  }, [authUser, router, userType]);
+  };
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      if (authUser && userType === 'staff') {
-        try {
-          const token = await AsyncStorage.getItem('authToken');
-          if (!token) return router.replace('/(screens)/staff');
+  const fetchUserDetails = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/users-details`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-          const decoded = jwtDecode(token);
-          setStaffData(decoded);
+      const data = await response.json();
 
-          await Promise.all([
-            fetchUserDetails(token),
-            fetchSalesData(token),
-            fetchData(token),
-          ]);
+      if (data.success) {
+        setUserData(data.usersData || []);
+      } else {
+        Alert.alert("Error", data.error);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-          const savedSection = await AsyncStorage.getItem('activeSection') || 'profile';
-          setActiveSection(savedSection);
-        } catch (err) {
-          console.error('Init error:', err);
-          setError(err.message);
-          Toast.show({
-            type: 'error',
-            text1: 'Failed to load dashboard',
-            text2: err.message,
-          });
-        } finally {
-          setLoading(false);
+  const fetchSalesData = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const [employeesRes, salesTargetsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/staff/employees`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch(`${API_BASE_URL}/api/staff/sales-targets`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
+
+      if (employeesRes.ok) {
+        const employeesData = await employeesRes.json();
+        if (employeesData.success) {
+          setEmployees(employeesData.employees || []);
         }
       }
-    };
 
-    fetchAllData();
-  }, [authUser, userType, router]);
-
-  const fetchUserDetails = async (token) => {
-    const res = await fetch(`${BASE_URL}/api/staff/users-details`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (data.success) setUserData(data.usersData);
-    else throw new Error(data.error || 'User fetch failed');
+      if (salesTargetsRes.ok) {
+        const salesTargetsData = await salesTargetsRes.json();
+        if (salesTargetsData.success) {
+          setSalesTargets(salesTargetsData.salesTargets || []);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+    }
   };
 
-  const fetchSalesData = async (token) => {
-    const [empRes, salesRes] = await Promise.all([
-      fetch(`${BASE_URL}/api/staff/employees`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${BASE_URL}/api/staff/sales-targets`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-    ]);
+  const handleCreateTarget = async (targetData) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/sales-targets`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(targetData),
+        }
+      );
 
-    const empData = await empRes.json();
-    const salesData = await salesRes.json();
-    if (empData.success) setEmployees(empData.employees);
-    if (salesData.success) setSalesTargets(salesData.salesTargets);
+      const result = await response.json();
+      if (result.success) {
+        setSalesTargets([...salesTargets, result.salesTarget]);
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error(result.error));
+      }
+    } catch (error) {
+      return Promise.reject(error);
+    }
   };
 
-  const fetchData = async (token) => {
-    const [appointmentsRes, propertiesRes, titleSearchRes, prePurchaseRes] = await Promise.all([
-      fetch(`${BASE_URL}/api/appointments`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${BASE_URL}/api/property/verification`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${BASE_URL}/api/title-search/list`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${BASE_URL}/api/Pre-Purchase-Property-Verification/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-    ]);
+  const handleUpdateTarget = async (targetId, updateData) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/sales-targets/${targetId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
 
-    const appointmentsData = await appointmentsRes.json();
-    const propertiesData = await propertiesRes.json();
-    const titleSearchData = await titleSearchRes.json();
-    const prePurchaseData = await prePurchaseRes.json();
+      const result = await response.json();
+      if (result.success) {
+        setSalesTargets(
+          salesTargets.map((target) =>
+            target._id === targetId ? result.salesTarget : target
+          )
+        );
+        return Promise.resolve();
+      } else {
+        return Promise.reject(new Error(result.error));
+      }
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
 
-    if (appointmentsData.success) setAppointments(appointmentsData.appointments);
-    if (propertiesData.success) setProperties(propertiesData.property_verify);
-    if (titleSearchData.success) setTitleSearchRequest(titleSearchData.allRequests);
-    if (prePurchaseData.success) setPrePurchaseRequest(prePurchaseData.allRequests);
+  const fetchData = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const [appointmentsRes, propertiesRes, titleSearchRes, prePurchaseRes] =
+        await Promise.all([
+          fetch(`${API_BASE_URL}/api/appointments`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch(`${API_BASE_URL}/api/property/verification`),
+          fetch(`${API_BASE_URL}/api/title-search/list`),
+          fetch(`${API_BASE_URL}/api/Pre-Purchase-Property-Verification/list`),
+        ]);
+
+      if (!appointmentsRes.ok || !propertiesRes.ok) {
+        throw new Error("Failed to fetch data.");
+      }
+
+      const appointmentsData = await appointmentsRes.json();
+      const propertiesData = await propertiesRes.json();
+      const titleSearchData = await titleSearchRes.json();
+      const prePurchaseData = await prePurchaseRes.json();
+
+      if (appointmentsData.success)
+        setAppointments(appointmentsData.appointments || []);
+      if (propertiesData && propertiesData.success)
+        setProperties(propertiesData.property_verify || []);
+      if (titleSearchData && titleSearchData.success)
+        setTitleSearchRequest(titleSearchData.allRequests || []);
+      if (prePurchaseData && prePurchaseData.success)
+        setPrePurchaseRequest(prePurchaseData.allRequests || []);
+    } catch (err) {
+      Alert.alert("Error", "Failed to fetch data. Please try again.");
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptProperty = async (id) => {
+    if (!staffData?._id) return;
+    
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/property/${id}/accept/${staffData._id}`,
+        { method: "PUT" }
+      );
+      const result = await response.json();
+      if (!result.success || !response.ok) {
+        Alert.alert("Error", "Accepting property failed, please try later");
+        return;
+      }
+      setProperties((prevProperties) =>
+        prevProperties.filter((property) => property._id !== id)
+      );
+      Alert.alert("Success", "Property accepted successfully");
+    } catch (error) {
+      console.error("Error accepting property:", error);
+      Alert.alert("Error", "Failed to accept property");
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!staffData?._id) return;
+    
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/appointment/cancelled/${appointmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ staffId: staffData._id }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        Alert.alert("Error", result.error || "Failed to cancel appointment");
+        return;
+      }
+
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a._id === appointmentId ? { ...a, status: "Cancelled" } : a
+        )
+      );
+      fetchData();
+      Alert.alert("Success", "Appointment cancelled successfully");
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
+  const handleAcceptAppointment = async (id) => {
+    if (!staffData?._id) return;
+    
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/appointment/accept/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ staffId: staffData._id }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        Alert.alert("Error", result.error || "Failed to accept appointment");
+        return;
+      }
+
+      setAppointments((prev) =>
+        prev.map((a) => (a._id === id ? { ...a, status: "Accepted" } : a))
+      );
+      fetchData();
+      Alert.alert("Success", "Appointment accepted successfully");
+    } catch (error) {
+      console.error("Error accepting appointment:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
   };
 
   const handleLogout = () => {
@@ -276,41 +474,74 @@ const StaffDashboard = () => {
 
   const handleSectionChange = async (section) => {
     setActiveSection(section);
+    setSelectedOption(section);
     await AsyncStorage.setItem('activeSection', section);
     if (!isTablet) setSidebarVisible(false);
   };
 
   const renderContent = () => {
-    if (loading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      );
-    }
-
-    const sectionInfo = getSectionInfo();
-
-    switch (activeSection) {
-      case 'profile':
-        return <StaffProfile staff={staffData} />;
-      case 'usersDetails':
+    switch (selectedOption) {
+      case "profile":
+        return <StaffProfile staff={staffData} updateToken={fetchStaffData} />;
+      case "usersDetails":
         return <StaffManagedUsers userDetails={userData} />;
-      case 'appointments':
-        return <StaffManagedAppointments appointments={appointments} />;
-      case 'properties':
-        return <StaffVerifyProperties properties={properties} />;
-      case 'title-search':
+      case "appointments":
+        return (
+          <StaffManagedAppointments
+            staffId={staffData?.staffId}
+            appointments={appointments}
+            loading={loading}
+            error={error}
+            handleCancelAppointment={handleCancelAppointment}
+            handleAcceptAppointment={handleAcceptAppointment}
+          />
+        );
+      case "properties":
+        return (
+          <StaffVerifyProperties
+            loading={loading}
+            error={error}
+            properties={properties}
+            handleAcceptProperty={handleAcceptProperty}
+          />
+        );
+      case "title-search":
         return <StaffTitleSearch titleSearchRequest={titleSearchRequest} />;
-      case 'pre-purchase-property-verification':
-        return <StaffPrePurchaseProVer prePurchaseRequest={prePurchaseRequest} />;
-      case 'sales-target-management':
-        return <StaffSalesTargetManagement employees={employees} salesTargets={salesTargets} />;
+      case "pre-purchase-property-verification":
+        return (
+          <StaffPrePurchaseProVer prePurchaseRequest={prePurchaseRequest} />
+        );
+      case "sales-target-management":
+        return (
+          <StaffSalesTargetManagement
+            employees={employees}
+            salesTargets={salesTargets}
+            onCreateTarget={handleCreateTarget}
+            onUpdateTarget={handleUpdateTarget}
+          />
+        );
+      case "logout":
+        handleLogout();
+        return null;
       default:
         return <Text>Select an option</Text>;
     }
   };
+
+  useEffect(() => {
+    fetchStaffData();
+    fetchUserDetails();
+    fetchData();
+    fetchSalesData();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   const sectionInfo = getSectionInfo();
 
