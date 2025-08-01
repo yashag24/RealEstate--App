@@ -132,7 +132,7 @@ export default function UserAppointments() {
   return (
     <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
         {/* Navbar Component */}
-        <Navbar />
+        {/* <Navbar /> */}
       <Navbar_local />
       <View style={{ flex: 1, padding: 16 }}>
         {loading ? (

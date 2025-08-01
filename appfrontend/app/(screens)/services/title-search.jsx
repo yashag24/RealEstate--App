@@ -1,14 +1,55 @@
 // app/title-search-services.jsx
 import React, { useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
 import { StyleSheet } from "react-native";
-import { FontAwesome, MaterialIcons, Entypo } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  MaterialIcons,
+  MaterialCommunityIcons,
+  Entypo,
+} from "@expo/vector-icons";
 import Navbar from "@/components/home/Navbar";
 
-
 // If you have Navbar/Footer as native components, import. Otherwise, omit for now.
+
+const Navbar_local = () => {
+  const router = useRouter();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 16,
+        marginTop: 0,
+        backgroundColor: "#784dc6",
+      }}
+    >
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ marginRight: 12, padding: 4 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+      </TouchableOpacity>
+      <Text
+        style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}
+      >
+        Title Search
+      </Text>
+    </View>
+  );
+};
 
 export default function TitleSearchServices() {
   const [showModal, setShowModal] = useState(false);
@@ -38,7 +79,7 @@ export default function TitleSearchServices() {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         multiple: true,
-        type: Platform.OS === "ios" ? ["public.data", "public.image"] : "*/*"
+        type: Platform.OS === "ios" ? ["public.data", "public.image"] : "*/*",
       });
       if (!result.canceled) {
         // result.assets is an array of files
@@ -46,7 +87,8 @@ export default function TitleSearchServices() {
           (file) =>
             !formData.Documents.some(
               (existingFile) =>
-                existingFile.name === file.name && existingFile.size === file.size
+                existingFile.name === file.name &&
+                existingFile.size === file.size
             )
         );
         setFormData({
@@ -119,197 +161,210 @@ export default function TitleSearchServices() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Navbar here if you have one */}
-      <Navbar/>
-      {submittedRequestId && (
-        <View style={styles.requestIdBox}>
-          <Text style={{ fontWeight: "bold" }}>
-            ✅ Your Request ID: {submittedRequestId}
-          </Text>
-          <Text>Please save this for future reference.</Text>
-          <TouchableOpacity
-            style={styles.closeBtn}
-            onPress={() => setSubmittedRequestId(null)}
-          >
-            <Text>X</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Header */}
-      <View style={styles.headerSection}>
-        <Text style={styles.title}>🔍 Property Title Search Services</Text>
-        <Text style={styles.subtitle}>
-          Ensure your next property deal is legally sound and secure with our trusted verification service.
-        </Text>
-      </View>
-
-      {/* Service grid */}
-      <View style={styles.gridSection}>
-        <View style={styles.card}>
-          <MaterialIcons name="description" size={30} color="#4285f4" />
-          <Text style={styles.cardTitle}>What’s Included</Text>
-          <Text>✅ Title Ownership History</Text>
-          <Text>✅ Encumbrance & Mortgage Check</Text>
-          <Text>✅ Dispute & Litigation Check</Text>
-          <Text>✅ Chain of Title Verification</Text>
-          <Text>✅ Final Legal Opinion Report</Text>
-        </View>
-        <View style={styles.card}>
-          <FontAwesome name="balance-scale" size={30} color="#4285f4" />
-          <Text style={styles.cardTitle}>Why Choose Us</Text>
-          <Text>✔ Experienced Real Estate Lawyers</Text>
-          <Text>✔ Pan-India Coverage</Text>
-          <Text>✔ 100% Confidentiality</Text>
-          <Text>✔ Fast Turnaround – 5 Days</Text>
-          <Text>✔ 24/7 Support</Text>
-        </View>
-        <View style={styles.card}>
-          <FontAwesome name="star" size={30} color="#E57300" />
-          <Text style={styles.cardTitle}>Service Plans</Text>
-          <Text>🏠 Residential Property – ₹1999</Text>
-          <Text>🏢 Commercial Property – ₹2999</Text>
-          <Text>🌳 Land/Plot – ₹3499</Text>
-          <Text>🧾 Custom Legal Opinion – On Request</Text>
-        </View>
-      </View>
-
-      <View style={styles.testimonials}>
-        <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
-          💬 What Our Clients Say
-        </Text>
-        <Text>
-          “Saved me from a disputed property. Very professional.” –{" "}
-          <Text style={{ fontStyle: "italic" }}>Arjun P., Mumbai</Text>
-        </Text>
-        <Text>
-          “Fast, reliable, and accurate. Worth every rupee!” –{" "}
-          <Text style={{ fontStyle: "italic" }}>Sneha R., Bangalore</Text>
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={() => setShowModal(true)}
-      >
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>
-          Get Title Search Now
-        </Text>
-      </TouchableOpacity>
-      <Text style={styles.note}>
-        * All services include a downloadable report. Additional charges apply{" "}
-        for physical copies.
-      </Text>
-
-      {/* Modal Form */}
-      {showModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>🔐 Request Title Search</Text>
+    // <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Navbar here if you have one */}
+        {/* <Navbar/> */}/
+        <Navbar_local />
+        {submittedRequestId && (
+          <View style={styles.requestIdBox}>
+            <Text style={{ fontWeight: "bold" }}>
+              ✅ Your Request ID: {submittedRequestId}
+            </Text>
+            <Text>Please save this for future reference.</Text>
             <TouchableOpacity
               style={styles.closeBtn}
-              onPress={() => setShowModal(false)}
+              onPress={() => setSubmittedRequestId(null)}
             >
-              <Text style={{ fontSize: 16 }}>&times;</Text>
+              <Text>X</Text>
             </TouchableOpacity>
-            <View style={styles.formTwoColumn}>
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <Text style={styles.formSectionTitle}>Property Details</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Property Address"
-                  value={formData.propertyAddress}
-                  onChangeText={(text) => handleChange("propertyAddress", text)}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="City"
-                  value={formData.PropertyCity}
-                  onChangeText={(text) => handleChange("PropertyCity", text)}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="State"
-                  value={formData.PropertyState}
-                  onChangeText={(text) => handleChange("PropertyState", text)}
-                />
-                {/* You could use a picker for state/propertyType */}
-                <TextInput
-                  style={styles.input}
-                  placeholder="Property Type (Residential, Commercial, Land)"
-                  value={formData.propertyType}
-                  onChangeText={(text) => handleChange("propertyType", text)}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Registration Number (Optional)"
-                  value={formData.PropertyRegistrationNumber}
-                  onChangeText={(text) => handleChange("PropertyRegistrationNumber", text)}
-                />
-                <TouchableOpacity style={styles.filePicker} onPress={handlePickDocuments}>
-                  <Text>
-                    {formData.Documents.length === 0
-                      ? "📁 Tap to upload documents"
-                      : formData.Documents.map((file, idx) => (
-                          <Text key={file.name}>
-                            {file.name}
-                            <Text
-                              style={{ color: "red" }}
-                              onPress={() => handleRemoveFile(idx)}
-                            > {" x "}</Text>
-                          </Text>
-                        ))}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.formSectionTitle}>Your Contact Info</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={formData.ContactFullName}
-                  onChangeText={(text) => handleChange("ContactFullName", text)}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  keyboardType="email-address"
-                  value={formData.ContactEmail}
-                  onChangeText={(text) => handleChange("ContactEmail", text)}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Phone Number"
-                  keyboardType="phone-pad"
-                  value={formData.ContactPhone}
-                  onChangeText={(text) => handleChange("ContactPhone", text)}
-                />
-                <TextInput
-                  style={[styles.input, { height: 60 }]}
-                  placeholder="Any additional notes"
-                  multiline
-                  value={formData.ContactNotes}
-                  onChangeText={(text) => handleChange("ContactNotes", text)}
-                />
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  onPress={handleSubmit}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>Submit Request</Text>
-                  )}
-                </TouchableOpacity>
+          </View>
+        )}
+        {/* Header */}
+        <View style={styles.headerSection}>
+          <Text style={styles.title}>🔍 Property Title Search Services</Text>
+          <Text style={styles.subtitle}>
+            Ensure your next property deal is legally sound and secure with our
+            trusted verification service.
+          </Text>
+        </View>
+        {/* Service grid */}
+        <View style={styles.gridSection}>
+          <View style={styles.card}>
+            <MaterialIcons name="description" size={30} color="#4285f4" />
+            <Text style={styles.cardTitle}>What’s Included</Text>
+            <Text>✅ Title Ownership History</Text>
+            <Text>✅ Encumbrance & Mortgage Check</Text>
+            <Text>✅ Dispute & Litigation Check</Text>
+            <Text>✅ Chain of Title Verification</Text>
+            <Text>✅ Final Legal Opinion Report</Text>
+          </View>
+          <View style={styles.card}>
+            <FontAwesome name="balance-scale" size={30} color="#4285f4" />
+            <Text style={styles.cardTitle}>Why Choose Us</Text>
+            <Text>✔ Experienced Real Estate Lawyers</Text>
+            <Text>✔ Pan-India Coverage</Text>
+            <Text>✔ 100% Confidentiality</Text>
+            <Text>✔ Fast Turnaround – 5 Days</Text>
+            <Text>✔ 24/7 Support</Text>
+          </View>
+          <View style={styles.card}>
+            <FontAwesome name="star" size={30} color="#E57300" />
+            <Text style={styles.cardTitle}>Service Plans</Text>
+            <Text>🏠 Residential Property – ₹1999</Text>
+            <Text>🏢 Commercial Property – ₹2999</Text>
+            <Text>🌳 Land/Plot – ₹3499</Text>
+            <Text>🧾 Custom Legal Opinion – On Request</Text>
+          </View>
+        </View>
+        <View style={styles.testimonials}>
+          <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+            💬 What Our Clients Say
+          </Text>
+          <Text>
+            “Saved me from a disputed property. Very professional.” –{" "}
+            <Text style={{ fontStyle: "italic" }}>Arjun P., Mumbai</Text>
+          </Text>
+          <Text>
+            “Fast, reliable, and accurate. Worth every rupee!” –{" "}
+            <Text style={{ fontStyle: "italic" }}>Sneha R., Bangalore</Text>
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          onPress={() => setShowModal(true)}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Get Title Search Now
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.note}>
+          * All services include a downloadable report. Additional charges apply{" "}
+          for physical copies.
+        </Text>
+        {/* Modal Form */}
+        {showModal && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>🔐 Request Title Search</Text>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={{ fontSize: 16 }}>&times;</Text>
+              </TouchableOpacity>
+              <View style={styles.formTwoColumn}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={styles.formSectionTitle}>Property Details</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Property Address"
+                    value={formData.propertyAddress}
+                    onChangeText={(text) =>
+                      handleChange("propertyAddress", text)
+                    }
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="City"
+                    value={formData.PropertyCity}
+                    onChangeText={(text) => handleChange("PropertyCity", text)}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="State"
+                    value={formData.PropertyState}
+                    onChangeText={(text) => handleChange("PropertyState", text)}
+                  />
+                  {/* You could use a picker for state/propertyType */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Property Type (Residential, Commercial, Land)"
+                    value={formData.propertyType}
+                    onChangeText={(text) => handleChange("propertyType", text)}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Registration Number (Optional)"
+                    value={formData.PropertyRegistrationNumber}
+                    onChangeText={(text) =>
+                      handleChange("PropertyRegistrationNumber", text)
+                    }
+                  />
+                  <TouchableOpacity
+                    style={styles.filePicker}
+                    onPress={handlePickDocuments}
+                  >
+                    <Text>
+                      {formData.Documents.length === 0
+                        ? "📁 Tap to upload documents"
+                        : formData.Documents.map((file, idx) => (
+                            <Text key={file.name}>
+                              {file.name}
+                              <Text
+                                style={{ color: "red" }}
+                                onPress={() => handleRemoveFile(idx)}
+                              >
+                                {" "}
+                                {" x "}
+                              </Text>
+                            </Text>
+                          ))}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.formSectionTitle}>Your Contact Info</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Full Name"
+                    value={formData.ContactFullName}
+                    onChangeText={(text) =>
+                      handleChange("ContactFullName", text)
+                    }
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    keyboardType="email-address"
+                    value={formData.ContactEmail}
+                    onChangeText={(text) => handleChange("ContactEmail", text)}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Phone Number"
+                    keyboardType="phone-pad"
+                    value={formData.ContactPhone}
+                    onChangeText={(text) => handleChange("ContactPhone", text)}
+                  />
+                  <TextInput
+                    style={[styles.input, { height: 60 }]}
+                    placeholder="Any additional notes"
+                    multiline
+                    value={formData.ContactNotes}
+                    onChangeText={(text) => handleChange("ContactNotes", text)}
+                  />
+                  <TouchableOpacity
+                    style={styles.submitBtn}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                        Submit Request
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      )}
-      {/* Footer here if you have one */}
-    </ScrollView>
+        )}
+        {/* Footer here if you have one */}
+      </ScrollView>
+    // </View>
   );
 }
 
@@ -375,7 +430,10 @@ const styles = StyleSheet.create({
   modalOverlay: {
     position: "absolute",
     backgroundColor: "rgba(0,0,0,0.2)",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,

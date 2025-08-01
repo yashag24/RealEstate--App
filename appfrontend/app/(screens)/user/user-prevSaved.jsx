@@ -5,8 +5,29 @@ import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 import Navbar from "@/components/home/Navbar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+
+const Navbar_local = () => {
+  const router = useRouter();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ marginRight: 12, padding: 4 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+      </TouchableOpacity>
+      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+        My Previously Saved
+      </Text>
+    </View>
+  );
+};
 
 const UserPreviouslySaved = () => {
   const router = useRouter();
@@ -27,24 +48,34 @@ const UserPreviouslySaved = () => {
 
   // Get userId from token
   useEffect(() => {
-    (async () => {
-      const token = await AsyncStorage.getItem("authToken");
-      if (token) {
+    // console.log("Fetching user ID from token...");
+     const getToken = async () => {
+    const token = await AsyncStorage.getItem("authToken") || null;
+    if (token) {
+      try {
         const decoded = jwtDecode(token);
-        setUserId(decoded._id);
+        const id = decoded._id || decoded.id;
+        setUserId(id);
+        // console.log("User ID:", id);
+      } catch (error) {
+        console.error("Invalid token:", error);
       }
-    })();
+    }}
+    getToken();
   }, []);
 
   // Fetch saved properties
   useEffect(() => {
     if (!userId) return;
+    console.log("Fetching saved properties for user:", userId);
     setLoading(true);
     fetch(`${API_URL}/api/user-update/${userId}/saved-properties`)
       .then(res => res.json())
       .then(data => setSavedProperties(data.saveProperties || []))
       .catch(() => setSavedProperties([]))
       .finally(() => setLoading(false));
+
+      // console.log("Saved Properties:", savedProperties);
   }, [userId]);
 
   // Remove property handler
@@ -141,7 +172,8 @@ const UserPreviouslySaved = () => {
 
   return (
         <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-    <Navbar />
+    {/* <Navbar /> */}
+    <Navbar_local />
     <View style={styles.container}>
       <Text style={styles.header}>Saved Properties</Text>
       {savedProperties.length > 0 ? (

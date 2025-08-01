@@ -14,6 +14,8 @@ import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
 import Navbar from "@/components/home/Navbar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+
 
 // -- Placeholder for your BuilderPropertyCard; adjust as needed
 const BuilderPropertyCard = ({ title, city, price, area, imageUrl, onPress, status }) => (
@@ -27,6 +29,25 @@ const BuilderPropertyCard = ({ title, city, price, area, imageUrl, onPress, stat
     </View>
   </TouchableOpacity>
 );
+
+const Navbar_local = () => {
+  const router = useRouter();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ marginRight: 12, padding: 4 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+      </TouchableOpacity>
+      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+        My Properties
+      </Text>
+    </View>
+  );
+};
+
 
 const UserProperties = () => {
   const [properties, setProperties] = useState([]);
@@ -81,7 +102,8 @@ const UserProperties = () => {
   return (
         <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
     
-        <Navbar />
+        {/* <Navbar /> */}
+        <Navbar_local />
     <View style={styles.container}>
       <ScrollView>
         <Text style={styles.header}>Your Properties</Text>

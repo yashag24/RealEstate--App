@@ -17,7 +17,7 @@ const { width, height } = Dimensions.get('window');
 
 const PostPurchaseServices = () => {
   const handleGoHome = () => {
-          router.push('/');
+          router.back();
         };
 
   const services = [
