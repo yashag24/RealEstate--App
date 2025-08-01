@@ -1,27 +1,26 @@
-
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   Dimensions,
+  TouchableOpacity,
   SafeAreaView,
   StatusBar,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import BasicDetailsForm from '@/components/property/BasicDetailsForm';
-import LocationDetailsForm from '@/components/property/LocationDetailsForm';
-import ApartmentProfileForm from '@/components/property/ApartmentProfileForm';
-import PlotProfileForm from '@/components/property/PlotProfileForm';
-import HouseProfileForm from '@/components/property/HouseProfileForm';
-import PhotosForm from '@/components/property/PhotosForm';
-import PricingForm from '@/components/property/PricingForm';
-import * as ImagePicker from 'expo-image-picker';
-import axios from 'axios';
-import { router } from 'expo-router'; 
-
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import BasicDetailsForm from "@/components/property/BasicDetailsForm";
+import LocationDetailsForm from "@/components/property/LocationDetailsForm";
+import ApartmentProfileForm from "@/components/property/ApartmentProfileForm";
+import PlotProfileForm from "@/components/property/PlotProfileForm";
+import HouseProfileForm from "@/components/property/HouseProfileForm";
+import PhotosForm from "@/components/property/PhotosForm";
+import PricingForm from "@/components/property/PricingForm";
+import * as ImagePicker from "expo-image-picker";
+import axios from "axios";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
@@ -31,50 +30,50 @@ const Post = () => {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '',
-    purpose: 'sell',
-    propertyType: '',
-    description: '',
-    city: '',
-    address: '',
-    landmark: '',
-    price: '',
-    bhk: '',
-    bathrooms: '',
-    balconies: '',
-    other_rooms: '',
-    area: '',
+    title: "",
+    purpose: "sell",
+    propertyType: "",
+    description: "",
+    city: "",
+    address: "",
+    landmark: "",
+    price: "",
+    bhk: "",
+    bathrooms: "",
+    balconies: "",
+    other_rooms: "",
+    area: "",
     allInclusivePrice: false,
     taxAndGovtChargesExcluded: false,
     priceNegotiable: false,
-    type: 'Residential',
-    status: 'Available',
-    floors: '',
-    availability: '',
-    phone: '',
-    mail: '',
-    proprietorName: '',
-    proprietorEmail: '',
-    proprietorContact: '',
-    proprietorPhone: '',
-    posterType: '',
-    numberOfBedrooms: '',
-    numberOfBathrooms: '',
-    numberOfBalconies: '',
-    areaDetails: '',
-    totalFloorDetails: '',
-    propertyFloorDetails: '',
+    type: "Residential",
+    status: "Available",
+    floors: "",
+    availability: "",
+    phone: "",
+    mail: "",
+    proprietorName: "",
+    proprietorEmail: "",
+    proprietorContact: "",
+    proprietorPhone: "",
+    posterType: "",
+    numberOfBedrooms: "",
+    numberOfBathrooms: "",
+    numberOfBalconies: "",
+    areaDetails: "",
+    totalFloorDetails: "",
+    propertyFloorDetails: "",
     studyRoom: false,
     poojaRoom: false,
     servantRoom: false,
     storeRoom: false,
-    ageOfProperty: '',
-    possessionDate: '',
-    ownershipType: '',
-    plotArea: '',
-    noOfFloorsConst: '',
-    boundary: '',
-    construction: '',
+    ageOfProperty: "",
+    possessionDate: "",
+    ownershipType: "",
+    plotArea: "",
+    noOfFloorsConst: "",
+    boundary: "",
+    construction: "",
   });
 
   const [selectedImages, setSelectedImages] = useState([]);
@@ -88,7 +87,7 @@ const Post = () => {
 
   const handleImageChange = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['image'],
+      mediaTypes: ["image"],
       allowsMultipleSelection: true,
       quality: 1,
     });
@@ -117,7 +116,7 @@ const Post = () => {
     };
 
     Object.entries(updatedFormData).forEach(([key, value]) => {
-      if (typeof value === 'object' && !Array.isArray(value)) {
+      if (typeof value === "object" && !Array.isArray(value)) {
         combinedFormData.append(key, JSON.stringify(value));
       } else if (Array.isArray(value)) {
         value.forEach((v) => combinedFormData.append(key, v));
@@ -127,14 +126,15 @@ const Post = () => {
     });
 
     selectedImages.forEach((image) => {
-      combinedFormData.append('propertyImage', {
+      combinedFormData.append("propertyImage", {
         uri: image.uri,
-        name: image.fileName || 'photo.jpg',
-        type: image.type || 'image/jpeg',
+        name: image.fileName || "photo.jpg",
+        type: image.type || "image/jpeg",
       });
     });
 
     try {
+
      
 
       const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -147,7 +147,8 @@ const Post = () => {
       type: 'success',
       text1: 'Property listed successfully!'
     });
-      router.push('/user');
+      // router.push('/user');
+      router.back()
     } catch (err) {
       console.error(err);
       
@@ -155,6 +156,7 @@ const Post = () => {
       type: 'error',
       text1: 'Failed to list property'
     });
+
     } finally {
       setLoading(false);
     }
@@ -162,7 +164,7 @@ const Post = () => {
 
   const renderPropertyProfileForm = () => {
     switch (formData.propertyType) {
-      case 'Apartment':
+      case "Apartment":
         return (
           <ApartmentProfileForm
             formData={formData}
@@ -171,7 +173,7 @@ const Post = () => {
             prevStep={prevStep}
           />
         );
-      case 'Plot':
+      case "Plot":
         return (
           <PlotProfileForm
             formData={formData}
@@ -180,7 +182,7 @@ const Post = () => {
             prevStep={prevStep}
           />
         );
-      case 'House':
+      case "House":
         return (
           <HouseProfileForm
             formData={formData}
@@ -196,12 +198,18 @@ const Post = () => {
 
   const getStepTitle = () => {
     switch (step) {
-      case 1: return 'Basic Details';
-      case 2: return 'Location Details';
-      case 3: return 'Property Profile';
-      case 4: return 'Upload Photos';
-      case 5: return 'Pricing Information';
-      default: return 'Property Details';
+      case 1:
+        return "Basic Details";
+      case 2:
+        return "Location Details";
+      case 3:
+        return "Property Profile";
+      case 4:
+        return "Upload Photos";
+      case 5:
+        return "Pricing Information";
+      default:
+        return "Property Details";
     }
   };
 
@@ -210,7 +218,9 @@ const Post = () => {
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>Step {step} of 5</Text>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${(step / 5) * 100}%` }]} />
+          <View
+            style={[styles.progressFill, { width: `${(step / 5) * 100}%` }]}
+          />
         </View>
         <Text style={styles.stepTitle}>{getStepTitle()}</Text>
       </View>
@@ -220,17 +230,24 @@ const Post = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#667eea" />
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.gradient}
-      >
-        <ScrollView 
+      <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.gradient}>
+
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
           {/* Header Box */}
           <View style={styles.headerBox}>
-            <Text style={styles.headerTitle}>Few more steps to post your property</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginRight: 12, padding: 4 }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+        </TouchableOpacity>
+            <Text style={styles.headerTitle}>
+              Few more steps to post your property
+            </Text>
             <Text style={styles.headerDescription}>
               Providing clear details helps you get quality leads faster.
             </Text>
@@ -296,80 +313,80 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   headerBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     marginHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#ffffff",
+    textAlign: "center",
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   headerDescription: {
     fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    fontWeight: "400",
+    color: "rgba(255, 255, 255, 0.9)",
+    textAlign: "center",
     lineHeight: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   progressContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     marginHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: "rgba(255, 255, 255, 0.15)",
   },
   progressText: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: "rgba(255, 255, 255, 0.8)",
     fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "500",
+    textAlign: "center",
     marginBottom: 8,
   },
   progressBar: {
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 3,
     marginBottom: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#ffffff',
+    height: "100%",
+    backgroundColor: "#ffffff",
     borderRadius: 3,
-    shadowColor: '#ffffff',
+    shadowColor: "#ffffff",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
   },
   stepTitle: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    fontWeight: "600",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   formContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     marginHorizontal: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 10,
@@ -377,9 +394,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 15,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 });
 
 export default Post;
-
