@@ -195,7 +195,7 @@ const Sidebar = ({
         text: "Post-Purchase Property Services",
       },
       {
-        route: "/(screens)/(services)/contractors",
+        route: "/(screens)/services/contractors/user-contractor",
         icon: "hammer-outline",
         text: "Contractors",
       },

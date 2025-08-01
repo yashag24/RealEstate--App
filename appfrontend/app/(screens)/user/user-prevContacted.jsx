@@ -1,11 +1,33 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import Navbar from "@/components/home/Navbar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+
+const Navbar_local = () => {
+  const router = useRouter();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ marginRight: 12, padding: 4 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+      </TouchableOpacity>
+      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+        My Previously Contacted
+      </Text>
+    </View>
+  );
+};
+
 
 const UserPreviouslyContacted = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-        <Navbar />
+        {/* <Navbar /> */}
+        <Navbar_local />
       <View style={styles.container}>
         <View style={styles.emptyStateWrapper}>
           <View style={styles.emptyState}>
@@ -16,7 +38,8 @@ const UserPreviouslyContacted = () => {
                 source={
                   // If you have local: require("../assets/image6.png")
                   {
-                    uri: "https://via.placeholder.com/200x160?text=No+Contacted",
+                    // uri: "https://via.placeholder.com/200x160?text=No+Contacted",
+                    uri : "https://cdn-icons-png.flaticon.com/512/13207/13207284.png"
                   }
                 }
                 resizeMode="contain"

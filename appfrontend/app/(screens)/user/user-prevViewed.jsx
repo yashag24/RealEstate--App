@@ -14,8 +14,28 @@ import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 import Navbar from "@/components/home/Navbar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+const Navbar_local = () => {
+  const router = useRouter();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ marginRight: 12, padding: 4 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+      </TouchableOpacity>
+      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+        My Previously Viewed
+      </Text>
+    </View>
+  );
+};
+
 
 const UserPreviouslyViewed = () => {
   const [properties, setProperties] = useState([]);
@@ -74,7 +94,8 @@ const UserPreviouslyViewed = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-      <Navbar />
+      {/* <Navbar /> */}
+      <Navbar_local />
       <View style={styles.container}>
         <Text style={styles.header}>Previously Viewed</Text>
         <View style={styles.contentArea}>
