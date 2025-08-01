@@ -1,20 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   ScrollView,
   Pressable,
-  ActivityIndicator,
   Modal,
-  FlatList
+  TextInput,
+  ActivityIndicator,
+  FlatList,
+  Alert
 } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 
 const StaffManagedAppointments = ({
-  appointments,
+  appointments = [],
   loading,
   staffId,
   error,
@@ -28,6 +29,10 @@ const StaffManagedAppointments = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+
+  useEffect(() => {
+    console.log("Appointments received:", appointments);
+  }, [appointments]);
 
   const handleUserClick = (user) => {
     setSelectedUser(user);
@@ -58,80 +63,64 @@ const StaffManagedAppointments = ({
 
   const renderAppointmentItem = ({ item }) => (
     <View style={styles.row}>
-      <View style={styles.cell}>
-        <Text numberOfLines={1}>
-          {`${item.firstName || ""} ${item.lastName || ""}`.trim() || "N/A"}
-        </Text>
-      </View>
-      <View style={styles.cell}>
-        <Text numberOfLines={1}>{item.email || "N/A"}</Text>
-      </View>
-      <View style={styles.cell}>
-        <Text>{item.phoneNumber || "N/A"}</Text>
-      </View>
-      <View style={styles.cell}>
-        <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-          <Text style={styles.statusText}>{item.status}</Text>
-        </View>
-      </View>
-      <View style={styles.cell}>
+      <Text style={styles.cell}>
+        {`${item.firstName || ""} ${item.lastName || ""}`.trim() || "N/A"}
+      </Text>
+      <Text style={styles.cell}>{item.email || "N/A"}</Text>
+      <Text style={styles.cell}>{item.phoneNumber || "N/A"}</Text>
+      <Text style={[styles.cell, styles[item.status.toLowerCase()]]}>
+        {item.status}
+      </Text>
+      <Text style={styles.cell}>
         {item.staffId ? (
           <Pressable
             onPress={() => {
               setSelectedStaff(item.staffId);
               setIsStaffModalOpen(true);
             }}
-            style={styles.detailButton}
           >
-            <Text style={styles.detailButtonText}>{item.staffId.staffId}</Text>
+            <Text style={styles.linkText}>{item.staffId.staffId || "N/A"}</Text>
           </Pressable>
         ) : (
-          <Text>—</Text>
+          "—"
         )}
-      </View>
-      <View style={styles.cell}>
-        <Text numberOfLines={1}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-      <View style={styles.cell}>
-        <Text numberOfLines={1}>
-          {new Date(item.updatedAt).toLocaleDateString()}
-        </Text>
-      </View>
-      <View style={styles.cell}>
+      </Text>
+      <Text style={styles.cell}>
+        {new Date(item.createdAt).toLocaleDateString()}
+      </Text>
+      <Text style={styles.cell}>
+        {new Date(item.updatedAt).toLocaleDateString()}
+      </Text>
+      <Text style={styles.cell}>
         {item.isGuest ? (
-          <Text>Guest</Text>
+          "Guest"
         ) : (
-          <Pressable
-            onPress={() => handleUserClick(item.userId)}
-            style={styles.detailButton}
-          >
-            <Text style={styles.detailButtonText}>User</Text>
+          <Pressable onPress={() => handleUserClick(item.userId)}>
+            <Text style={styles.linkText}>User</Text>
           </Pressable>
         )}
-      </View>
+      </Text>
       <View style={styles.cell}>
         {item.status.toLowerCase() === "pending" ? (
           <View style={styles.actionButtons}>
             <Pressable
-              onPress={() => handleAcceptAppointment(item._id)}
               style={[styles.button, styles.acceptButton]}
+              onPress={() => handleAcceptAppointment(item._id)}
             >
               <Text style={styles.buttonText}>Accept</Text>
             </Pressable>
             <Pressable
+              style={[styles.button, styles.rejectButton]}
               onPress={() => handleCancelAppointment(item._id)}
-              style={[styles.button, styles.cancelButton]}
             >
               <Text style={styles.buttonText}>Reject</Text>
             </Pressable>
           </View>
         ) : item.status.toLowerCase() !== "cancelled" ? (
           <Pressable
-            style={[styles.button, styles.logButton]}
+            style={[styles.button, styles.logsButton]}
             onPress={() =>
-              navigation.navigate('AppointmentLogs', { 
+              navigation.navigate('AppointmentLogs', {
                 appointmentId: item._id,
                 staffId: staffId
               })
@@ -146,30 +135,11 @@ const StaffManagedAppointments = ({
     </View>
   );
 
-  const getStatusStyle = (status) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return { backgroundColor: '#f59e0b' };
-      case 'accepted':
-        return { backgroundColor: '#3b82f6' };
-      case 'scheduled':
-        return { backgroundColor: '#8b5cf6' };
-      case 'in progress':
-        return { backgroundColor: '#06b6d4' };
-      case 'completed':
-        return { backgroundColor: '#10b981' };
-      case 'cancelled':
-        return { backgroundColor: '#ef4444' };
-      default:
-        return { backgroundColor: '#64748b' };
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading appointments...</Text>
+        <ActivityIndicator size="large" />
+        <Text>Loading appointments...</Text>
       </View>
     );
   }
@@ -186,111 +156,84 @@ const StaffManagedAppointments = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Appointments</Text>
-        <View style={styles.controls}>
-          <View style={styles.searchContainer}>
-            <FontAwesome5 name="search" size={16} color="#64748b" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search appointments..."
-              placeholderTextColor="#94a3b8"
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-            />
-          </View>
-          <View style={styles.filterContainer}>
-            <FontAwesome5 name="filter" size={16} color="#64748b" />
-            <Pressable
-              style={styles.filterButton}
-              onPress={() => {
-                // In a real app, you'd use a proper picker component here
-                const statuses = ['All', 'Pending', 'Accepted', 'Scheduled', 'In Progress', 'Completed', 'Cancelled'];
-                const currentIndex = statuses.indexOf(selectedStatus);
-                const nextIndex = (currentIndex + 1) % statuses.length;
-                setSelectedStatus(statuses[nextIndex]);
-              }}
+        <View style={styles.filterContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+          />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedStatus}
+              onValueChange={setSelectedStatus}
+              style={styles.picker}
             >
-              <Text style={styles.filterText}>{selectedStatus}</Text>
-            </Pressable>
+              <Picker.Item label="All" value="All" />
+              <Picker.Item label="Pending" value="Pending" />
+              <Picker.Item label="Accepted" value="Accepted" />
+              <Picker.Item label="Scheduled" value="Scheduled" />
+              <Picker.Item label="In Progress" value="In Progress" />
+              <Picker.Item label="Completed" value="Completed" />
+              <Picker.Item label="Cancelled" value="Cancelled" />
+            </Picker>
           </View>
         </View>
       </View>
 
       {filteredAppointments.length > 0 ? (
-        <ScrollView horizontal={true}>
+        <ScrollView horizontal>
           <View>
-            <View style={styles.headerRow}>
-              <Text style={styles.headerCell}>Full Name</Text>
-              <Text style={styles.headerCell}>Email</Text>
-              <Text style={styles.headerCell}>Phone</Text>
-              <Text style={styles.headerCell}>Status</Text>
-              <Text style={styles.headerCell}>Managed By</Text>
-              <Text style={styles.headerCell}>Created</Text>
-              <Text style={styles.headerCell}>Updated</Text>
-              <Text style={styles.headerCell}>Type</Text>
-              <Text style={styles.headerCell}>Action</Text>
+            <View style={styles.tableHeader}>
+              <Text style={styles.headerText}>Full Name</Text>
+              <Text style={styles.headerText}>Email</Text>
+              <Text style={styles.headerText}>Phone</Text>
+              <Text style={styles.headerText}>Status</Text>
+              <Text style={styles.headerText}>Managed By</Text>
+              <Text style={styles.headerText}>Created</Text>
+              <Text style={styles.headerText}>Updated</Text>
+              <Text style={styles.headerText}>Type</Text>
+              <Text style={styles.headerText}>Action</Text>
             </View>
             <FlatList
               data={filteredAppointments}
               renderItem={renderAppointmentItem}
-              keyExtractor={(item) => item._id}
+              keyExtractor={item => item._id}
             />
           </View>
         </ScrollView>
       ) : (
-        <View style={styles.emptyContainer}>
-          <FontAwesome5 name="calendar-times" size={40} color="#94a3b8" />
-          <Text style={styles.emptyText}>No appointments available</Text>
-          <Text style={styles.emptySubtext}>Try changing your filters</Text>
-        </View>
+        <Text style={styles.noAppointments}>No appointments available</Text>
       )}
 
       {/* User Details Modal */}
-      <Modal
-        visible={isModalOpen}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeModal}
-      >
+      <Modal visible={isModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Pressable style={styles.closeButton} onPress={closeModal}>
-              <FontAwesome5 name="times" size={20} color="#64748b" />
+              <Text style={styles.closeButtonText}>×</Text>
             </Pressable>
             <Text style={styles.modalTitle}>User Details</Text>
             {selectedUser && (
               <>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Name:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedUser.firstName} {selectedUser.lastName}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Email:</Text>
-                  <Text style={styles.detailValue}>{selectedUser.email}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Phone:</Text>
-                  <Text style={styles.detailValue}>{selectedUser.phoneNumber}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Landline:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedUser.landlineNumber || 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>City:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedUser.city || 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Address:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedUser.address || 'N/A'}
-                  </Text>
-                </View>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Name:</Text> {selectedUser.firstName} {selectedUser.lastName}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Email:</Text> {selectedUser.email}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Phone:</Text> {selectedUser.phoneNumber}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Landline:</Text> {selectedUser.landlineNumber || 'N/A'}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>City:</Text> {selectedUser.city || 'N/A'}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Address:</Text> {selectedUser.address || 'N/A'}
+                </Text>
               </>
             )}
           </View>
@@ -298,43 +241,36 @@ const StaffManagedAppointments = ({
       </Modal>
 
       {/* Staff Details Modal */}
-      <Modal
-        visible={isStaffModalOpen}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsStaffModalOpen(false)}
-      >
+      <Modal visible={isStaffModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Pressable 
               style={styles.closeButton} 
-              onPress={() => setIsStaffModalOpen(false)}
+              onPress={() => {
+                setIsStaffModalOpen(false);
+                setSelectedStaff(null);
+              }}
             >
-              <FontAwesome5 name="times" size={20} color="#64748b" />
+              <Text style={styles.closeButtonText}>×</Text>
             </Pressable>
             <Text style={styles.modalTitle}>Staff Details</Text>
             {selectedStaff && (
               <>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Staff ID:</Text>
-                  <Text style={styles.detailValue}>{selectedStaff.staffId}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Full Name:</Text>
-                  <Text style={styles.detailValue}>{selectedStaff.fullName}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Email:</Text>
-                  <Text style={styles.detailValue}>{selectedStaff.email}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Phone:</Text>
-                  <Text style={styles.detailValue}>{selectedStaff.phoneNumber}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Role:</Text>
-                  <Text style={styles.detailValue}>{selectedStaff.role}</Text>
-                </View>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Staff ID:</Text> {selectedStaff.staffId}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Full Name:</Text> {selectedStaff.fullName}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Email:</Text> {selectedStaff.email}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Phone:</Text> {selectedStaff.phoneNumber}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.boldText}>Role:</Text> {selectedStaff.role}
+                </Text>
               </>
             )}
           </View>
@@ -348,162 +284,119 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f8fafc',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    marginRight: 8,
+    width: 150,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    height: 40,
+    justifyContent: 'center',
+    width: 150,
+  },
+  picker: {
+    height: 40,
+    width: '100%',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  headerText: {
+    fontWeight: 'bold',
+    width: 120,
+    textAlign: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cell: {
+    width: 120,
+    textAlign: 'center',
+    paddingHorizontal: 4,
+  },
+  pending: {
+    color: '#FFA500', // Orange
+  },
+  accepted: {
+    color: '#008000', // Green
+  },
+  cancelled: {
+    color: '#FF0000', // Red
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  button: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginHorizontal: 2,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  acceptButton: {
+    backgroundColor: '#008000',
+  },
+  rejectButton: {
+    backgroundColor: '#FF0000',
+  },
+  logsButton: {
+    backgroundColor: '#1E90FF',
+  },
+  linkText: {
+    color: '#1E90FF',
+    textDecorationLine: 'underline',
+  },
+  noAppointments: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 10,
-    color: '#64748b',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   errorText: {
-    color: '#ef4444',
+    color: 'red',
     fontSize: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 16,
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    color: '#1e293b',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  filterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  filterText: {
-    color: '#3b82f6',
-    fontWeight: '500',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    backgroundColor: '#334155',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-  },
-  headerCell: {
-    width: 120,
-    color: '#ffffff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  cell: {
-    width: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  detailButton: {
-    backgroundColor: '#e2e8f0',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-  },
-  detailButtonText: {
-    color: '#3b82f6',
-    fontSize: 12,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  button: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  acceptButton: {
-    backgroundColor: '#10b981',
-  },
-  cancelButton: {
-    backgroundColor: '#ef4444',
-  },
-  logButton: {
-    backgroundColor: '#3b82f6',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#64748b',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
@@ -512,35 +405,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
+    backgroundColor: '#fff',
     padding: 20,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
-    padding: 8,
+    borderRadius: 10,
+    width: '80%',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
-  detailRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
+  modalText: {
+    marginBottom: 8,
   },
-  detailLabel: {
-    fontWeight: '600',
-    color: '#1e293b',
-    width: 100,
+  boldText: {
+    fontWeight: 'bold',
   },
-  detailValue: {
-    flex: 1,
-    color: '#64748b',
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 
