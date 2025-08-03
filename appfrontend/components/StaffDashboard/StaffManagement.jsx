@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Platform
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -110,44 +111,48 @@ const StaffManagement = () => {
       setLoading(false);
     }
   };
+const handleDelete = async (id) => {
+    // Web confirmation
+    if (Platform.OS === 'web') {
+      const ok = window.confirm("Are you sure you want to delete this staff member?");
+      if (!ok) return;
+    }
+    // Mobile confirmation
+    else {
+      let proceed = false;
+      await new Promise(resolve => {
+        Alert.alert(
+          "Confirm Delete",
+          "Are you sure you want to delete this staff member?",
+          [
+            { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+            { text: "Delete", style: "destructive", onPress: () => resolve(true) }
+          ],
+          { cancelable: true }
+        );
+      }).then(res => proceed = res);
+      if (!proceed) return;
+    }
 
-  const handleDelete = async (id) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this staff member?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const token = await AsyncStorage.getItem("authToken");
-              const response = await fetch(`${API_BASE_URL}/api/staff/${id}`, {
-                method: "DELETE",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              });
-
-              if (!response.ok) {
-                throw new Error("Failed to delete staff");
-              }
-
-              Alert.alert("Success", "Staff deleted successfully.");
-              fetchStaff();
-            } catch (err) {
-              console.error("Error deleting staff:", err);
-              Alert.alert("Error", "Failed to delete staff.");
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/api/staff/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to delete staff");
+      if (Platform.OS === 'web') alert("Staff deleted successfully.");
+      else Alert.alert("Success", "Staff deleted successfully.");
+      fetchStaff();
+    } catch (err) {
+      console.error(err);
+      const msg = "Failed to delete staff.";
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert("Error", msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openModal = () => {
