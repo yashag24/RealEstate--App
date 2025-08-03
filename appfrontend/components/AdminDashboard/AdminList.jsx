@@ -1,5 +1,5 @@
 // AdminList.jsx
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,118 +8,41 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-
-const AdminList = ({ onAddAdminClick }) => {
-  const [admins, setAdmins] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [token, setToken] = useState(null);
-
-  // Load token once
-  useEffect(() => {
-    (async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("authToken");
-        setToken(storedToken);
-      } catch (e) {
-        console.warn("Failed to load token:", e);
+const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error, refreshAdmins }) => {
+  const confirmDelete = async (adminId) => {
+    if (Platform.OS === 'web') {
+      const ok = window.confirm('Are you sure you want to delete this admin?');
+      if (ok) {
+        await handleRemoveAdmin(adminId);
+        refreshAdmins();
       }
-    })();
-  }, []);
-
-  // Fetch admins when token is set
-  useEffect(() => {
-    if (token) {
-      fetchAdmins();
-    }
-  }, [token]);
-
-  const fetchAdmins = async () => {
-    console.log("⏺️ FETCH ADMINS →", API_BASE_URL + "/api/admin");
-    console.log("⏺️ TOKEN:", token);
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log(data);
-      setAdmins(Array.isArray(data.data) ? data.data : []);
-
-      console.log(admins);
-    } catch (err) {
-      console.error("Error fetching admins:", err);
-      setError(`Failed to load admins: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmDelete = (adminId) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this admin?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deleteAdmin(adminId),
-        },
-      ]
-    );
-  };
-
-  const deleteAdmin = async (adminId) => {
-    console.log("⏺️ DELETE ADMIN →", API_BASE_URL + `/api/admin/${adminId}`);
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/${adminId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      setAdmins((prev) => prev.filter((a) => a._id !== adminId));
-      Alert.alert("Success", "Admin deleted successfully");
-    } catch (err) {
-      console.error("Error deleting admin:", err);
-      Alert.alert("Error", `Failed to delete admin: ${err.message}`);
-    } finally {
-      setLoading(false);
+    } else {
+      Alert.alert(
+        "Confirm Delete",
+        "Are you sure you want to delete this admin?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await handleRemoveAdmin(adminId);
+              refreshAdmins();
+            }
+          },
+        ]
+      );
     }
   };
 
   const renderAdminItem = ({ item, index }) => (
     <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
       <Text style={styles.tableCell}>{item.adminId || "N/A"}</Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>
-        {item.fullName}
-      </Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>
-        {item.email}
-      </Text>
+      <Text style={[styles.tableCell, styles.tableCellNumber]}>{item.fullName}</Text>
+      <Text style={[styles.tableCell, styles.tableCellNumber]}>{item.email}</Text>
       <TouchableOpacity
         style={styles.deleteBtn}
         onPress={() => confirmDelete(item._id)}
@@ -136,7 +59,7 @@ const AdminList = ({ onAddAdminClick }) => {
         <Text style={styles.title}>Admins</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity
-            onPress={fetchAdmins}
+            onPress={refreshAdmins}
             disabled={loading}
             style={styles.refreshButton}
           >
@@ -160,9 +83,6 @@ const AdminList = ({ onAddAdminClick }) => {
       ) : error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={fetchAdmins} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.table}>
@@ -179,16 +99,8 @@ const AdminList = ({ onAddAdminClick }) => {
             ListEmptyComponent={() => (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateText}>No admins found</Text>
-                <TouchableOpacity
-                  onPress={fetchAdmins}
-                  style={styles.refreshButton}
-                >
-                  <Text style={styles.refreshButtonText}>Refresh</Text>
-                </TouchableOpacity>
               </View>
             )}
-            refreshing={loading}
-            onRefresh={fetchAdmins}
           />
         </View>
       )}
@@ -206,16 +118,14 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: "bold", color: "#2c3e50" },
   headerButtons: { flexDirection: "row", alignItems: "center", gap: 12 },
-  addButton: { backgroundColor: "#007bff", padding: 12, borderRadius: 25 },
-  addButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   refreshButton: { backgroundColor: "#28a745", padding: 12, borderRadius: 25 },
   refreshButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  addButton: { backgroundColor: "#007bff", padding: 12, borderRadius: 25 },
+  addButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { marginTop: 16, fontSize: 18, color: "#6c757d" },
   errorContainer: { padding: 20, alignItems: "center" },
   errorText: { color: "#dc3545", fontSize: 18, marginBottom: 16 },
-  retryButton: { backgroundColor: "#dc3545", padding: 12, borderRadius: 25 },
-  retryButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   table: { backgroundColor: "#fff", borderRadius: 12, overflow: "hidden" },
   tableHeader: {
     flexDirection: "row",

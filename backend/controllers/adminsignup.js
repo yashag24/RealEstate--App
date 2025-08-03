@@ -61,11 +61,10 @@ adminSignupRouter.get("/",async (req, res) => {
 
 adminSignupRouter.delete(
   "/:id",
-  authenticate,
-  authorizeAdmin,
+
   async (request, response) => {
     const { id } = request.params;
-
+    console.log("req")
     try {
       const deletedUser = await Admin.findByIdAndDelete(id);
       if (deletedUser) {
