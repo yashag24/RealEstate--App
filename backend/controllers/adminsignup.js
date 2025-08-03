@@ -46,7 +46,7 @@ adminSignupRouter.post(
   }
 );
 
-adminSignupRouter.get("/", authenticate, authorizeAdmin, async (req, res) => {
+adminSignupRouter.get("/",async (req, res) => {
   try {
     const admins = await Admin.find()
       .populate("buyersId", "name email")
