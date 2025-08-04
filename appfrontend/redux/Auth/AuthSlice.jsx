@@ -117,6 +117,29 @@ export const signup = (credentials) => async (dispatch) => {
     throw new Error('Signup failed: ' + (error.response?.data?.error || error.message));
   }
 };
+export const addEmployee = (credentials) => async (dispatch) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/auth/signup`, credentials);
+
+    // if (response.status === 200) {
+    //   const { token, userType, ...userData } = response.data;
+      
+    //   // Store token securely
+    //   await AsyncStorage.setItem('authToken', token);
+      
+    //   dispatch(setAuthUser({
+    //     authUser: true,
+    //     userData,
+    //     userType,
+    //     token
+    //   }));
+    //   return response.data;
+    // }
+      return response.data;
+  } catch (error) {
+    throw new Error('Signup failed: ' + (error.response?.data?.error || error.message));
+  }
+};
 
 // Add this to handle token persistence on app start
 export const initializeAuth = () => async (dispatch) => {
