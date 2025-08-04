@@ -240,11 +240,11 @@ const Sidebar = ({
       // { route: '/(screens)/(services)/pre-purchaseServices', icon: 'checkmark-done-outline', text: 'Pre-Purchase Property Services' },
       // { route: '/(screens)/(profile)/profile', icon: 'person-outline', text: 'Profile' },
       // { route: '/(screens)/(help)/help', icon: 'help-circle-outline', text: 'Help' },
-      {
-        route: "/(screens)/services/settings",
-        icon: "settings-outline",
-        text: "Settings",
-      },
+      // {
+      //   route: "/(screens)/services/settings",
+      //   icon: "settings-outline",
+      //   text: "Settings",
+      // },
       {
         route: "/(screens)/services/about",
         icon: "information-circle-outline",

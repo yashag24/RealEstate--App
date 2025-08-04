@@ -54,6 +54,9 @@ exports.signup = async (req, res) => {
     const newUser = new Model(userData);
     await newUser.save();
 
+
+    console.log('New JWT secret:', process.env.JWT_SECRET); // Log the created user
+
     // Generate JWT
     const token = jwt.sign(
       { id: newUser._id, newUser },

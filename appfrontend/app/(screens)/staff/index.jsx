@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  ScrollView, 
-  Text, 
-  StyleSheet, 
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
   Platform,
   Alert,
   Dimensions,
@@ -15,12 +15,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
+// import { useDispatch } from 'react-redux';
 import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice';
 import { FontAwesome5 } from '@expo/vector-icons';
 import jwtDecode from 'jwt-decode';
 import { useNavigation } from '@react-navigation/native';
-
+ 
 import StaffSideBar from '@/components/StaffDashboard/SidebarStaff';
 import StaffProfile from '@/components/StaffDashboard/StaffProfile';
 import StaffManagedUsers from '@/components/StaffDashboard/StaffManagedUsers';
@@ -29,14 +29,15 @@ import StaffVerifyProperties from '@/components/StaffDashboard/StaffVerifyProper
 import StaffTitleSearch from '@/components/StaffDashboard/StaffTitleSearch';
 import StaffPrePurchaseProVer from '@/components/StaffDashboard/StaffPrePurchaseProVer';
 import StaffSalesTargetManagement from '@/components/StaffDashboard/StaffSalesTargetManagement';
-
+import { useDispatch, useSelector } from "react-redux";
+ 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
-
+ 
 const StaffDashboard = () => {
   const [selectedOption, setSelectedOption] = useState("profile");
   const [staffData, setStaffData] = useState(null);
-  const [userData, setUserData] = useState([]);
+  const [usersData, setUsersData] = useState([]);
   const navigation = useNavigation();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,10 +51,11 @@ const StaffDashboard = () => {
   const [activeSection, setActiveSection] = useState("profile");
   const [currentTime, setCurrentTime] = useState(new Date());
   const headerAnimation = useRef(new Animated.Value(0)).current;
-
+ 
   const dispatch = useDispatch();
   const router = useRouter();
-
+  const { userData, authUser, userType } = useSelector((state) => state.auth);
+ 
   const menuOptions = [
     { key: "profile", label: "Staff Profile" },
     { key: "usersDetails", label: "Users Details" },
@@ -64,12 +66,12 @@ const StaffDashboard = () => {
       key: "pre-purchase-property-verification",
       label: "Pre Purchase Property Request",
     },
-    { key: "sales-target-management", label: "Sales and Target Management" },
+    // { key: "sales-target-management", label: "Sales and Target Management" },
     { key: "logout", label: "Logout" },
   ];
-
-  const API_BASE_URL = 'https://realestate-app-ewxc.onrender.com';
-
+ 
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+ 
   // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
@@ -77,7 +79,7 @@ const StaffDashboard = () => {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
+ 
   // Header animation
   useEffect(() => {
     Animated.timing(headerAnimation, {
@@ -86,69 +88,69 @@ const StaffDashboard = () => {
       useNativeDriver: true,
     }).start();
   }, []);
-
+ 
   // Get section display info with enhanced details
   const getSectionInfo = () => {
     const sectionMap = {
-      'profile': { 
+      'profile': {
         title: 'Staff Profile',
         subtitle: 'Manage your profile settings',
         icon: 'user-circle',
         color: '#10b981',
         stats: null
       },
-      'usersDetails': { 
+      'usersDetails': {
         title: 'Users Details',
         subtitle: 'View and manage user information',
         icon: 'users',
         color: '#3b82f6',
         stats: userData.length,
       },
-      'appointments': { 
+      'appointments': {
         title: 'Appointments',
         subtitle: 'Manage customer appointments',
         icon: 'calendar-check',
         color: '#8b5cf6',
         stats: appointments.length
       },
-      'properties': { 
+      'properties': {
         title: 'Property Verification',
         subtitle: 'Review and verify properties',
         icon: 'home',
         color: '#f59e0b',
         stats: properties.length
       },
-      'title-search': { 
+      'title-search': {
         title: 'Title Search',
         subtitle: 'Manage title search requests',
         icon: 'search',
         color: '#ef4444',
         stats: titleSearchRequest.length,
       },
-      'pre-purchase-property-verification': { 
+      'pre-purchase-property-verification': {
         title: 'Pre-Purchase',
         subtitle: 'Handle property verification requests',
         icon: 'file-signature',
         stats: prePurchaseRequest.length,
         color: '#06b6d4',
       },
-      'sales-target-management': { 
-        title: 'Sales Targets',
-        subtitle: 'Track and manage sales performance',
-        icon: 'chart-line',
-        stats: salesTargets.length,
-        color: '#dc2626',
-      },
+      // 'sales-target-management': {
+      //   title: 'Sales Targets',
+      //   subtitle: 'Track and manage sales performance',
+      //   icon: 'chart-line',
+      //   stats: salesTargets.length,
+      //   color: '#dc2626',
+      // },
     };
-    return sectionMap[activeSection] || { 
-      title: 'Staff Dashboard', 
+    return sectionMap[activeSection] || {
+      title: 'Staff Dashboard',
       subtitle: 'Welcome back',
       icon: 'tachometer-alt',
       color: '#6366f1',
       stats: null
     };
   };
-
+ 
   // Get greeting based on time
   const getGreeting = () => {
     const hour = currentTime.getHours();
@@ -156,42 +158,45 @@ const StaffDashboard = () => {
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   };
-
+ 
   // Format time
   const formatTime = (date) => {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
-  
+ 
   useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
-  
+ 
   const fetchStaffData = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("Token not found.");
+        console.log("Token not found.");
         navigation.navigate("/(screens)");
         return;
       }
-
+      console.log("Token found",token)
+ 
       try {
         const decoded = jwtDecode(token);
+        console.log("Decoded ",decoded)
         setStaffData(decoded);
       } catch (err) {
         console.error("Invalid token.");
-        AsyncStorage.removeItem("authToken");
+        console.log("Erorrrrrrrrrrrrrrrrrr")
+        // AsyncStorage.removeItem("authToken");
         navigation.navigate("StaffLogin");
       }
     } catch (error) {
       console.error('AsyncStorage error:', error);
     }
   };
-
+ 
   const fetchUserDetails = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
@@ -205,11 +210,11 @@ const StaffDashboard = () => {
           },
         }
       );
-
+ 
       const data = await response.json();
-
+ 
       if (data.success) {
-        setUserData(data.usersData || []);
+        setUsersData(data.usersData || []);
       } else {
         Alert.alert("Error", data.error);
       }
@@ -217,7 +222,7 @@ const StaffDashboard = () => {
       console.log(error);
     }
   };
-
+ 
   const fetchSalesData = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
@@ -233,14 +238,14 @@ const StaffDashboard = () => {
           },
         }),
       ]);
-
+ 
       if (employeesRes.ok) {
         const employeesData = await employeesRes.json();
         if (employeesData.success) {
           setEmployees(employeesData.employees || []);
         }
       }
-
+ 
       if (salesTargetsRes.ok) {
         const salesTargetsData = await salesTargetsRes.json();
         if (salesTargetsData.success) {
@@ -251,7 +256,7 @@ const StaffDashboard = () => {
       console.error("Error fetching sales data:", error);
     }
   };
-
+ 
   const handleCreateTarget = async (targetData) => {
     try {
       const token = await AsyncStorage.getItem("authToken");
@@ -266,7 +271,7 @@ const StaffDashboard = () => {
           body: JSON.stringify(targetData),
         }
       );
-
+ 
       const result = await response.json();
       if (result.success) {
         setSalesTargets([...salesTargets, result.salesTarget]);
@@ -278,7 +283,7 @@ const StaffDashboard = () => {
       return Promise.reject(error);
     }
   };
-
+ 
   const handleUpdateTarget = async (targetId, updateData) => {
     try {
       const token = await AsyncStorage.getItem("authToken");
@@ -293,7 +298,7 @@ const StaffDashboard = () => {
           body: JSON.stringify(updateData),
         }
       );
-
+ 
       const result = await response.json();
       if (result.success) {
         setSalesTargets(
@@ -309,7 +314,7 @@ const StaffDashboard = () => {
       return Promise.reject(error);
     }
   };
-
+ 
   const fetchData = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
@@ -324,16 +329,16 @@ const StaffDashboard = () => {
           fetch(`${API_BASE_URL}/api/title-search/list`),
           fetch(`${API_BASE_URL}/api/Pre-Purchase-Property-Verification/list`),
         ]);
-
+ 
       if (!appointmentsRes.ok || !propertiesRes.ok) {
         throw new Error("Failed to fetch data.");
       }
-
+ 
       const appointmentsData = await appointmentsRes.json();
       const propertiesData = await propertiesRes.json();
       const titleSearchData = await titleSearchRes.json();
       const prePurchaseData = await prePurchaseRes.json();
-
+ 
       if (appointmentsData.success)
         setAppointments(appointmentsData.appointments || []);
       if (propertiesData && propertiesData.success)
@@ -349,33 +354,40 @@ const StaffDashboard = () => {
       setLoading(false);
     }
   };
-
-  const handleAcceptProperty = async (id) => {
-    if (!staffData?._id) return;
-    
+ 
+   const handleRejectProperty = async (id) => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/staff/property/${id}/accept/${staffData._id}`,
-        { method: "PUT" }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/property/${id}/reject`, {
+        method: "PUT",
+      });
       const result = await response.json();
-      if (!result.success || !response.ok) {
-        Alert.alert("Error", "Accepting property failed, please try later");
-        return;
-      }
-      setProperties((prevProperties) =>
-        prevProperties.filter((property) => property._id !== id)
-      );
-      Alert.alert("Success", "Property accepted successfully");
+      if (!result.success || !response.ok)
+        throw new Error("Rejecting property failed");
+      setProperties((prev) => prev.filter((p) => p._id !== id));
+      Toast.show({ type: "success", text1: "Property rejected" });
     } catch (error) {
-      console.error("Error accepting property:", error);
-      Alert.alert("Error", "Failed to accept property");
+      console.error(error);
+    }
+  };
+
+ const handleAcceptProperty = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/property/${id}/accept`, {
+        method: "PUT",
+      });
+      const result = await response.json();
+      if (!result.success || !response.ok)
+        throw new Error("Accepting property failed");
+      setProperties((prev) => prev.filter((p) => p._id !== id));
+      Toast.show({ type: "success", text1: "Property accepted" });
+    } catch (error) {
+      console.error(error);
     }
   };
 
   const handleCancelAppointment = async (appointmentId) => {
     if (!staffData?._id) return;
-    
+   
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/staff/appointment/cancelled/${appointmentId}`,
@@ -387,14 +399,14 @@ const StaffDashboard = () => {
           body: JSON.stringify({ staffId: staffData._id }),
         }
       );
-
+ 
       const result = await response.json();
-
+ 
       if (!response.ok || !result.success) {
         Alert.alert("Error", result.error || "Failed to cancel appointment");
         return;
       }
-
+ 
       setAppointments((prev) =>
         prev.map((a) =>
           a._id === appointmentId ? { ...a, status: "Cancelled" } : a
@@ -407,10 +419,10 @@ const StaffDashboard = () => {
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
-
+ 
   const handleAcceptAppointment = async (id) => {
     if (!staffData?._id) return;
-    
+   
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/staff/appointment/accept/${id}`,
@@ -422,13 +434,13 @@ const StaffDashboard = () => {
           body: JSON.stringify({ staffId: staffData._id }),
         }
       );
-
+ 
       const result = await response.json();
       if (!response.ok || !result.success) {
         Alert.alert("Error", result.error || "Failed to accept appointment");
         return;
       }
-
+ 
       setAppointments((prev) =>
         prev.map((a) => (a._id === id ? { ...a, status: "Accepted" } : a))
       );
@@ -439,7 +451,7 @@ const StaffDashboard = () => {
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
-
+ 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
       const confirmLogout = window.confirm('Are you sure you want to logout?');
@@ -449,7 +461,7 @@ const StaffDashboard = () => {
       }
       return;
     }
-
+ 
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -471,20 +483,20 @@ const StaffDashboard = () => {
       ]
     );
   };
-
+ 
   const handleSectionChange = async (section) => {
     setActiveSection(section);
     setSelectedOption(section);
     await AsyncStorage.setItem('activeSection', section);
     if (!isTablet) setSidebarVisible(false);
   };
-
+ 
   const renderContent = () => {
     switch (selectedOption) {
       case "profile":
-        return <StaffProfile staff={staffData} updateToken={fetchStaffData} />;
+        return <StaffProfile staff={userData} updateToken={fetchStaffData} />;
       case "usersDetails":
-        return <StaffManagedUsers userDetails={userData} />;
+        return <StaffManagedUsers userDetails={usersData} />;
       case "appointments":
         return (
           <StaffManagedAppointments
@@ -503,6 +515,7 @@ const StaffDashboard = () => {
             error={error}
             properties={properties}
             handleAcceptProperty={handleAcceptProperty}
+            handleRejectProperty={handleRejectProperty}
           />
         );
       case "title-search":
@@ -511,15 +524,15 @@ const StaffDashboard = () => {
         return (
           <StaffPrePurchaseProVer prePurchaseRequest={prePurchaseRequest} />
         );
-      case "sales-target-management":
-        return (
-          <StaffSalesTargetManagement
-            employees={employees}
-            salesTargets={salesTargets}
-            onCreateTarget={handleCreateTarget}
-            onUpdateTarget={handleUpdateTarget}
-          />
-        );
+      // case "sales-target-management":
+      //   return (
+      //     <StaffSalesTargetManagement
+      //       employees={employees}
+      //       salesTargets={salesTargets}
+      //       onCreateTarget={handleCreateTarget}
+      //       onUpdateTarget={handleUpdateTarget}
+      //     />
+      //   );
       case "logout":
         handleLogout();
         return null;
@@ -527,14 +540,14 @@ const StaffDashboard = () => {
         return <Text>Select an option</Text>;
     }
   };
-
+ 
   useEffect(() => {
     fetchStaffData();
     fetchUserDetails();
     fetchData();
     fetchSalesData();
   }, []);
-
+ 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -542,13 +555,13 @@ const StaffDashboard = () => {
       </View>
     );
   }
-
+ 
   const sectionInfo = getSectionInfo();
-
+ 
   return (
     <View style={styles.wrapper}>
       {/* Enhanced Header */}
-      <Animated.View 
+      <Animated.View
         style={[
           styles.headerSection,
           {
@@ -565,20 +578,20 @@ const StaffDashboard = () => {
         ]}
       >
         <View style={styles.headerGradient} />
-        
+       
         {/* Header Content */}
         <View style={styles.headerContent}>
           {/* Left Section - Menu & User Info */}
           <View style={styles.headerLeft}>
             {!isTablet && (
-              <Pressable 
-                style={styles.menuButton} 
+              <Pressable
+                style={styles.menuButton}
                 onPress={() => setSidebarVisible(!sidebarVisible)}
               >
                 <FontAwesome5 name="bars" size={18} color="#ffffff" />
               </Pressable>
             )}
-            
+           
             <View style={styles.userWelcome}>
               <Text style={styles.greetingText}>
                 {getGreeting()}, {staffData?.name || 'Staff'}!
@@ -588,25 +601,25 @@ const StaffDashboard = () => {
               </Text>
             </View>
           </View>
-
+ 
           {/* Right Section - Actions */}
           <View style={styles.headerRight}>
-            <Pressable 
-              style={styles.headerActionButton} 
+            <Pressable
+              style={styles.headerActionButton}
               onPress={handleLogout}
             >
               <FontAwesome5 name="sign-out-alt" size={16} color="#ffffff" />
             </Pressable>
           </View>
         </View>
-
+ 
         {/* Section Info */}
         <View style={styles.sectionInfoContainer}>
           <View style={styles.sectionIconContainer}>
-            <FontAwesome5 
-              name={sectionInfo.icon} 
-              size={20} 
-              color={sectionInfo.color} 
+            <FontAwesome5
+              name={sectionInfo.icon}
+              size={20}
+              color={sectionInfo.color}
             />
           </View>
           <View style={styles.headerTitleContainer}>
@@ -615,7 +628,7 @@ const StaffDashboard = () => {
           </View>
         </View>
       </Animated.View>
-
+ 
       {/* Dashboard Content */}
       <View style={styles.dashboardContainer}>
         <StaffSideBar
@@ -626,7 +639,7 @@ const StaffDashboard = () => {
           setSidebarVisible={setSidebarVisible}
           isTablet={isTablet}
         />
-        <ScrollView 
+        <ScrollView
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
@@ -634,7 +647,7 @@ const StaffDashboard = () => {
           {renderContent()}
         </ScrollView>
       </View>
-      
+     
       <Toast />
     </View>
   );
