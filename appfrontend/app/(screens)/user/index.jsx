@@ -315,7 +315,7 @@ const HomePage = () => {
 
         <BankingPartnersSection />
 
-        <View style={styles.popularBuilders}>
+        {/* <View style={styles.popularBuilders}>
           <Text style={styles.heading}>POPULAR BUILDERS</Text>
           <View style={styles.builderListings}>
             {properties.slice(0, 1).map((builder) => (
@@ -329,10 +329,10 @@ const HomePage = () => {
               </View>
             ))}
           </View>
-        </View>
+        </View> */}
 
         <Upcoming />
-        <CityWiseReviews />
+        {/* <CityWiseReviews /> */}
         <EmergingLocalities />
 
         <View style={styles.insightsContainer}>
@@ -361,9 +361,9 @@ const HomePage = () => {
           </View>
         </View>
 
-        <StaffPerformanceCategories />
+        {/* <StaffPerformanceCategories /> */}
         <Articles />
-        <Footer />
+        {/* <Footer /> */}
       </ScrollView>
 
       {/* {isLoginPopupVisible && (

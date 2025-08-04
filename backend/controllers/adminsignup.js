@@ -46,7 +46,7 @@ adminSignupRouter.post(
   }
 );
 
-adminSignupRouter.get("/",async (req, res) => {
+adminSignupRouter.get("/",authenticate, async (req, res) => {
   try {
     const admins = await Admin.find()
       .populate("buyersId", "name email")
@@ -61,7 +61,7 @@ adminSignupRouter.get("/",async (req, res) => {
 
 adminSignupRouter.delete(
   "/:id",
-
+  authenticate,
   async (request, response) => {
     const { id } = request.params;
     console.log("req")
