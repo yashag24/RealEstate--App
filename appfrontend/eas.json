@@ -6,11 +6,12 @@
   "build": {
     "production": {
       "android": {
-        "buildType": "apk",
-        "env": {
-          "EXPO_KOTLIN_VERSION": "1.9.10"
-        }
-      }
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_KOTLIN_VERSION": "1.9.10"
+      },
+      "buildCommand": "npm install --legacy-peer-deps"
     }
   }
 }
