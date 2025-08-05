@@ -26,7 +26,7 @@ adminSignupRouter.post(
 
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(password, saltRounds);
-
+      console.log("req received",name)
       const newAdmin = new Admin({
         adminId,
         password: passwordHash,

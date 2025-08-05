@@ -26,6 +26,7 @@ exports.signup = async (req, res) => {
         Model = Admin;
         userType = 'admin';
         userData.adminId = otherFields.adminId || `ADMIN${Date.now()}`;
+        userData.fullName = otherFields.name || '';
         break;
       case 'staff':
         Model = Staff;
