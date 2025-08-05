@@ -16,6 +16,9 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 
 const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error, refreshAdmins }) => {
+  // Filter out any undefined/null items and ensure each item has an _id
+  const validAdmins = (admins || []).filter(admin => admin && admin._id);
+
   const confirmDelete = async (adminId) => {
     if (Platform.OS === 'web') {
       const ok = window.confirm('Are you sure you want to delete this admin?');
@@ -42,25 +45,38 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
     }
   };
 
-  const renderAdminItem = ({ item, index }) => (
-    <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
-      <Text style={styles.indexCell}>{index + 1}</Text>
-      <View style={styles.nameContainer}>
-        <Text style={styles.nameCell} numberOfLines={1}>{item.fullName}</Text>
-        <Text style={styles.idCell} numberOfLines={1}>ID: {item.adminId || "N/A"}</Text>
+  const renderAdminItem = ({ item, index }) => {
+    // Additional safety check
+    if (!item || !item._id) {
+      return null;
+    }
+
+    return (
+      <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
+        <Text style={styles.indexCell}>{index + 1}</Text>
+        <View style={styles.nameContainer}>
+          <Text style={styles.nameCell} numberOfLines={1}>
+            {item.fullName || item.name || "N/A"}
+          </Text>
+          <Text style={styles.idCell} numberOfLines={1}>
+            ID: {item.adminId || item._id || "N/A"}
+          </Text>
+        </View>
+        <Text style={styles.emailCell} numberOfLines={2}>
+          {item.email || "N/A"}
+        </Text>
+        <View style={styles.actionCell}>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => confirmDelete(item._id)}
+            disabled={loading}
+          >
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.emailCell} numberOfLines={2}>{item.email}</Text>
-      <View style={styles.actionCell}>
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={() => confirmDelete(item._id)}
-          disabled={loading}
-        >
-          <Text style={styles.deleteBtnText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -103,9 +119,9 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
               <Text style={styles.actionHeader}>Action</Text>
             </View>
             <FlatList
-              data={admins}
+              data={validAdmins}
               renderItem={renderAdminItem}
-              keyExtractor={(item) => item._id}
+              keyExtractor={(item, index) => item._id || `admin-${index}`}
               showsVerticalScrollIndicator={true}
               style={styles.flatList}
               contentContainerStyle={styles.listContent}
@@ -114,6 +130,11 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
                   <Text style={styles.emptyStateText}>No admins found</Text>
                 </View>
               )}
+              // Add extra props for better error handling
+              removeClippedSubviews={false}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={10}
             />
           </View>
         </View>

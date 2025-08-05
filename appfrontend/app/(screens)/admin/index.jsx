@@ -332,13 +332,13 @@ const AdminDashboard = () => {
 
   const handleRemoveAdmin = async (adminId) => {
     try {
-      console.log("Req received")
+      console.log("Req received");
       const token = await AsyncStorage.getItem("authToken");
       const response = await fetch(`${BASE_URL}/api/admin/${adminId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(response)
+      console.log(response);
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message);
       setAdmins((prev) => prev.filter((admin) => admin._id !== adminId));
@@ -567,7 +567,15 @@ const AdminDashboard = () => {
             />
           )}
         </View>
-        <CustomModal show={showModal} handleClose={() => setShowModal(false)} />
+        <CustomModal
+          show={showModal}
+          handleClose={() => setShowModal(false)}
+          onAdminAdded={(newAdmin) => {
+            // Optionally add the new admin to the local state immediately
+            setAdmins((prev) => [...prev, newAdmin]);
+          }}
+          refreshAdmins={fetchData}
+        />
       </View>
       <Toast />
     </View>

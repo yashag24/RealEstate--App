@@ -22,7 +22,7 @@ import { addEmployee } from "@/redux/Auth/AuthSlice";
 const { width } = Dimensions.get("window");
 const isTablet = width >= 768;
 
-const CustomModal = ({ show, handleClose, onAdminAdded }) => {
+const CustomModal = ({ show, handleClose, onAdminAdded, refreshAdmins }) => {
   const [addAdmin, setAddAdmin] = useState({ 
     fullName: "",
     adminId: "", 
@@ -117,11 +117,13 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
         type: "success", 
         text1: "Admin added successfully",
         visibilityTime: 3000,
-        topOffset: 50
+        topOffset: Platform.OS === 'ios' ? 50 : 25,
+        position: 'top'
       });
 
-      // Notify parent
+      // Notify parent and refresh data
       onAdminAdded?.(res.payload);
+      refreshAdmins?.();
       handleClose();
     } catch (err) {
       // Show error toast
@@ -130,7 +132,8 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
         text1: "Error", 
         text2: err.message,
         visibilityTime: 4000,
-        topOffset: 50
+        topOffset: Platform.OS === 'ios' ? 50 : 25,
+        position: 'top'
       });
     } finally {
       setLoading(false);
@@ -399,6 +402,7 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
           </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
+      {/* Add Toast component for mobile compatibility */}
       <Toast />
     </Modal>
   );
