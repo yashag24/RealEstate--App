@@ -3,13 +3,11 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, Activ
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
-import LottieView from "lottie-react-native";
+import Lottie from "lottie-react"; // ✅ updated import
 import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-
 
 const Navbar_local = () => {
   const router = useRouter();
@@ -36,7 +34,6 @@ const UserPreviouslySaved = () => {
   const [loading, setLoading] = useState(true);
   const [lottieSource, setLottieSource] = useState(null);
 
-  // Load Lottie JSON
   useEffect(() => {
     fetch(
       "https://lottie.host/69e157cb-db54-4f03-b411-e105a2b76125/2bWLBAXZpM.json"
@@ -46,39 +43,32 @@ const UserPreviouslySaved = () => {
       .catch(() => setLottieSource(null));
   }, []);
 
-  // Get userId from token
   useEffect(() => {
-    // console.log("Fetching user ID from token...");
-     const getToken = async () => {
-    const token = await AsyncStorage.getItem("authToken") || null;
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        const id = decoded._id || decoded.id;
-        setUserId(id);
-        // console.log("User ID:", id);
-      } catch (error) {
-        console.error("Invalid token:", error);
+    const getToken = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          const id = decoded._id || decoded.id;
+          setUserId(id);
+        } catch (error) {
+          console.error("Invalid token:", error);
+        }
       }
-    }}
+    };
     getToken();
   }, []);
 
-  // Fetch saved properties
   useEffect(() => {
     if (!userId) return;
-    console.log("Fetching saved properties for user:", userId);
     setLoading(true);
     fetch(`${API_URL}/api/user-update/${userId}/saved-properties`)
       .then(res => res.json())
       .then(data => setSavedProperties(data.saveProperties || []))
       .catch(() => setSavedProperties([]))
       .finally(() => setLoading(false));
-
-      // console.log("Saved Properties:", savedProperties);
   }, [userId]);
 
-  // Remove property handler
   const handleRemove = async (propertyId) => {
     try {
       const res = await fetch(
@@ -97,12 +87,10 @@ const UserPreviouslySaved = () => {
     }
   };
 
-  // View details handler
   const handleViewDetails = (propertyId) => {
     router.push(`/property-details-page/${propertyId}`);
   };
 
-  // Render a card for each property
   const renderProperty = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.imageWrapper}>
@@ -171,46 +159,44 @@ const UserPreviouslySaved = () => {
   }
 
   return (
-        <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-    {/* <Navbar /> */}
-    <Navbar_local />
-    <View style={styles.container}>
-      <Text style={styles.header}>Saved Properties</Text>
-      {savedProperties.length > 0 ? (
-        <FlatList
-          data={savedProperties}
-          keyExtractor={item => item.propertyId._id}
-          renderItem={renderProperty}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.grid}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          {lottieSource && (
-            <LottieView
-              source={lottieSource}
-              autoPlay
-              loop
-              style={{ width: 250, height: 200 }}
-            />
-          )}
-          <Text style={styles.emptyTitle}>You haven’t saved any property lately!</Text>
-          <Text style={styles.emptySubtitle}>
-            All the properties and projects that you have saved will start appearing here. Start exploring your dream home now.
-          </Text>
-          <TouchableOpacity
-            style={styles.exploreBtn}
-            onPress={() => router.push("/SearchPropertiesNavbar")}
-          >
-            <Text style={styles.exploreBtnText}>Explore Properties</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+    <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
+      <Navbar_local />
+      <View style={styles.container}>
+        <Text style={styles.header}>Saved Properties</Text>
+        {savedProperties.length > 0 ? (
+          <FlatList
+            data={savedProperties}
+            keyExtractor={item => item.propertyId._id}
+            renderItem={renderProperty}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.grid}
+          />
+        ) : (
+          <View style={styles.emptyState}>
+            {lottieSource && (
+              <Lottie
+                animationData={lottieSource}
+                loop
+                autoplay
+                style={{ width: 250, height: 200 }}
+              />
+            )}
+            <Text style={styles.emptyTitle}>You haven’t saved any property lately!</Text>
+            <Text style={styles.emptySubtitle}>
+              All the properties and projects that you have saved will start appearing here. Start exploring your dream home now.
+            </Text>
+            <TouchableOpacity
+              style={styles.exploreBtn}
+              onPress={() => router.push("/SearchPropertiesNavbar")}
+            >
+              <Text style={styles.exploreBtnText}>Explore Properties</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
-
 export default UserPreviouslySaved;
 
 const styles = StyleSheet.create({
