@@ -9,7 +9,7 @@ adminSignupRouter.post(
   authenticate,
   authorizeAdmin,
   async (req, res) => {
-    const { adminId, password } = req.body;
+    const { name,adminId, password } = req.body;
 
     if (!adminId || !password) {
       return res
@@ -31,7 +31,7 @@ adminSignupRouter.post(
         adminId,
         password: passwordHash,
         email: `${adminId}@mail.com`,
-        fullName: "",
+        fullName: name,
         phoneNumber: "",
         buyersId: [],
         sellersId: [],

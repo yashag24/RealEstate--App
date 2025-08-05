@@ -9,7 +9,11 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  ScrollView,
+  Dimensions,
 } from "react-native";
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error, refreshAdmins }) => {
   const confirmDelete = async (adminId) => {
@@ -40,21 +44,26 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
 
   const renderAdminItem = ({ item, index }) => (
     <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
-      <Text style={styles.tableCell}>{item.adminId || "N/A"}</Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>{item.fullName}</Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>{item.email}</Text>
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => confirmDelete(item._id)}
-        disabled={loading}
-      >
-        <Text style={styles.deleteBtnText}>Delete</Text>
-      </TouchableOpacity>
+      <Text style={styles.indexCell}>{index + 1}</Text>
+      <View style={styles.nameContainer}>
+        <Text style={styles.nameCell} numberOfLines={1}>{item.fullName}</Text>
+        <Text style={styles.idCell} numberOfLines={1}>ID: {item.adminId || "N/A"}</Text>
+      </View>
+      <Text style={styles.emailCell} numberOfLines={2}>{item.email}</Text>
+      <View style={styles.actionCell}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => confirmDelete(item._id)}
+          disabled={loading}
+        >
+          <Text style={styles.deleteBtnText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   return (
-    <View style={styles.adminList}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Admins</Text>
         <View style={styles.headerButtons}>
@@ -85,23 +94,28 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderCell}>Admin ID</Text>
-            <Text style={styles.tableHeaderCell}>Name</Text>
-            <Text style={styles.tableHeaderCell}>Email</Text>
-            <Text style={styles.tableHeaderCell}>Delete</Text>
+        <View style={styles.tableContainer}>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.indexHeader}>No.</Text>
+              <Text style={[styles.tableHeaderCell, styles.nameHeader]}>Name</Text>
+              <Text style={[styles.tableHeaderCell, styles.emailHeader]}>Email</Text>
+              <Text style={styles.actionHeader}>Action</Text>
+            </View>
+            <FlatList
+              data={admins}
+              renderItem={renderAdminItem}
+              keyExtractor={(item) => item._id}
+              showsVerticalScrollIndicator={true}
+              style={styles.flatList}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No admins found</Text>
+                </View>
+              )}
+            />
           </View>
-          <FlatList
-            data={admins}
-            renderItem={renderAdminItem}
-            keyExtractor={(item) => item._id}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>No admins found</Text>
-              </View>
-            )}
-          />
         </View>
       )}
     </View>
@@ -109,54 +123,200 @@ const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error,
 };
 
 const styles = StyleSheet.create({
-  adminList: { flex: 1, padding: 16, backgroundColor: "#f8f9fa" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#f8f9fa",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
+    flexWrap: "wrap",
+    gap: 12,
   },
-  title: { fontSize: 28, fontWeight: "bold", color: "#2c3e50" },
-  headerButtons: { flexDirection: "row", alignItems: "center", gap: 12 },
-  refreshButton: { backgroundColor: "#28a745", padding: 12, borderRadius: 25 },
-  refreshButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  addButton: { backgroundColor: "#007bff", padding: 12, borderRadius: 25 },
-  addButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 16, fontSize: 18, color: "#6c757d" },
-  errorContainer: { padding: 20, alignItems: "center" },
-  errorText: { color: "#dc3545", fontSize: 18, marginBottom: 16 },
-  table: { backgroundColor: "#fff", borderRadius: 12, overflow: "hidden" },
+  title: { 
+    fontSize: 28, 
+    fontWeight: "bold", 
+    color: "#2c3e50",
+    minWidth: 100,
+  },
+  headerButtons: { 
+    flexDirection: "row", 
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  refreshButton: { 
+    backgroundColor: "#28a745", 
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    minWidth: 90,
+  },
+  refreshButtonText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  addButton: { 
+    backgroundColor: "#007bff", 
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    minWidth: 110,
+  },
+  addButtonText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
+  loadingText: { 
+    marginTop: 16, 
+    fontSize: 18, 
+    color: "#6c757d" 
+  },
+  errorContainer: { 
+    flex: 1,
+    justifyContent: "center", 
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: { 
+    color: "#dc3545", 
+    fontSize: 18, 
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  tableContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  table: { 
+    flex: 1,
+  },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#343a40",
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
   },
   tableHeaderCell: {
-    flex: 1,
     color: "#fff",
     fontWeight: "700",
     textAlign: "center",
+    fontSize: 14,
+  },
+  indexHeader: {
+    flex: 0.8,
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  nameHeader: {
+    flex: 2.5,
+  },
+  emailHeader: {
+    flex: 2.5,
+  },
+  actionHeader: {
+    flex: 1.2,
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  flatList: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 40,
+    flexGrow: 1,
   },
   tableRow: {
     flexDirection: "row",
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderColor: "#e9ecef",
+    alignItems: "center",
+    minHeight: 60,
   },
-  tableRowEven: { backgroundColor: "#f8f9fa" },
-  tableCell: { flex: 1, textAlign: "center", fontSize: 16, color: "#495057" },
-  tableCellNumber: { fontSize: 18, fontWeight: "600", color: "#007bff" },
-  deleteBtn: {
-    flex: 1,
-    backgroundColor: "#dc3545",
-    padding: 10,
-    borderRadius: 20,
+  tableRowEven: { 
+    backgroundColor: "#f8f9fa" 
+  },
+  indexCell: {
+    flex: 0.8,
+    textAlign: "center", 
+    fontSize: 14, 
+    color: "#28a745",
+    fontWeight: "bold",
+  },
+  nameContainer: {
+    flex: 2.5,
+    paddingHorizontal: 4,
     alignItems: "center",
   },
-  deleteBtnText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  emptyState: { padding: 40, alignItems: "center" },
-  emptyStateText: { fontSize: 18, color: "#6c757d", marginBottom: 16 },
+  nameCell: {
+    textAlign: "center", 
+    fontSize: 14, 
+    fontWeight: "600", 
+    color: "#007bff",
+    marginBottom: 2,
+  },
+  idCell: {
+    textAlign: "center", 
+    fontSize: 11, 
+    color: "#6c757d",
+    fontStyle: "italic",
+  },
+  emailCell: {
+    flex: 2.5,
+    textAlign: "center", 
+    fontSize: 12, 
+    color: "#495057",
+    paddingHorizontal: 4,
+  },
+  actionCell: {
+    flex: 1.2,
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  deleteBtn: {
+    backgroundColor: "#dc3545",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    alignItems: "center",
+    minWidth: 60,
+  },
+  deleteBtnText: { 
+    color: "#fff", 
+    fontSize: 11, 
+    fontWeight: "600" 
+  },
+  emptyState: { 
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyStateText: { 
+    fontSize: 18, 
+    color: "#6c757d", 
+    textAlign: "center",
+  },
 });
 
 export default AdminList;

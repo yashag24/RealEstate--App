@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Pressable,
+  Alert,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
@@ -22,7 +23,11 @@ const { width } = Dimensions.get("window");
 const isTablet = width >= 768;
 
 const CustomModal = ({ show, handleClose, onAdminAdded }) => {
-  const [addAdmin, setAddAdmin] = useState({ adminId: "", password: "" });
+  const [addAdmin, setAddAdmin] = useState({ 
+    fullName: "",
+    adminId: "", 
+    password: "" 
+  });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -32,12 +37,15 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
   const modalScale = useState(new Animated.Value(0.8))[0];
   const modalTranslateY = useState(new Animated.Value(50))[0];
 
+  // Ref for auto-focus
+  const nameInputRef = useRef(null);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (show) {
       // Reset state
-      setAddAdmin({ adminId: "", password: "" });
+      setAddAdmin({ fullName: "", adminId: "", password: "" });
       setErrors({});
       setShowPassword(false);
       // Animate in
@@ -57,7 +65,10 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
           duration: 300,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        // Auto-focus on the full name field after animation
+        setTimeout(() => nameInputRef.current?.focus(), 100);
+      });
     } else {
       // Reset animations
       overlayOpacity.setValue(0);
@@ -68,12 +79,19 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!addAdmin.adminId.trim()) newErrors.adminId = "Admin ID is required";
-    else if (addAdmin.adminId.length < 3)
-      newErrors.adminId = "Admin ID must be at least 3 characters";
-    if (!addAdmin.password.trim()) newErrors.password = "Password is required";
-    else if (addAdmin.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
+    const { fullName, adminId, password } = addAdmin;
+
+    // Full name validation
+    if (!fullName.trim()) newErrors.fullName = "Full name is required";
+    else if (fullName.length < 2) newErrors.fullName = "Name must be at least 2 characters";
+
+    // Admin ID validation
+    if (!adminId.trim()) newErrors.adminId = "Admin ID is required";
+    else if (adminId.length < 3) newErrors.adminId = "Admin ID must be at least 3 characters";
+
+    // Password validation
+    if (!password.trim()) newErrors.password = "Password is required";
+    else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -84,6 +102,7 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
     setLoading(true);
     try {
       const credentials = {
+        name: addAdmin.fullName,
         email: addAdmin.adminId,
         password: addAdmin.password,
         role: "admin",
@@ -93,13 +112,26 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
         throw new Error(res.payload?.message || "Signup failed");
       }
 
-      Toast.show({ type: "success", text1: "Admin added successfully" });
+      // Show success toast
+      Toast.show({ 
+        type: "success", 
+        text1: "Admin added successfully",
+        visibilityTime: 3000,
+        topOffset: 50
+      });
 
       // Notify parent
       onAdminAdded?.(res.payload);
       handleClose();
     } catch (err) {
-      Toast.show({ type: "error", text1: "Error", text2: err.message });
+      // Show error toast
+      Toast.show({ 
+        type: "error", 
+        text1: "Error", 
+        text2: err.message,
+        visibilityTime: 4000,
+        topOffset: 50
+      });
     } finally {
       setLoading(false);
     }
@@ -112,8 +144,33 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
     }
   };
 
-  const closeModal = () => {
+  const closeModal = async () => {
     if (loading) return;
+
+    // Check if form has data and show confirmation alert
+    const hasData = addAdmin.fullName.trim() || addAdmin.adminId.trim() || addAdmin.password.trim();
+    
+    if (hasData) {
+      let proceed = false;
+      if (Platform.OS === 'web') {
+        proceed = window.confirm("Are you sure you want to close? All unsaved changes will be lost.");
+      } else {
+        proceed = await new Promise(resolve => {
+          Alert.alert(
+            "Confirm Close",
+            "Are you sure you want to close? All unsaved changes will be lost.",
+            [
+              { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+              { text: "Close", style: "destructive", onPress: () => resolve(true) }
+            ],
+            { cancelable: true }
+          );
+        });
+      }
+      if (!proceed) return;
+    }
+
+    // Animate out
     Animated.parallel([
       Animated.timing(overlayOpacity, {
         toValue: 0,
@@ -191,10 +248,39 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
 
               {/* Form */}
               <View style={styles.formContainer}>
+                {/* Full Name Field */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
-                    <FontAwesome5 name="user" size={14} color="#475569" /> Admin
-                    ID
+                    <FontAwesome5 name="user" size={14} color="#475569" /> Full Name
+                  </Text>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      errors.fullName && styles.inputError,
+                    ]}
+                  >
+                    <TextInput
+                      ref={nameInputRef}
+                      style={styles.input}
+                      value={addAdmin.fullName}
+                      onChangeText={(text) => handleChange("fullName", text)}
+                      placeholder="Enter full name"
+                      placeholderTextColor="#94a3b8"
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      editable={!loading}
+                    />
+                    <FontAwesome5 name="id-card" size={16} color="#94a3b8" />
+                  </View>
+                  {errors.fullName && (
+                    <Text style={styles.errorText}>{errors.fullName}</Text>
+                  )}
+                </View>
+
+                {/* Admin ID Field */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    <FontAwesome5 name="envelope" size={14} color="#475569" /> Admin ID (Email)
                   </Text>
                   <View
                     style={[
@@ -206,19 +292,21 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
                       style={styles.input}
                       value={addAdmin.adminId}
                       onChangeText={(text) => handleChange("adminId", text)}
-                      placeholder="Enter unique admin ID"
+                      placeholder="Enter admin email address"
                       placeholderTextColor="#94a3b8"
+                      keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
                       editable={!loading}
                     />
-                    <FontAwesome5 name="id-card" size={16} color="#94a3b8" />
+                    <FontAwesome5 name="at" size={16} color="#94a3b8" />
                   </View>
                   {errors.adminId && (
                     <Text style={styles.errorText}>{errors.adminId}</Text>
                   )}
                 </View>
 
+                {/* Password Field */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     <FontAwesome5 name="lock" size={14} color="#475569" />{" "}
@@ -311,6 +399,7 @@ const CustomModal = ({ show, handleClose, onAdminAdded }) => {
           </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
+      <Toast />
     </Modal>
   );
 };
