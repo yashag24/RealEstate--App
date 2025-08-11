@@ -19,6 +19,8 @@ import { useRouter } from 'expo-router';
 import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice';
 import { FontAwesome5 } from '@expo/vector-icons';
 import jwtDecode from 'jwt-decode';
+// import jwt from "jsonwebtoken";
+
 import { useNavigation } from '@react-navigation/native';
  
 import StaffSideBar from '@/components/StaffDashboard/SidebarStaff';
@@ -88,6 +90,33 @@ const StaffDashboard = () => {
       useNativeDriver: true,
     }).start();
   }, []);
+
+
+    useEffect(() => {
+      dispatch(initializeAuth());
+    }, [dispatch]);
+  
+    useEffect(() => {
+      if (userType !== "staff" || !authUser) {
+        requestAnimationFrame(() => {
+          router.replace("/(screens)");
+        });
+      }
+    }, [authUser, router, userType]);
+
+      useEffect(() => {
+        const loadInitialData = async () => {
+          const savedSection =
+            (await AsyncStorage.getItem("activeSection")) || "staff Profile";
+          setActiveSection(savedSection);
+          fetchData();
+        };
+        if (authUser && userType === "staff") {
+          loadInitialData();
+        }
+      }, [authUser, userType]);
+
+
  
   // Get section display info with enhanced details
   const getSectionInfo = () => {
@@ -172,30 +201,36 @@ const StaffDashboard = () => {
     dispatch(initializeAuth());
   }, [dispatch]);
  
-  const fetchStaffData = async () => {
-    try {
-      const token = await AsyncStorage.getItem("authToken");
-      if (!token) {
-        console.log("Token not found.");
-        navigation.navigate("/(screens)");
-        return;
-      }
-      console.log("Token found",token)
- 
-      try {
-        const decoded = jwtDecode(token);
-        console.log("Decoded ",decoded)
-        setStaffData(decoded);
-      } catch (err) {
-        console.error("Invalid token.");
-        console.log("Erorrrrrrrrrrrrrrrrrr")
-        // AsyncStorage.removeItem("authToken");
-        navigation.navigate("StaffLogin");
-      }
-    } catch (error) {
-      console.error('AsyncStorage error:', error);
+// const [staffData, setStaffData] = useState(null); // or []
+
+const fetchStaffData = async () => {
+  try {
+    const token = await AsyncStorage.getItem("authToken");
+    if (!token) {
+      router.replace("/(screens)");
+      return;
     }
-  };
+    const base64Url = token.split(".")[1];
+    if (!base64Url) throw new Error("Invalid token format");
+
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+
+    const decoded = JSON.parse(jsonPayload);
+    console.log(decoded)
+    setStaffData(decoded || {}); // ✅ prevents null
+  } catch (err) {
+    console.error("Error decoding token:", err);
+    setStaffData({}); // ✅ ensures no null in render
+    router.replace("/(screens)");
+  }
+};
+
  
   const fetchUserDetails = async () => {
     try {
@@ -356,6 +391,7 @@ const StaffDashboard = () => {
   };
  
    const handleRejectProperty = async (id) => {
+    console.log("Rejected")
     try {
       const response = await fetch(`${API_BASE_URL}/api/property/${id}/reject`, {
         method: "PUT",
@@ -386,7 +422,8 @@ const StaffDashboard = () => {
   };
 
   const handleCancelAppointment = async (appointmentId) => {
-    if (!staffData?._id) return;
+    if (!staffData?.id) return;
+    console.log("Canceled");
    
     try {
       const response = await fetch(
@@ -396,7 +433,7 @@ const StaffDashboard = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ staffId: staffData._id }),
+          body: JSON.stringify({ staffId: staffData.id }),
         }
       );
  
@@ -421,8 +458,9 @@ const StaffDashboard = () => {
   };
  
   const handleAcceptAppointment = async (id) => {
-    if (!staffData?._id) return;
-   
+    if (!staffData?.id) return;
+
+    console.log("Accepted ", id)
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/staff/appointment/accept/${id}`,
@@ -431,7 +469,7 @@ const StaffDashboard = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ staffId: staffData._id }),
+          body: JSON.stringify({ staffId: staffData.id }),
         }
       );
  
@@ -452,37 +490,29 @@ const StaffDashboard = () => {
     }
   };
  
-  const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      const confirmLogout = window.confirm('Are you sure you want to logout?');
-      if (confirmLogout) {
-        dispatch(performLogout());
-        router.replace('/(screens)');
-      }
-      return;
+const handleLogout = () => {
+  const doLogout = async () => {
+    try {
+      await dispatch(performLogout()).unwrap(); // clears Redux + AsyncStorage
+      router.replace("/(screens)"); // always navigate to login/home
+    } catch (error) {
+      Alert.alert("Error", "Failed to logout. Please try again.");
     }
- 
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await dispatch(performLogout()).unwrap();
-              router.replace('/(screens)');
-            } catch (error) {
-              console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          },
-        },
-      ]
-    );
   };
+
+  if (Platform.OS === "web") {
+    if (window.confirm("Are you sure you want to logout?")) {
+      doLogout();
+    }
+  } else {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Logout", style: "destructive", onPress: doLogout },
+    ]);
+  }
+};
+
+  
  
   const handleSectionChange = async (section) => {
     setActiveSection(section);
@@ -556,7 +586,7 @@ const StaffDashboard = () => {
     );
   }
  
-  const sectionInfo = getSectionInfo();
+const sectionInfo = getSectionInfo(staffData?.sections || []);
  
   return (
     <View style={styles.wrapper}>
