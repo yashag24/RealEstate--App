@@ -13,10 +13,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "react-native";
 import { useRouter } from "expo-router";
-import { useDispatch, useSelector } from 'react-redux';
-import { useEffect } from 'react';
-import { Platform, Alert } from 'react-native';
-import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice'; // Adjust the import path
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { Platform, Alert } from "react-native";
+import { initializeAuth, performLogout } from "@/redux/Auth/AuthSlice"; // Adjust the import path
 const router = useRouter();
 
 const Sidebar = ({
@@ -110,65 +110,67 @@ const Sidebar = ({
     [setSearchQuery]
   );
 
+  const [scrollPos, setScrollPos] = useState(0);
 
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: scrollPos, animated: false });
+    }
+  }, [scrollPos]);
 
+  const handleScroll = (event) => {
+    setScrollPos(event.nativeEvent.contentOffset.y);
+  };
 
   //logout handler
 
-      const dispatch = useDispatch();
-    // const router = useRouter();
-    const { userData, authUser, userType } = useSelector((state) => state.auth);
-  
-    // Initialize authentication on component mount
-    useEffect(() => {
-      dispatch(initializeAuth());
-    }, [dispatch]);
-  
-    // Redirect to login if not authenticated
-    useEffect(() => {
-      if (userType !== 'user' || !authUser) {
-        router.replace('/(screens)');
+  const dispatch = useDispatch();
+  // const router = useRouter();
+  const { userData, authUser, userType } = useSelector((state) => state.auth);
+
+  // Initialize authentication on component mount
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (userType !== "user" || !authUser) {
+      router.replace("/(screens)");
+    }
+  }, [authUser, router, userType]);
+
+  const handleLogout = () => {
+    // For web
+    if (Platform.OS === "web") {
+      const confirmLogout = window.confirm("Are you sure you want to logout?");
+      if (confirmLogout) {
+        console.log("Logging out...");
+        dispatch(performLogout());
+        router.replace("/(screens)");
       }
-    }, [authUser, router, userType]);
-  
-      const handleLogout = () => {
-        // For web
-        if (Platform.OS === 'web') {
-          const confirmLogout = window.confirm('Are you sure you want to logout?');
-          if (confirmLogout) {
+      return;
+    }
+
+    // For mobile (iOS/Android)
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
             console.log("Logging out...");
-            dispatch(performLogout());
-            router.replace('/(screens)');
+            await dispatch(performLogout()).unwrap();
+            router.replace("/(screens)");
+          } catch (error) {
+            console.error("Logout error:", error);
+            Alert.alert("Error", "Failed to logout. Please try again.");
           }
-          return;
-        }
-    
-        // For mobile (iOS/Android)
-        Alert.alert(
-          'Logout',
-          'Are you sure you want to logout?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Logout',
-              style: 'destructive',
-              onPress: async () => {
-                try {
-                  console.log("Logging out...");
-                  await dispatch(performLogout()).unwrap();
-                  router.replace('/(screens)');
-                } catch (error) {
-                  console.error('Logout error:', error);
-                  Alert.alert('Error', 'Failed to logout. Please try again.');
-                }
-              },
-            },
-          ]
-        );
-      };
-    
-  
-  
+        },
+      },
+    ]);
+  };
 
   // Memoize menu items to prevent recreation
   const menuItems = useMemo(
@@ -253,8 +255,7 @@ const Sidebar = ({
     ],
     []
   );
-    const memoizedStyles = useMemo(() => styles, []);
-  
+  const memoizedStyles = useMemo(() => styles, []);
 
   const SidebarContent = React.memo(() => (
     <View style={styles.sidebarContent}>
@@ -297,15 +298,13 @@ const Sidebar = ({
       {/* Scrollable Navigation Menu */}
       <ScrollView
         ref={scrollViewRef}
-        style={styles.scrollableMenuContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.menuContentContainer}
-        keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll}
         scrollEventThrottle={100}
+        style={styles.scrollableMenuContainer}
+        contentContainerStyle={styles.menuContentContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        initialNumToRender={10}
-        windowSize={10}
       >
         {menuItems.map((item, index) => (
           <TouchableOpacity
@@ -317,12 +316,9 @@ const Sidebar = ({
             <Text style={styles.menuText}>{item.text}</Text>
           </TouchableOpacity>
         ))}
-      <TouchableOpacity
-        onPress={handleLogout}
-        style={styles.logoutButton}
-      >
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Fixed Sidebar Footer */}
@@ -368,27 +364,25 @@ const Sidebar = ({
   );
 };
 
-
-
 const styles = StyleSheet.create({
-   logoutButton: {
-    backgroundColor: '#FF3B30', // iOS-style red for destructive actions
+  logoutButton: {
+    backgroundColor: "#FF3B30", // iOS-style red for destructive actions
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3, // for Android shadow
   },
   logoutText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 0.5,
   },
   overlay: {
