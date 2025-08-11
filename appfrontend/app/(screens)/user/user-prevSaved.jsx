@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 import { useRouter } from "expo-router";
-// import Lottie from "lottie-react"; // ✅ updated import
-import LottieView from "lottie-react-native";
-
-import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -14,7 +19,14 @@ const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const Navbar_local = () => {
   const router = useRouter();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 16,
+        backgroundColor: "#784dc6",
+      }}
+    >
       <TouchableOpacity
         onPress={() => router.back()}
         style={{ marginRight: 12, padding: 4 }}
@@ -22,7 +34,9 @@ const Navbar_local = () => {
       >
         <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
       </TouchableOpacity>
-      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+      <Text
+        style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}
+      >
         My Previously Saved
       </Text>
     </View>
@@ -34,16 +48,6 @@ const UserPreviouslySaved = () => {
   const [userId, setUserId] = useState("");
   const [savedProperties, setSavedProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lottieSource, setLottieSource] = useState(null);
-
-  useEffect(() => {
-    fetch(
-      "https://lottie.host/69e157cb-db54-4f03-b411-e105a2b76125/2bWLBAXZpM.json"
-    )
-      .then(res => res.json())
-      .then(json => setLottieSource(json))
-      .catch(() => setLottieSource(null));
-  }, []);
 
   useEffect(() => {
     const getToken = async () => {
@@ -65,8 +69,8 @@ const UserPreviouslySaved = () => {
     if (!userId) return;
     setLoading(true);
     fetch(`${API_URL}/api/user-update/${userId}/saved-properties`)
-      .then(res => res.json())
-      .then(data => setSavedProperties(data.saveProperties || []))
+      .then((res) => res.json())
+      .then((data) => setSavedProperties(data.saveProperties || []))
       .catch(() => setSavedProperties([]))
       .finally(() => setLoading(false));
   }, [userId]);
@@ -79,7 +83,9 @@ const UserPreviouslySaved = () => {
       );
       const data = await res.json();
       if (res.ok) {
-        setSavedProperties(prev => prev.filter(item => item.propertyId._id !== propertyId));
+        setSavedProperties((prev) =>
+          prev.filter((item) => item.propertyId._id !== propertyId)
+        );
         Alert.alert("Removed", data.message || "Property removed successfully!");
       } else {
         Alert.alert("Error", data.message || "Failed to remove property");
@@ -114,7 +120,9 @@ const UserPreviouslySaved = () => {
           {item.propertyId.location}, {item.propertyId.city}
         </Text>
         <View style={styles.meta}>
-          <Text style={styles.price}>₹ {item.propertyId.price?.toLocaleString()}</Text>
+          <Text style={styles.price}>
+            ₹ {item.propertyId.price?.toLocaleString()}
+          </Text>
           <Text style={styles.status}>{item.propertyId.status}</Text>
         </View>
         <View style={styles.stats}>
@@ -139,7 +147,11 @@ const UserPreviouslySaved = () => {
                 "Are you sure you want to remove this property from your saved list?",
                 [
                   { text: "Cancel", style: "cancel" },
-                  { text: "Remove", style: "destructive", onPress: () => handleRemove(item.propertyId._id) },
+                  {
+                    text: "Remove",
+                    style: "destructive",
+                    onPress: () => handleRemove(item.propertyId._id),
+                  },
                 ]
               )
             }
@@ -168,24 +180,26 @@ const UserPreviouslySaved = () => {
         {savedProperties.length > 0 ? (
           <FlatList
             data={savedProperties}
-            keyExtractor={item => item.propertyId._id}
+            keyExtractor={(item) => item.propertyId._id}
             renderItem={renderProperty}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.grid}
           />
         ) : (
           <View style={styles.emptyState}>
-            {lottieSource && (
-              <LottieView
-                animationData={lottieSource}
-                loop
-                autoplay
-                style={{ width: 250, height: 200 }}
-              />
-            )}
-            <Text style={styles.emptyTitle}>You haven’t saved any property lately!</Text>
+            <Image
+              source={{
+                uri: "https://media.giphy.com/media/3o7TKtnuHOHHUjR38Y/giphy.gif",
+              }}
+              style={{ width: 250, height: 200 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyTitle}>
+              You haven’t saved any property lately!
+            </Text>
             <Text style={styles.emptySubtitle}>
-              All the properties and projects that you have saved will start appearing here. Start exploring your dream home now.
+              All the properties and projects that you have saved will start
+              appearing here. Start exploring your dream home now.
             </Text>
             <TouchableOpacity
               style={styles.exploreBtn}
