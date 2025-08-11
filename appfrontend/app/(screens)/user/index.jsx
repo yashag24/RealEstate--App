@@ -334,7 +334,7 @@ const HomePage = () => {
 
         <Upcoming />
         {/* <CityWiseReviews /> */}
-        <EmergingLocalities />
+        {/* <EmergingLocalities /> */}
 
         <View style={styles.insightsContainer}>
           <CardLayout />
