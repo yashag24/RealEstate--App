@@ -1,8 +1,8 @@
 // controllers/builderController.js
-import Builder from '../models/builder.js';
+const Builder = require('../models/builder.js');
 
 // Create a new builder
-export const createBuilder = async (req, res) => {
+const createBuilder = async (req, res) => {
   try {
     const { name, image, description, builderUrl } = req.body;
 
@@ -16,7 +16,7 @@ export const createBuilder = async (req, res) => {
 };
 
 // Get all builders
-export const getBuilders = async (req, res) => {
+const getBuilders = async (req, res) => {
   try {
     const builders = await Builder.find();
     res.status(200).json(builders);
@@ -26,7 +26,7 @@ export const getBuilders = async (req, res) => {
 };
 
 // Get a single builder by ID
-export const getBuilderById = async (req, res) => {
+const getBuilderById = async (req, res) => {
   try {
     const builder = await Builder.findById(req.params.id);
     if (!builder) return res.status(404).json({ message: 'Builder not found' });
@@ -38,7 +38,7 @@ export const getBuilderById = async (req, res) => {
 };
 
 // Update a builder
-export const updateBuilder = async (req, res) => {
+const updateBuilder = async (req, res) => {
   try {
     const { name, image, description, builderUrl } = req.body;
 
@@ -57,7 +57,7 @@ export const updateBuilder = async (req, res) => {
 };
 
 // Delete a builder
-export const deleteBuilder = async (req, res) => {
+const deleteBuilder = async (req, res) => {
   try {
     const deletedBuilder = await Builder.findByIdAndDelete(req.params.id);
     if (!deletedBuilder) return res.status(404).json({ message: 'Builder not found' });
@@ -66,4 +66,12 @@ export const deleteBuilder = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+module.exports = {
+  createBuilder,
+  getBuilders,
+  getBuilderById,
+  updateBuilder,
+  deleteBuilder,
 };
