@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, Activ
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
-import Lottie from "lottie-react"; // ✅ updated import
+// import Lottie from "lottie-react"; // ✅ updated import
+import LottieView from "lottie-react-native";
+
 import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -174,7 +176,7 @@ const UserPreviouslySaved = () => {
         ) : (
           <View style={styles.emptyState}>
             {lottieSource && (
-              <Lottie
+              <LottieView
                 animationData={lottieSource}
                 loop
                 autoplay
