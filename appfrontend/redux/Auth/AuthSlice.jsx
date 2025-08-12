@@ -81,6 +81,9 @@ export const login = (credentials) => async (dispatch) => {
       
       // Store token securely
       await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('email', userData.email);
+      // await AsyncStorage.setItem('email', userData.email);
+      // console.log("DATAAAAAAAAAAAAAAA",userData);
       
       dispatch(setAuthUser({
         authUser: true,
@@ -155,6 +158,7 @@ export const performLogout = createAsyncThunk(
   async (_, { dispatch }) => {
     try {
       await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('email');
       dispatch(logout()); // Call your existing logout reducer
       return true;
     } catch (error) {
