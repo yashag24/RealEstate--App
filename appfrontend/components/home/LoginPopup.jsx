@@ -21,6 +21,7 @@ import Toast from 'react-native-toast-message';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import { initializeAuth, login, signup } from '@/redux/Auth/AuthSlice';
+
 // import your BasilRealestate logo asset
 import BasilLogo from '../../assets/images/logo.png'; // <= update with your logo path
 
@@ -94,7 +95,7 @@ export default function LoginPopup({ visible = true, onClose }) {
 
       Alert.alert(
         'Success!',
-        `Welcome ${authUser.name || authUser.email}!`,
+        `Welcome ${userType}!`,
         [{
           text: 'Continue',
           onPress: () => {
