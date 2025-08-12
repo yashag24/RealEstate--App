@@ -148,7 +148,7 @@ export default function LoginPopup({ visible = true, onClose }) {
 
   handleGuestLogin = () => {
     setLoading(true);
-    dispatch(login({ email: 'user23@gmail.com', password: '12345678' }))
+    dispatch(login({ email: 'demo@gmail.com', password: '12345678' }))
       .then(res => {
         if (res?.error || res?.payload?.error) {
           const errorMessage = res?.error?.message || res?.payload?.error || res?.payload?.message || 'Guest login failed'; 
